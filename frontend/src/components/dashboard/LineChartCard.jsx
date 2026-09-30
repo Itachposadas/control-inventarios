@@ -18,13 +18,15 @@ ChartJS.register(
   Title, Tooltip, Filler, Legend
 );
 
-export default function LineChartCard({ data = [] }) {
+export default function LineChartCard({ data = [], sinAnio = 0 }) {
   // data = [{ anio: "2003", total: 5 }, { anio: "2007", total: 3 }, ...]
+  // sinAnio = vehículos cuyo "modelo" no tiene un año válido (se cuentan en el total)
   const labels = data.map((d) => d.anio);
   const values = data.map((d) => d.total);
 
-  const total = values.reduce((a, b) => a + b, 0);
-  const promedio = values.length > 0 ? (total / values.length).toFixed(1) : 0;
+  const conAnio = values.reduce((a, b) => a + b, 0);
+  const total = conAnio + sinAnio;
+  const promedio = values.length > 0 ? (conAnio / values.length).toFixed(1) : 0;
   const maxIdx = values.indexOf(Math.max(...values));
   const anioMax = labels[maxIdx] || "—";
 
@@ -111,6 +113,13 @@ export default function LineChartCard({ data = [] }) {
             <p className="mt-1 text-lg font-bold text-slate-800">{anioMax}</p>
           </div>
         </div>
+
+        {sinAnio > 0 && (
+          <p className="mt-3 text-center text-xs text-slate-500">
+            {sinAnio} {sinAnio === 1 ? "vehículo no tiene" : "vehículos no tienen"} año registrado
+            en su modelo; se incluyen en el total pero no en la gráfica.
+          </p>
+        )}
       </div>
     </div>
   );

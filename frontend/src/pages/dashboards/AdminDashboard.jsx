@@ -141,7 +141,7 @@ export default function AdminDashboard() {
           {/* Gráficas */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-5">
             <div className="xl:col-span-2">
-              <LineChartCard data={porAnio} />
+              <LineChartCard data={porAnio} sinAnio={stats?.sin_anio || 0} />
             </div>
             <div>
               <DonutCard data={vehiculosPorArea} />

@@ -1,4 +1,6 @@
 # backend/routes/dashboard.py
+import re
+from collections import Counter
 from flask import Blueprint, jsonify
 from sqlalchemy import func
 from extensions import db
@@ -6,6 +8,15 @@ from models import Vehiculo, Solicitud, SolicitudEvento
 from auth_utils import role_required
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
+
+# Un año de 4 dígitos (1900–2099) en cualquier parte del texto del modelo
+ANIO_RE = re.compile(r"\b(19\d{2}|20\d{2})\b")
+
+
+def _anio_de_modelo(modelo):
+    """'2019' → '2019'; 'SPORT TSMAN 570 2026' → '2026'; '924F' o vacío → None."""
+    m = ANIO_RE.search(modelo or "")
+    return m.group(1) if m else None
 
 
 @dashboard_bp.route("/stats", methods=["GET"])
@@ -47,13 +58,21 @@ def stats():
     )
 
     # ─── Años (para gráfica de líneas) ───
-    por_anio = (
-        db.session.query(Vehiculo.modelo, func.count(Vehiculo.id).label("total"))
-        .filter(Vehiculo.modelo.isnot(None), Vehiculo.modelo != "")
+    # Se cuentan TODOS los vehículos: los que no tienen un año válido en
+    # "modelo" (vacío o un texto como "924F") van aparte en sin_anio.
+    conteo_anios = Counter()
+    sin_anio = 0
+    for modelo, total in (
+        db.session.query(Vehiculo.modelo, func.count(Vehiculo.id))
         .group_by(Vehiculo.modelo)
-        .order_by(Vehiculo.modelo.asc())
         .all()
-    )
+    ):
+        anio = _anio_de_modelo(modelo)
+        if anio:
+            conteo_anios[anio] += total
+        else:
+            sin_anio += total
+    por_anio = sorted(conteo_anios.items())
 
     # ─── Vehículos por área (para dona) ───
     vehiculos_por_area = (
@@ -96,6 +115,7 @@ def stats():
         "top_marcas": [
             {"marca": m, "total": t} for m, t in top_marcas
         ],
+        "sin_anio": sin_anio,
         "por_anio": [
             {"anio": a, "total": t} for a, t in por_anio
         ],
