@@ -10,6 +10,6 @@ html, body, #root {
 body {
   background-color: #faf9f8;
   color: #1e293b;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }

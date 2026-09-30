@@ -2,9 +2,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Topbar from "../components/Topbar";
-import { useAuth } from "../context/AuthContext";
-import { ROLE_COLOR, ROLE_LABEL } from "../config/roles";
-import { Settings, HelpCircle } from "lucide-react";
 import SystemStatus from "../components/layout/SystemStatus";
 
 export default function DashboardLayout({
@@ -14,13 +11,9 @@ export default function DashboardLayout({
   title = "Panel",
   subtitle = "",
 }) {
-  const { user, role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const roleLabel = ROLE_LABEL[role] || "Usuario";
-  const roleColor = ROLE_COLOR[role] || "bg-slate-500";
 
   const isActive = (item) => {
     if (!item.to) return false;
@@ -44,14 +37,14 @@ export default function DashboardLayout({
         `}
       >
         {/* Logo */}
-        <div className="h-16 px-5 border-b border-slate-200 flex items-center gap-3">
+        <div className="h-16 px-4 border-b border-slate-200 flex items-center gap-3">
           <img
             src="/logo-atlacomulco.png"
-            alt="Logo"
-            className="h-9 w-auto object-contain"
+            alt="Logo Atlacomulco"
+            className="h-11 w-auto object-contain shrink-0"
           />
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-[#9F2241] font-semibold leading-tight">
+            <p className="text-[11px] uppercase tracking-wide whitespace-nowrap text-[#9F2241] font-semibold leading-tight">
               Parque Vehicular
             </p>
             <p className="text-xs text-slate-500 leading-tight truncate">
@@ -138,26 +131,6 @@ export default function DashboardLayout({
           <SystemStatus />
         </nav>
 
-        {/* Perfil abajo */}
-        <div className="p-3 border-t border-slate-200">
-          <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50">
-            <div
-              className={`w-9 h-9 rounded-full ${roleColor}
-                          flex items-center justify-center
-                          text-white font-semibold text-sm shrink-0`}
-            >
-              {user?.username?.charAt(0).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-800 truncate leading-tight">
-                {user?.username}
-              </p>
-              <p className="text-[11px] text-slate-500 leading-tight">
-                {roleLabel}
-              </p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {sidebarOpen && (

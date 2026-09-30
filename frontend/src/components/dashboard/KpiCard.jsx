@@ -27,12 +27,6 @@ export default function KpiCard({
                     shadow-[0_1px_3px_rgba(15,23,42,0.04)]
                     hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)]
                     transition-all duration-200 relative overflow-hidden">
-      {/* Acento superior */}
-      <span
-        className="absolute top-0 left-0 h-1 w-full"
-        style={{ background: accent }}
-      />
-
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
