@@ -168,17 +168,6 @@ export async function descargarReportePdf(reporte, graficas = {}) {
     { columnStyles: { 0: { cellWidth: 8 }, 4: derecha, 5: derecha } }
   );
 
-  tabla(
-    "Piezas a comprar",
-    ["Pieza", "Cantidad", "Servicios"],
-    reporte.piezas_por_comprar.map((p) => [
-      p.descripcion,
-      p.cantidad,
-      p.servicios.map((s) => `${s.folio} (${s.vehiculo})`).join(", "),
-    ]),
-    { columnStyles: { 1: { halign: "right", cellWidth: 20 }, 2: { cellWidth: 90, fontSize: 8 } } }
-  );
-
   // ─── Pie de página en todas las hojas ───
   const paginas = doc.getNumberOfPages();
   for (let i = 1; i <= paginas; i++) {

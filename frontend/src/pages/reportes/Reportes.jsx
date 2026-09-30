@@ -1,5 +1,5 @@
 // src/pages/reportes/Reportes.jsx
-// Reportes del admin: gasto, servicios y piezas a comprar, con descarga en PDF.
+// Reportes del admin: gasto y servicios del taller, con descarga en PDF.
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -249,50 +249,6 @@ export default function Reportes() {
                   <TablaVehiculos filas={reporte.top_ingresos} />
                 </Tarjeta>
               </div>
-
-              <Tarjeta
-                titulo="Piezas a comprar"
-                subtitulo="Lo que los mecánicos marcaron para comprar, agrupado por pieza"
-              >
-                {reporte.piezas_por_comprar.length === 0 ? (
-                  <p className="text-sm text-slate-400 py-4 text-center">No hay piezas por comprar en este periodo</p>
-                ) : (
-                  <div className="overflow-x-auto -mx-5">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">
-                          <th className="text-left font-semibold px-5 py-2">Pieza</th>
-                          <th className="text-right font-semibold px-5 py-2">Cantidad</th>
-                          <th className="text-left font-semibold px-5 py-2">Servicios</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {reporte.piezas_por_comprar.map((p) => (
-                          <tr key={p.descripcion}>
-                            <td className="px-5 py-2.5 font-medium text-slate-800">{p.descripcion}</td>
-                            <td className="px-5 py-2.5 text-right font-semibold text-slate-700 tabular-nums">{p.cantidad}</td>
-                            <td className="px-5 py-2.5">
-                              <div className="flex flex-wrap gap-1.5">
-                                {p.servicios.map((s) => (
-                                  <Link
-                                    key={`${s.solicitud_id}-${s.cantidad}`}
-                                    to={`/admin/solicitudes/${s.solicitud_id}`}
-                                    title={`${s.vehiculo} · ${s.cantidad} pza.`}
-                                    className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600
-                                               hover:bg-[#9F2241]/10 hover:text-[#9F2241] transition"
-                                  >
-                                    {s.folio}
-                                  </Link>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Tarjeta>
             </>
           )}
         </div>

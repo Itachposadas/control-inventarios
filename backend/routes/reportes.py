@@ -66,7 +66,7 @@ def reporte():
 
     query = (
         Solicitud.query.join(Vehiculo)
-        .options(selectinload(Solicitud.eventos), selectinload(Solicitud.refacciones))
+        .options(selectinload(Solicitud.eventos))
         .filter(
             Solicitud.fecha_ingreso >= _utc_desde_local(desde),
             Solicitud.fecha_ingreso < _utc_desde_local(hasta + timedelta(days=1)),
@@ -81,7 +81,6 @@ def reporte():
     por_area = defaultdict(lambda: {"gasto": 0.0, "servicios": 0})
     por_tipo = defaultdict(lambda: {"gasto": 0.0, "servicios": 0})
     por_vehiculo = {}
-    piezas = {}
     dias_taller = []
     gasto_total = 0.0
     terminados = en_taller = sin_costo = con_costo = 0
@@ -126,21 +125,6 @@ def reporte():
         if completada:
             dias_taller.append((completada - s.fecha_ingreso).total_seconds() / 86400)
 
-        # Piezas a comprar: se agrupan por descripción (sin distinguir mayúsculas)
-        for r in s.refacciones:
-            if r.tipo != "por_comprar":
-                continue
-            clave = " ".join(r.descripcion.lower().split())
-            p = piezas.setdefault(clave, {"descripcion": r.descripcion, "cantidad": 0, "servicios": []})
-            p["cantidad"] += r.cantidad
-            p["servicios"].append({
-                "solicitud_id": s.id,
-                "folio": s.folio,
-                "vehiculo": _nombre(v),
-                "cantidad": r.cantidad,
-                "estado": s.estado,
-            })
-
     def ordenar(dic, clave):
         return sorted(
             [{clave: k, **val} for k, val in dic.items()],
@@ -166,5 +150,4 @@ def reporte():
         "por_tipo": ordenar(por_tipo, "tipo"),
         "top_costo": sorted(vehiculos, key=lambda x: (-x["gasto"], -x["servicios"]))[:TOP],
         "top_ingresos": sorted(vehiculos, key=lambda x: (-x["servicios"], -x["gasto"]))[:TOP],
-        "piezas_por_comprar": sorted(piezas.values(), key=lambda p: (-p["cantidad"], p["descripcion"].lower())),
     }), 200
