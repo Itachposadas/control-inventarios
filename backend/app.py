@@ -8,6 +8,7 @@ from routes.vehiculos import vehiculos_bp
 from routes.dashboard import dashboard_bp
 from routes.usuarios import usuarios_bp
 from routes.solicitudes import solicitudes_bp
+from routes.general import general_bp
 
 
 def create_app():
@@ -31,6 +32,7 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(solicitudes_bp)
+    app.register_blueprint(general_bp)
 
     # Crea las tablas que falten al arrancar (no modifica las que ya existen),
     # así un módulo nuevo no deja al sistema sin funcionar.

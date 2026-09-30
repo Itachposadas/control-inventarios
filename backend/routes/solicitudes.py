@@ -31,8 +31,20 @@ CAMPOS_INGRESO = {
 
 CAMPOS_TEXTO = ("observaciones_ingreso", "fallas", "acciones", "observaciones")
 
+# Mientras el servicio esté en alguno de estos pasos, el vehículo está en el taller.
+# Al completarse, el vehículo vuelve a "activo" (la entrega es solo administrativa).
+EN_TALLER = ("recibida", "diagnostico", "reparacion")
+
 
 # ─── Helpers ───
+
+def _sincronizar_vehiculo(vehiculo):
+    """Mantenimiento si tiene un servicio en taller; activo si no (baja no se toca)."""
+    if vehiculo.estado == "baja":
+        return
+    en_taller = vehiculo.solicitudes.filter(Solicitud.estado.in_(EN_TALLER)).first()
+    vehiculo.estado = "mantenimiento" if en_taller else "activo"
+
 
 def _texto(valor):
     return (str(valor) if valor is not None else "").strip() or None
@@ -223,9 +235,9 @@ def crear():
     if vehiculo.estado == "baja":
         return jsonify({"msg": "El vehículo está dado de baja"}), 400
 
-    abierta = vehiculo.solicitudes.filter(Solicitud.estado != "entregada").first()
-    if abierta:
-        return jsonify({"msg": f"Este vehículo ya tiene una solicitud abierta ({abierta.folio})"}), 409
+    en_taller = vehiculo.solicitudes.filter(Solicitud.estado.in_(EN_TALLER)).first()
+    if en_taller:
+        return jsonify({"msg": f"Este vehículo ya está en el taller ({en_taller.folio})"}), 409
 
     s = Solicitud(vehiculo=vehiculo, creado_por_id=user.id, estado="recibida")
 
@@ -325,15 +337,13 @@ def cambiar_estado(solicitud_id):
 
     s.estado = nuevo
 
-    # El estado del vehículo se mantiene en sincronía
     if nuevo == "entregada":
         s.fecha_entrega = utcnow()
-        if s.vehiculo.estado != "baja":
-            s.vehiculo.estado = "activo"
     elif s.fecha_entrega:  # se regresó desde "entregada"
         s.fecha_entrega = None
-        if s.vehiculo.estado != "baja":
-            s.vehiculo.estado = "mantenimiento"
+
+    # Completada → el vehículo vuelve a activo; si se regresa a reparación, vuelve a mantenimiento
+    _sincronizar_vehiculo(s.vehiculo)
 
     verbo = "Avanzó" if avanza else "Regresó"
     _registrar(s, user, f"{verbo} a {ESTADO_LABEL[nuevo]}", data.get("nota"))
@@ -350,15 +360,13 @@ def eliminar(solicitud_id):
         return jsonify({"msg": "Solicitud no encontrada"}), 404
 
     vehiculo = s.vehiculo
-    era_abierta = s.estado != "entregada"
+    estaba_en_taller = s.estado in EN_TALLER
     db.session.delete(s)
     db.session.flush()
 
-    # Si era la solicitud que tenía al vehículo en taller, vuelve a activo
-    if era_abierta and vehiculo.estado == "mantenimiento":
-        otra = vehiculo.solicitudes.filter(Solicitud.estado != "entregada").first()
-        if not otra:
-            vehiculo.estado = "activo"
+    # Si era la solicitud que tenía al vehículo en taller, se recalcula su estado
+    if estaba_en_taller:
+        _sincronizar_vehiculo(vehiculo)
 
     db.session.commit()
     return jsonify({"msg": "Solicitud eliminada"}), 200

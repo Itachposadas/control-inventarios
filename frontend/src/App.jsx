@@ -22,6 +22,10 @@ import SolicitudesList from "./pages/solicitudes/SolicitudesList";
 import SolicitudNueva from "./pages/solicitudes/SolicitudNueva";
 import SolicitudDetail from "./pages/solicitudes/SolicitudDetail";
 
+// Mi cuenta y ayuda (ambos roles)
+import MiCuenta from "./pages/cuenta/MiCuenta";
+import Ayuda from "./pages/ayuda/Ayuda";
+
 // Placeholder para subrutas no implementadas aún
 import EnConstruccion from "./pages/admin/EnConstruccion";
 
@@ -58,7 +62,10 @@ export default function App() {
           <Route path="/admin/usuarios" element={solo([ADMIN], <UsuariosList />)} />
           <Route path="/admin/usuarios/:id" element={solo([ADMIN], <UsuarioDetail />)} />
 
-          {/* Pendientes: Reportes, Configuración, Ayuda */}
+          <Route path="/admin/mi-cuenta" element={solo([ADMIN], <MiCuenta />)} />
+          <Route path="/admin/ayuda" element={solo([ADMIN], <Ayuda />)} />
+
+          {/* Pendiente: Reportes */}
           <Route path="/admin/*" element={solo([ADMIN], <EnConstruccion />)} />
 
           {/* ══════════ MECÁNICO ══════════ */}
@@ -82,7 +89,9 @@ export default function App() {
               <SolicitudesList titulo="Historial" subtitulo="Servicios que ya terminaste" estadoFijo="cerradas" />
             ))}
           />
-          <Route path="/mecanico/*" element={solo([MECANICO], <EnConstruccion />)} />
+          <Route path="/mecanico/mi-cuenta" element={solo([MECANICO], <MiCuenta />)} />
+          <Route path="/mecanico/ayuda" element={solo([MECANICO], <Ayuda />)} />
+          <Route path="/mecanico/*" element={<Navigate to="/mecanico" replace />} />
 
           {/* ══════════ REDIRECCIONES ══════════ */}
           <Route path="/" element={<Navigate to="/login" replace />} />

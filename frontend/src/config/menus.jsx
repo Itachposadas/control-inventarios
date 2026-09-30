@@ -3,7 +3,7 @@
 // para que todas las páginas muestren exactamente lo mismo.
 import {
   LayoutDashboard, Car, Users, BarChart3,
-  Settings, HelpCircle,
+  UserCog, HelpCircle,
   Wrench, History,
 } from "lucide-react";
 import { ROLES } from "./roles";
@@ -18,7 +18,7 @@ export const ADMIN_MENU = [
 ];
 
 export const ADMIN_SECONDARY_MENU = [
-  { label: "Configuración", to: "/admin/configuracion", icon: <Settings size={18} /> },
+  { label: "Mi cuenta", to: "/admin/mi-cuenta", icon: <UserCog size={18} /> },
   { label: "Ayuda", to: "/admin/ayuda", icon: <HelpCircle size={18} /> },
 ];
 
@@ -31,7 +31,7 @@ export const MECANICO_MENU = [
 ];
 
 export const MECANICO_SECONDARY_MENU = [
-  { label: "Configuración", to: "/mecanico/configuracion", icon: <Settings size={18} /> },
+  { label: "Mi cuenta", to: "/mecanico/mi-cuenta", icon: <UserCog size={18} /> },
   { label: "Ayuda", to: "/mecanico/ayuda", icon: <HelpCircle size={18} /> },
 ];
 

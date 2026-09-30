@@ -27,6 +27,9 @@ export const authApi = {
     return data;
   },
 
+  cambiarPassword: (actual, nueva) =>
+    request("/auth/password", { method: "PUT", body: { actual, nueva } }),
+
   logout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(CURRENT_KEY);

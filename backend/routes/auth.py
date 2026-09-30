@@ -44,3 +44,24 @@ def login():
 @role_required()
 def me():
     return jsonify(get_current_user().to_dict()), 200
+
+
+# ─── Cambiar mi propia contraseña ───
+@auth_bp.route("/password", methods=["PUT"])
+@role_required()
+def cambiar_password():
+    user = get_current_user()
+    data = request.get_json() or {}
+    actual = data.get("actual") or ""
+    nueva = data.get("nueva") or ""
+
+    if not user.check_password(actual):
+        return jsonify({"msg": "La contraseña actual no es correcta"}), 400
+    if len(nueva) < 6:
+        return jsonify({"msg": "La nueva contraseña debe tener al menos 6 caracteres"}), 400
+    if nueva == actual:
+        return jsonify({"msg": "La nueva contraseña debe ser distinta a la actual"}), 400
+
+    user.set_password(nueva)
+    db.session.commit()
+    return jsonify({"msg": "Contraseña actualizada"}), 200
