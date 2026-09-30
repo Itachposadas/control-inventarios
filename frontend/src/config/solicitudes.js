@@ -25,12 +25,12 @@ export const PRIORIDADES = [
 ];
 export const PRIORIDAD_LABEL = Object.fromEntries(PRIORIDADES.map((p) => [p.value, p.label]));
 
-// Datos del vehículo que se capturan en el formato de ingreso
+// Datos del vehículo que muestra el formato de ingreso (vienen del catálogo, solo lectura)
 export const CAMPOS_INGRESO = [
   { key: "unidad",        label: "Vehículo / Maquinaria" },
   { key: "marca",         label: "Marca" },
   { key: "modelo",        label: "Modelo" },
-  { key: "placas",        label: "Placas" },
+  { key: "placas",        label: "Placas", mono: true },
   { key: "color",         label: "Color" },
   { key: "area",          label: "Área" },
   { key: "serie",         label: "No. de Serie", mono: true },

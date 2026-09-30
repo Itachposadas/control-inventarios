@@ -5,9 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ConfirmModal from "../../components/ConfirmModal";
-import IngresoFields from "../../components/solicitudes/IngresoFields";
+import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
 import RefaccionesEditor from "../../components/solicitudes/RefaccionesEditor";
+import FotosEvidencia from "../../components/solicitudes/FotosEvidencia";
 import { EstadoBadge, PrioridadBadge } from "../../components/solicitudes/Badges";
 import { Section, Field, TextArea, inputClass } from "../../components/solicitudes/ui";
 import { solicitudesApi } from "../../api/solicitudes";
@@ -20,14 +21,13 @@ import {
   formatFecha, formatMoneda,
 } from "../../config/solicitudes";
 import {
-  ArrowLeft, ArrowRight, Undo2, Check, Loader2, CarFront, Trash2, Save,
+  ArrowLeft, ArrowRight, Undo2, Check, Loader2, CarFront, Trash2, Save, Camera,
 } from "lucide-react";
 
 function formDesdeSolicitud(s) {
   return {
     tipo: s.tipo,
     prioridad: s.prioridad,
-    ingreso: { ...s.ingreso },
     checklist: { ...s.checklist },
     observaciones_ingreso: s.observaciones_ingreso || "",
     fallas: s.fallas || "",
@@ -41,9 +41,9 @@ function formDesdeSolicitud(s) {
 
 // Qué necesita cada paso para poder avanzar (se muestra como ayuda)
 const AYUDA_PASO = {
-  recibida: "Revisa el vehículo y pasa a Diagnóstico.",
+  recibida: "Sube la foto de llegada en Evidencia fotográfica, revisa el vehículo y pasa a Diagnóstico.",
   diagnostico: "Captura el diagnóstico de fallas presentadas para pasar a Reparación.",
-  reparacion: "Captura las acciones realizadas y refacciones para marcarla como Completada.",
+  reparacion: "Captura las acciones realizadas y sube las fotos de reparación y final (en Evidencia fotográfica) para marcarla como Completada.",
   completada: "El administrador captura el costo y la marca como Entregada.",
   entregada: "Servicio entregado.",
 };
@@ -242,9 +242,9 @@ export default function SolicitudDetail() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 pb-24">
         {/* ═════ Columna principal ═════ */}
         <div className="xl:col-span-2 space-y-5">
-          <Section title="Datos del vehículo" subtitle="Tal como llegó al taller">
-            <IngresoFields value={form.ingreso} onChange={set("ingreso")} disabled={bloqueado} />
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Section title="Datos del vehículo" subtitle="Registrados al ingresar al taller">
+            <DatosVehiculo datos={s.ingreso} nota={puedeLlenar} />
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Tipo de servicio">
                 <select value={form.tipo} onChange={(e) => set("tipo")(e.target.value)} disabled={bloqueado} className={inputClass}>
                   {TIPOS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -257,6 +257,21 @@ export default function SolicitudDetail() {
               </Field>
             </div>
           </Section>
+
+          <FotosEvidencia
+            solicitud={s}
+            puedeSubir={false}
+            accion={puedeLlenar && (
+              <button
+                onClick={() => navigate(`/mecanico/evidencia?servicio=${s.id}`)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                           bg-[#9F2241] hover:bg-[#7d1a33] text-white transition shrink-0"
+              >
+                <Camera size={14} />
+                Subir fotos
+              </button>
+            )}
+          />
 
           <Section title="Accesorios" subtitle="Palomita = sí llegó con el vehículo">
             <Checklist value={form.checklist} onChange={set("checklist")} disabled={bloqueado} />

@@ -16,4 +16,15 @@ export const solicitudesApi = {
     request(`/solicitudes/${id}/estado`, { method: "POST", body: { estado, nota } }),
 
   eliminar: (id) => request(`/solicitudes/${id}`, { method: "DELETE" }),
+
+  // ─── Evidencia fotográfica (tipo: "llegada" | "reparacion" | "final") ───
+  subirFoto: (id, tipo, archivo) => {
+    const form = new FormData();
+    form.append("foto", archivo, archivo.name || `${tipo}.jpg`);
+    return request(`/solicitudes/${id}/fotos/${tipo}`, { method: "POST", body: form });
+  },
+
+  verFoto: (id, tipo) => request(`/solicitudes/${id}/fotos/${tipo}`, { blob: true }),
+
+  quitarFoto: (id, tipo) => request(`/solicitudes/${id}/fotos/${tipo}`, { method: "DELETE" }),
 };

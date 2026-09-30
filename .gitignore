@@ -17,3 +17,6 @@ dist/
 Thumbs.db
 .vscode/
 *.log
+
+# Fotos de evidencia (datos, no código)
+backend/uploads/

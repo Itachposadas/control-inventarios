@@ -4,7 +4,7 @@
 import {
   LayoutDashboard, Car, Users, BarChart3,
   UserCog, HelpCircle,
-  Wrench, History,
+  Wrench, History, Camera,
 } from "lucide-react";
 import { ROLES } from "./roles";
 
@@ -27,6 +27,7 @@ export const MECANICO_MENU = [
   { label: "Panel de control", to: "/mecanico", icon: <LayoutDashboard size={18} /> },
   { label: "Vehículos", to: "/mecanico/vehiculos", icon: <Car size={18} /> },
   { label: "Mis reparaciones", to: "/mecanico/reparaciones", icon: <Wrench size={18} /> },
+  { label: "Evidencia fotográfica", to: "/mecanico/evidencia", icon: <Camera size={18} /> },
   { label: "Historial", to: "/mecanico/historial", icon: <History size={18} /> },
 ];
 

@@ -61,6 +61,7 @@ class Vehiculo(db.Model):
     no_motor = db.Column(db.String(100))
     placas = db.Column(db.String(30))
     numero_economico = db.Column(db.String(50))
+    color = db.Column(db.String(50))
     estado = db.Column(db.Enum("activo", "mantenimiento", "baja"), default="activo")
     created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
@@ -79,6 +80,7 @@ class Vehiculo(db.Model):
             "noMotor": self.no_motor,
             "placas": self.placas,
             "numeroEconomico": self.numero_economico,
+            "color": self.color,
             "estado": self.estado,
         }
 
@@ -149,6 +151,10 @@ class Solicitud(db.Model):
         "SolicitudEvento", backref="solicitud",
         cascade="all, delete-orphan", order_by="SolicitudEvento.id",
     )
+    fotos = db.relationship(
+        "SolicitudFoto", backref="solicitud",
+        cascade="all, delete-orphan", order_by="SolicitudFoto.id",
+    )
 
     def to_dict(self, detalle=False):
         v = self.vehiculo
@@ -167,6 +173,7 @@ class Solicitud(db.Model):
                 "area": v.area,
             } if v else None,
             "mecanico": self.mecanico.to_dict() if self.mecanico else None,
+            "fotos_tipos": sorted(f.tipo for f in self.fotos),
             "costo": float(self.costo) if self.costo is not None else None,
             "fecha_ingreso": _iso(self.fecha_ingreso),
             "fecha_entrega": _iso(self.fecha_entrega),
@@ -191,6 +198,7 @@ class Solicitud(db.Model):
                 "observaciones": self.observaciones,
                 "refacciones": [r.to_dict() for r in self.refacciones],
                 "eventos": [e.to_dict() for e in self.eventos],
+                "fotos": {f.tipo: f.to_dict() for f in self.fotos},
                 "creado_por": self.creado_por.to_dict() if self.creado_por else None,
             })
         return data
@@ -212,6 +220,36 @@ class SolicitudRefaccion(db.Model):
             "tipo": self.tipo,
             "descripcion": self.descripcion,
             "cantidad": self.cantidad,
+        }
+
+
+# Evidencia fotográfica obligatoria de cada servicio
+TIPOS_FOTO = ("llegada", "reparacion", "final")
+
+
+class SolicitudFoto(db.Model):
+    """Una foto por tipo (llegada, reparación, final). El archivo vive en backend/uploads/."""
+    __tablename__ = "solicitud_fotos"
+    __table_args__ = (db.UniqueConstraint("solicitud_id", "tipo", name="uq_solicitud_foto_tipo"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    solicitud_id = db.Column(db.Integer, db.ForeignKey("solicitudes.id"), nullable=False, index=True)
+    tipo = db.Column(db.Enum(*TIPOS_FOTO), nullable=False)
+    archivo = db.Column(db.String(255), nullable=False)   # ruta relativa dentro de uploads/
+    mimetype = db.Column(db.String(50), nullable=False)
+    tamano = db.Column(db.Integer, nullable=False)        # bytes
+    subido_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    subido_por = db.relationship("Usuario")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tipo": self.tipo,
+            "tamano": self.tamano,
+            "subido_por": (self.subido_por.nombre_completo or self.subido_por.username) if self.subido_por else None,
+            "fecha": _iso(self.created_at),
         }
 
 

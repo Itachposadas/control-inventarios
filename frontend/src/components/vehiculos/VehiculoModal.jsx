@@ -17,6 +17,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
     no_motor: "",
     placas: "",
     numero_economico: "",
+    color: "",
     estado: "activo",
   });
   const [error, setError] = useState("");
@@ -36,6 +37,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
         no_motor: vehiculo?.noMotor || "",
         placas: vehiculo?.placas || "",
         numero_economico: vehiculo?.numeroEconomico || "",
+        color: vehiculo?.color || "",
         estado: vehiculo?.estado || "activo",
       });
       setError("");
@@ -75,6 +77,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
         no_motor: form.no_motor.trim(),
         placas: form.placas.trim(),
         numero_economico: form.numero_economico.trim(),
+        color: form.color.trim(),
         estado: form.estado,
       };
 
@@ -245,6 +248,16 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Color</Label>
+              <input
+                name="color"
+                value={form.color}
+                onChange={handleChange}
+                placeholder="Blanco"
+                className={inputClass}
+              />
+            </div>
             <div>
               <Label required>Estado</Label>
               <select

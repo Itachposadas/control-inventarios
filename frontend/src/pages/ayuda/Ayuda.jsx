@@ -16,9 +16,9 @@ const GUIA_MECANICO = [
     titulo: "1. Registrar el ingreso a taller",
     pasos: [
       "Entra a Vehículos, busca la unidad y ábrela.",
-      "Pulsa “Registrar ingreso a taller”. Los datos del vehículo se llenan solos; corrige lo que no coincida y agrega el color.",
+      "Pulsa “Registrar ingreso a taller”. Los datos del vehículo se llenan solos desde el catálogo (no se pueden modificar; si alguno está mal, avisa al administrador).",
       "Marca con palomita los accesorios con los que SÍ llegó y escribe las observaciones (ej. “no tenía defensa delantera”).",
-      "Pulsa “Registrar ingreso”. El vehículo queda en mantenimiento.",
+      "Pulsa “Registrar ingreso”. El vehículo queda en mantenimiento y el sistema te lleva a Evidencia fotográfica para tomar la foto de llegada.",
     ],
     nota: "También puedes empezar desde Mis reparaciones → “Nuevo ingreso a taller”.",
   },
@@ -30,13 +30,14 @@ const GUIA_MECANICO = [
       "Escribe el diagnóstico de fallas presentadas.",
       "Pulsa “Guardar y pasar a Reparación”.",
     ],
-    nota: "No podrás pasar a Reparación sin capturar el diagnóstico.",
+    nota: "Sin la foto de llegada no podrás pasar a Diagnóstico, y sin el diagnóstico no podrás pasar a Reparación.",
   },
   {
     icon: <Wrench size={20} />,
     titulo: "3. Reparación",
     pasos: [
       "Captura las acciones realizadas y las observaciones de lo que se trabajó.",
+      "Mientras cambias la pieza, entra a Evidencia fotográfica, elige el vehículo y toma la foto de reparación.",
       "Agrega las refacciones utilizadas y las piezas a comprar (descripción y cantidad).",
       "Pulsa “Guardar cambios” cuando quieras; no se pierde lo capturado.",
     ],
@@ -45,7 +46,8 @@ const GUIA_MECANICO = [
     icon: <CheckCircle2 size={20} />,
     titulo: "4. Completar",
     pasos: [
-      "Cuando termines, pulsa “Pasar a Completada”.",
+      "Cuando termines, toma la foto final del vehículo ya reparado (también en Evidencia fotográfica).",
+      "Pulsa “Pasar a Completada”. Sin las 3 fotos (llegada, reparación y final) no se puede completar.",
       "El vehículo vuelve a estar activo y el administrador captura el costo y lo entrega.",
     ],
     nota: "Una vez completada ya no puedes modificarla. Si hay que corregir algo, pídele al administrador que la regrese a Reparación.",
@@ -66,7 +68,7 @@ const GUIA_ADMIN = [
     titulo: "Capturar costo y entregar",
     pasos: [
       "Cuando un mecánico completa un servicio aparece en la campana y en el Panel de control (“Servicios listos para entregar”).",
-      "Ábrelo, escribe el costo en “Administración” y pulsa “Guardar cambios”.",
+      "Ábrelo, revisa las 3 fotos de evidencia, escribe el costo en “Administración” y pulsa “Guardar cambios”.",
       "Pulsa “Pasar a Entregada”. Puedes anotar quién recibió el vehículo.",
     ],
   },
@@ -110,6 +112,10 @@ const PREGUNTAS = [
   {
     p: "Aparece “Sin conexión con el servidor”",
     r: "El servidor del sistema está apagado o no hay red. Avisa al administrador.",
+  },
+  {
+    p: "No me deja pasar a Diagnóstico o a Completada",
+    r: "Faltan fotos de evidencia: la de llegada para Diagnóstico, y las de reparación y final para Completada. Entra a Evidencia fotográfica en el menú, elige el vehículo y súbelas.",
   },
   {
     p: "No puedo registrar el ingreso de un vehículo",

@@ -21,6 +21,7 @@ import UsuarioDetail from "./pages/admin/usuarios/UsuarioDetail";
 import SolicitudesList from "./pages/solicitudes/SolicitudesList";
 import SolicitudNueva from "./pages/solicitudes/SolicitudNueva";
 import SolicitudDetail from "./pages/solicitudes/SolicitudDetail";
+import EvidenciaFotografica from "./pages/solicitudes/EvidenciaFotografica";
 
 // Reportes (solo admin)
 import Reportes from "./pages/reportes/Reportes";
@@ -87,6 +88,7 @@ export default function App() {
           />
           <Route path="/mecanico/reparaciones/nueva" element={solo([MECANICO], <SolicitudNueva />)} />
           <Route path="/mecanico/reparaciones/:id" element={solo([MECANICO], <SolicitudDetail />)} />
+          <Route path="/mecanico/evidencia" element={solo([MECANICO], <EvidenciaFotografica />)} />
           <Route
             path="/mecanico/historial"
             element={solo([MECANICO], (

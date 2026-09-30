@@ -1,32 +1,18 @@
 // src/pages/solicitudes/SolicitudNueva.jsx
-// Formato de ingreso a taller: vehículo, datos con que llegó,
-// accesorios (palomitas) y observaciones. Solo lo llena el mecánico.
+// Formato de ingreso a taller: vehículo (datos del catálogo, solo lectura),
+// servicio, accesorios (palomitas) y observaciones. Solo lo llena el mecánico.
+// Las fotos se suben después en "Evidencia fotográfica".
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import IngresoFields from "../../components/solicitudes/IngresoFields";
+import DatosVehiculo, { datosDesdeVehiculo } from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
 import { Section, Field, TextArea, inputClass } from "../../components/solicitudes/ui";
 import { solicitudesApi } from "../../api/solicitudes";
 import { vehiculosApi } from "../../api/vehiculos";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { TIPOS, PRIORIDADES } from "../../config/solicitudes";
-
-const BASE = "/mecanico/reparaciones";
 import { ArrowLeft, Search, CarFront, Loader2 } from "lucide-react";
-
-function ingresoDesdeVehiculo(v) {
-  return {
-    unidad: v.unidad || v.descripcion || "",
-    marca: v.marca || "",
-    modelo: v.modelo || "",
-    placas: v.placas || "",
-    color: "",
-    area: v.area || "",
-    serie: v.serie || "",
-    no_inventario: v.noInventario || "",
-  };
-}
 
 export default function SolicitudNueva() {
   const navigate = useNavigate();
@@ -42,7 +28,6 @@ export default function SolicitudNueva() {
   const [form, setForm] = useState({
     tipo: "correctivo",
     prioridad: "media",
-    ingreso: {},
     checklist: {},
     observaciones_ingreso: "",
   });
@@ -53,7 +38,6 @@ export default function SolicitudNueva() {
 
   const elegirVehiculo = (v) => {
     setVehiculo(v);
-    set("ingreso", ingresoDesdeVehiculo(v));
     setResultados([]);
     setBusqueda("");
   };
@@ -94,7 +78,8 @@ export default function SolicitudNueva() {
     setSaving(true);
     try {
       const creada = await solicitudesApi.crear({ ...form, vehiculo_id: vehiculo.id });
-      navigate(`${BASE}/${creada.id}`, { replace: true });
+      // Siguiente paso natural: tomar la foto de llegada
+      navigate(`/mecanico/evidencia?servicio=${creada.id}`, { replace: true });
     } catch (err) {
       setError(err.message || "Error al registrar el ingreso");
       setSaving(false);
@@ -195,8 +180,8 @@ export default function SolicitudNueva() {
         {vehiculo && (
           <>
             {/* 2. Datos del vehículo */}
-            <Section title="2. Datos del vehículo" subtitle="Corrige lo que no coincida con cómo llegó (ej. placas) y agrega el color">
-              <IngresoFields value={form.ingreso} onChange={(v) => set("ingreso", v)} />
+            <Section title="2. Datos del vehículo" subtitle="Del catálogo de vehículos (solo lectura)">
+              <DatosVehiculo datos={datosDesdeVehiculo(vehiculo)} />
             </Section>
 
             {/* 3. Servicio */}
@@ -232,6 +217,7 @@ export default function SolicitudNueva() {
                 </Field>
               </div>
             </Section>
+
           </>
         )}
 

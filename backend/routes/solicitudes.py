@@ -17,18 +17,6 @@ ESTADO_LABEL = {
     "entregada": "Entregada",
 }
 
-# Campos del formato de ingreso: clave en el JSON → columna del modelo
-CAMPOS_INGRESO = {
-    "marca": "ing_marca",
-    "placas": "ing_placas",
-    "modelo": "ing_modelo",
-    "area": "ing_area",
-    "unidad": "ing_unidad",
-    "color": "ing_color",
-    "serie": "ing_serie",
-    "no_inventario": "ing_no_inventario",
-}
-
 CAMPOS_TEXTO = ("observaciones_ingreso", "fallas", "acciones", "observaciones")
 
 # Mientras el servicio esté en alguno de estos pasos, el vehículo está en el taller.
@@ -97,11 +85,8 @@ def _aplicar_campos_mecanico(s, data):
             return "Prioridad inválida"
         s.prioridad = data["prioridad"]
 
-    ingreso = data.get("ingreso")
-    if isinstance(ingreso, dict):
-        for clave, columna in CAMPOS_INGRESO.items():
-            if clave in ingreso:
-                setattr(s, columna, _texto(ingreso[clave]))
+    # Los datos del vehículo (ingreso) NO se reciben del mecánico: se copian del
+    # catálogo al registrar el ingreso y solo el admin los corrige en Vehículos.
 
     if "checklist" in data:
         if not isinstance(data["checklist"], dict):
@@ -187,6 +172,8 @@ def listar():
     # "abiertas" = todo lo que no se ha entregado; "cerradas" = completadas y entregadas
     if estado == "abiertas":
         query = query.filter(Solicitud.estado != "entregada")
+    elif estado == "en_taller":
+        query = query.filter(Solicitud.estado.in_(EN_TALLER))
     elif estado == "cerradas":
         query = query.filter(Solicitud.estado.in_(("completada", "entregada")))
     elif estado:
@@ -241,7 +228,8 @@ def crear():
 
     s = Solicitud(vehiculo=vehiculo, creado_por_id=user.id, estado="recibida")
 
-    # Datos de ingreso: se copian del catálogo; el formulario puede corregirlos
+    # Datos del vehículo: se copian del catálogo tal como están al ingresar
+    # (quedan como registro histórico; el mecánico solo los ve)
     s.ing_marca = vehiculo.marca
     s.ing_placas = vehiculo.placas
     s.ing_modelo = vehiculo.modelo
@@ -249,6 +237,7 @@ def crear():
     s.ing_unidad = vehiculo.unidad
     s.ing_serie = vehiculo.serie
     s.ing_no_inventario = vehiculo.no_inventario
+    s.ing_color = vehiculo.color
 
     # El mecánico que llena el formato queda asignado
     s.mecanico_id = user.id
@@ -335,6 +324,15 @@ def cambiar_estado(solicitud_id):
     if avanza and nuevo == "completada" and not s.acciones:
         return jsonify({"msg": "Captura las acciones realizadas antes de completar"}), 400
 
+    # Evidencia fotográfica obligatoria
+    tiene = {f.tipo for f in s.fotos}
+    if avanza and nuevo == "diagnostico" and "llegada" not in tiene:
+        return jsonify({"msg": "Sube la foto de llegada antes de pasar a diagnóstico"}), 400
+    if avanza and nuevo == "completada":
+        faltan = [n for t, n in (("reparacion", "reparación"), ("final", "final")) if t not in tiene]
+        if faltan:
+            return jsonify({"msg": f"Sube la foto de {' y '.join(faltan)} antes de completar"}), 400
+
     s.estado = nuevo
 
     if nuevo == "entregada":
@@ -361,6 +359,9 @@ def eliminar(solicitud_id):
 
     vehiculo = s.vehiculo
     estaba_en_taller = s.estado in EN_TALLER
+
+    from routes.fotos import borrar_archivos_de  # import local: fotos importa este módulo
+    borrar_archivos_de(s)
     db.session.delete(s)
     db.session.flush()
 

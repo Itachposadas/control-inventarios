@@ -22,9 +22,13 @@ function apiError(status, data) {
  * - Agrega el token automáticamente (salvo `auth: false`).
  * - Si el backend responde 401, dispara AUTH_EXPIRED_EVENT.
  * - Nunca truena si la respuesta no es JSON (ej. error 500 en HTML).
+ * - `body` puede ser un objeto (se envía como JSON) o un FormData (archivos).
+ * - `blob: true` devuelve el contenido binario (ej. una foto) en lugar de JSON.
  */
-export async function request(path, { method = "GET", body, auth = true } = {}) {
-  const headers = { "Content-Type": "application/json" };
+export async function request(path, { method = "GET", body, auth = true, blob = false } = {}) {
+  const esFormData = body instanceof FormData;
+  // Con FormData el navegador pone el Content-Type (multipart) por sí mismo
+  const headers = esFormData ? {} : { "Content-Type": "application/json" };
   if (auth) {
     const token = localStorage.getItem(TOKEN_KEY);
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -35,11 +39,13 @@ export async function request(path, { method = "GET", body, auth = true } = {}) 
     r = await fetch(`${API_URL}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : esFormData ? body : JSON.stringify(body),
     });
   } catch {
     throw apiError(0, { msg: "No se pudo conectar con el servidor" });
   }
+
+  if (blob && r.ok) return r.blob();
 
   const text = await r.text();
   let data = null;

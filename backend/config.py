@@ -36,3 +36,10 @@ class Config:
         "pool_pre_ping": True,
         "pool_recycle": 3600,
     }
+
+    # Fotos de evidencia: se guardan en backend/uploads/ (no se suben a git)
+    UPLOAD_FOLDER = os.getenv(
+        "UPLOAD_FOLDER",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads"),
+    )
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB por petición

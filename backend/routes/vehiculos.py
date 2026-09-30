@@ -135,6 +135,7 @@ def crear_vehiculo():
         no_motor=(data.get("no_motor") or "").strip() or None,
         placas=(data.get("placas") or "").strip() or None,
         numero_economico=(data.get("numero_economico") or "").strip() or None,
+        color=(data.get("color") or "").strip() or None,
         estado=estado,
     )
 
@@ -157,7 +158,7 @@ def editar_vehiculo(vehiculo_id):
     # Campos de texto
     campos_texto = [
         "unidad", "descripcion", "modelo", "marca",
-        "serie", "no_motor", "placas", "numero_economico", 
+        "serie", "no_motor", "placas", "numero_economico", "color",
     ]
     for campo in campos_texto:
         if campo in data:
