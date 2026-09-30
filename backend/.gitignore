@@ -1,0 +1,6 @@
+# Credenciales: nunca subir a git
+.env
+
+venv/
+__pycache__/
+*.pyc

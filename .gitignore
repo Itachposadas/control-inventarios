@@ -1,0 +1,19 @@
+# ─── Credenciales: nunca subir ───
+.env
+.env.*
+!.env.example
+
+# ─── Python / backend ───
+venv/
+__pycache__/
+*.pyc
+
+# ─── Node / frontend ───
+node_modules/
+dist/
+
+# ─── Sistema / editor ───
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
