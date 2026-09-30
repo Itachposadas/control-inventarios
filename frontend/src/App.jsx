@@ -22,6 +22,9 @@ import SolicitudesList from "./pages/solicitudes/SolicitudesList";
 import SolicitudNueva from "./pages/solicitudes/SolicitudNueva";
 import SolicitudDetail from "./pages/solicitudes/SolicitudDetail";
 
+// Reportes (solo admin)
+import Reportes from "./pages/reportes/Reportes";
+
 // Mi cuenta y ayuda (ambos roles)
 import MiCuenta from "./pages/cuenta/MiCuenta";
 import Ayuda from "./pages/ayuda/Ayuda";
@@ -65,7 +68,8 @@ export default function App() {
           <Route path="/admin/mi-cuenta" element={solo([ADMIN], <MiCuenta />)} />
           <Route path="/admin/ayuda" element={solo([ADMIN], <Ayuda />)} />
 
-          {/* Pendiente: Reportes */}
+          <Route path="/admin/reportes" element={solo([ADMIN], <Reportes />)} />
+
           <Route path="/admin/*" element={solo([ADMIN], <EnConstruccion />)} />
 
           {/* ══════════ MECÁNICO ══════════ */}
