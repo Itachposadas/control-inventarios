@@ -1,5 +1,6 @@
 // src/components/dashboard/KpiCard.jsx
 import { TrendingUp, TrendingDown, AlertCircle, Clock } from "lucide-react";
+import { useCountUp } from "../../hooks/useCountUp";
 
 export default function KpiCard({
   label,
@@ -21,11 +22,12 @@ export default function KpiCard({
   };
 
   const statusColors = statusColorMap[statusType] || statusColorMap.info;
+  const valorMostrado = useCountUp(value); // los números "cuentan" hasta su valor
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4
                     shadow-[0_1px_3px_rgba(15,23,42,0.04)]
-                    hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)]
+                    hover:shadow-[0_6px_16px_rgba(15,23,42,0.08)] hover:-translate-y-0.5
                     transition-all duration-200 relative overflow-hidden">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -33,7 +35,7 @@ export default function KpiCard({
             {label}
           </p>
           <p className="mt-1.5 text-2xl sm:text-3xl font-bold text-slate-800 leading-none">
-            {value}
+            {valorMostrado}
           </p>
 
           {/* Línea secundaria — siempre una sola, con misma estructura */}

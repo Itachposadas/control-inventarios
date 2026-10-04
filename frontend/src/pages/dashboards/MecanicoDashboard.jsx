@@ -55,7 +55,7 @@ export default function MecanicoDashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div className="stagger grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             <KpiCard
               label="Reparaciones activas"
               value={activas.length}

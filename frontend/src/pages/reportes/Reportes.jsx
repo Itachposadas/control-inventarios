@@ -151,7 +151,7 @@ export default function Reportes() {
       ) : reporte && (
         <div className={`space-y-5 transition-opacity ${loading ? "opacity-60" : ""}`}>
           {/* ─── Resumen ─── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="stagger grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <KpiCard
               label="Servicios ingresados"
               value={res.servicios}
@@ -302,7 +302,7 @@ function TablaProporcion({ filas, columna }) {
               <div className="text-right font-semibold text-slate-800 tabular-nums">{moneda(f.gasto)}</div>
               <div className="mt-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[#9F2241]"
+                  className="h-full rounded-full bg-[#9F2241] origin-left animate-grow-x"
                   style={{ width: max ? `${(f.gasto / max) * 100}%` : 0 }}
                 />
               </div>

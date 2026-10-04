@@ -140,7 +140,11 @@ function RanuraFoto({ def, solicitudId, foto, puedeSubir, onActualizada, onAmpli
               className="w-full h-full"
               aria-label={`Ver foto de ${def.titulo.toLowerCase()} en grande`}
             >
-              <img src={url} alt={`Foto de ${def.titulo.toLowerCase()}`} className="w-full h-full object-cover" />
+              <img
+                src={url}
+                alt={`Foto de ${def.titulo.toLowerCase()}`}
+                className="w-full h-full object-cover animate-fade-in transition-transform duration-300 hover:scale-[1.03]"
+              />
             </button>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-300">
@@ -224,7 +228,7 @@ function VisorFoto({ url, titulo, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/85 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-slate-900/85 flex items-center justify-center p-4 animate-fade-in"
       onClick={onClose}
       role="dialog"
       aria-label={`Foto de ${titulo.toLowerCase()}`}
@@ -241,7 +245,7 @@ function VisorFoto({ url, titulo, onClose }) {
         src={url}
         alt={`Foto de ${titulo.toLowerCase()}`}
         onClick={(e) => e.stopPropagation()}
-        className="max-w-full max-h-full rounded-lg shadow-2xl object-contain"
+        className="max-w-full max-h-full rounded-lg shadow-2xl object-contain animate-pop"
       />
     </div>
   );

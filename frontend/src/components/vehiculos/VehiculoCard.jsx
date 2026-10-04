@@ -14,8 +14,8 @@ export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) 
       onClick={onClick}
       className="text-left bg-white rounded-2xl border border-slate-200
                  shadow-[0_1px_3px_rgba(15,23,42,0.04)]
-                 hover:shadow-[0_4px_12px_rgba(15,23,42,0.08)]
-                 hover:border-[#9F2241]/30
+                 hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]
+                 hover:border-[#9F2241]/30 hover:-translate-y-0.5
                  transition-all duration-200 overflow-hidden group"
     >
       {/* Encabezado */}

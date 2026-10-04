@@ -91,7 +91,8 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
           </button>
 
           {userMenuOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-40">
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-40
+                            origin-top-right animate-pop">
               <div className="px-4 py-3 border-b border-slate-200">
                 <p className="text-sm font-semibold text-slate-800 truncate">
                   {user?.nombre_completo || user?.username}
@@ -209,7 +210,7 @@ function Buscador({ role }) {
 
       {open && hayTexto && (
         <div className="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-slate-200
-                        z-40 max-h-[70vh] overflow-y-auto py-1">
+                        z-40 max-h-[70vh] overflow-y-auto py-1 origin-top animate-pop">
           {res.vehiculos.length > 0 && (
             <Grupo titulo="Vehículos">
               {res.vehiculos.map((v) => (
@@ -287,11 +288,18 @@ function Resultado({ icon, titulo, detalle, extra, onClick }) {
 
 const REFRESCO_MS = 60_000;
 
+// Último total visto. Vive fuera del componente porque la barra superior se
+// vuelve a montar en cada pantalla; así la campana solo "suena" si de verdad
+// llegaron pendientes nuevos (y no cada vez que se cambia de página).
+// Se guarda junto con el rol para no compararlo con la sesión de otra persona.
+let ultimoVisto = { role: null, total: 0 };
+
 function Notificaciones({ role }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [data, setData] = useState({ total: 0, items: [] });
   const [open, setOpen] = useState(false);
+  const [sonando, setSonando] = useState(false);
   const ref = useRef(null);
   useClickFuera(ref, () => setOpen(false));
 
@@ -301,7 +309,12 @@ function Notificaciones({ role }) {
     const cargar = () =>
       generalApi
         .notificaciones()
-        .then((d) => !cancel && setData(d))
+        .then((d) => {
+          if (cancel) return;
+          if (ultimoVisto.role === role && d.total > ultimoVisto.total) setSonando(true);
+          ultimoVisto = { role, total: d.total };
+          setData(d);
+        })
         .catch(() => {});
     cargar();
     const timer = setInterval(cargar, REFRESCO_MS);
@@ -309,7 +322,7 @@ function Notificaciones({ role }) {
       cancel = true;
       clearInterval(timer);
     };
-  }, [location.pathname]);
+  }, [location.pathname, role]);
 
   const abrir = (n) => {
     setOpen(false);
@@ -327,10 +340,17 @@ function Notificaciones({ role }) {
         className="relative p-2 rounded-lg hover:bg-slate-100 text-slate-600"
         aria-label={`Notificaciones${data.total ? ` (${data.total})` : ""}`}
       >
-        <Bell size={20} />
+        <Bell
+          size={20}
+          className={`origin-top ${sonando ? "animate-ring" : ""}`}
+          onAnimationEnd={() => setSonando(false)}
+        />
         {data.total > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full
-                           bg-[#9F2241] text-white text-[10px] font-bold flex items-center justify-center">
+          <span
+            key={data.total}
+            className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full
+                       bg-[#9F2241] text-white text-[10px] font-bold flex items-center justify-center animate-pop"
+          >
             {data.total > 9 ? "9+" : data.total}
           </span>
         )}
@@ -338,7 +358,7 @@ function Notificaciones({ role }) {
 
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-lg
-                        border border-slate-200 z-40 overflow-hidden">
+                        border border-slate-200 z-40 overflow-hidden origin-top-right animate-pop">
           <div className="px-4 py-3 border-b border-slate-100">
             <p className="text-sm font-semibold text-slate-800">Pendientes</p>
             <p className="text-xs text-slate-500">

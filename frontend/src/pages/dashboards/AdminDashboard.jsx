@@ -83,7 +83,7 @@ export default function AdminDashboard() {
       ) : (
         <>
           {/* KPIs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div className="stagger grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
             <KpiCard
               label="Servicios abiertos"
               value={kpis.solicitudes_abiertas}

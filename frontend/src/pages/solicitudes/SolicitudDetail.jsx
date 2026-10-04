@@ -352,7 +352,7 @@ export default function SolicitudDetail() {
                 return (
                   <li key={e.value} className="flex items-center gap-3">
                     <span
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-300
                         ${hecho ? "bg-emerald-600 text-white"
                           : actual ? "bg-[#9F2241] text-white"
                           : "bg-slate-100 text-slate-400"}`}

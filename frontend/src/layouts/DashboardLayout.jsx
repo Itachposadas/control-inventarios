@@ -135,7 +135,7 @@ export default function DashboardLayout({
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/40 z-30 lg:hidden"
+          className="fixed inset-0 bg-slate-900/40 z-30 lg:hidden animate-fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -149,7 +149,10 @@ export default function DashboardLayout({
         />
 
         <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
-          {children}
+          {/* key = ruta: al cambiar de pantalla el contenido entra con una animación suave */}
+          <div key={location.pathname} className="animate-page-in">
+            {children}
+          </div>
         </main>
       </div>
     </div>
