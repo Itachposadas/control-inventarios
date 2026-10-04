@@ -1,13 +1,12 @@
 // src/pages/solicitudes/SolicitudDetail.jsx
 // Detalle de una solicitud: formato de ingreso, diagnóstico, trabajo realizado,
-// refacciones, costo (admin) y avance de estado.
+// taller foráneo, costo (admin) y avance de estado.
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ConfirmModal from "../../components/ConfirmModal";
 import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
-import RefaccionesEditor from "../../components/solicitudes/RefaccionesEditor";
 import FotosEvidencia from "../../components/solicitudes/FotosEvidencia";
 import { EstadoBadge, PrioridadBadge } from "../../components/solicitudes/Badges";
 import { Section, Field, TextArea, inputClass } from "../../components/solicitudes/ui";
@@ -18,10 +17,11 @@ import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
   ESTADOS, TIPOS, PRIORIDADES, TIPO_LABEL, SOLICITUDES_BASE,
-  formatFecha, formatMoneda,
+  FORANEO_BASE, TALLERES_FORANEOS, formatFecha, formatMoneda,
 } from "../../config/solicitudes";
+import { fechaCorta } from "../../config/reportes";
 import {
-  ArrowLeft, ArrowRight, Undo2, Check, Loader2, CarFront, Trash2, Save, Camera,
+  ArrowLeft, ArrowRight, Undo2, Check, Loader2, CarFront, Trash2, Save, Camera, Truck, Plus,
 } from "lucide-react";
 
 function formDesdeSolicitud(s) {
@@ -34,7 +34,6 @@ function formDesdeSolicitud(s) {
     fallas: s.fallas || "",
     acciones: s.acciones || "",
     observaciones: s.observaciones || "",
-    refacciones: s.refacciones.map(({ tipo, descripcion, cantidad }) => ({ tipo, descripcion, cantidad })),
     costo: s.costo ?? "",
     mecanico_id: s.mecanico?.id ?? "",
   };
@@ -328,26 +327,55 @@ export default function SolicitudDetail() {
             </div>
           </Section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <Section title="Refacciones utilizadas">
-              <RefaccionesEditor
-                items={form.refacciones}
-                tipo="utilizada"
-                onChange={set("refacciones")}
-                disabled={bloqueado}
-                vacio="Sin refacciones registradas"
-              />
+          {/* Órdenes de reparación en taller foráneo generadas desde este ingreso */}
+          {(puedeLlenar || s.ordenes_foraneas.length > 0) && (
+            <Section
+              title="Taller foráneo"
+              subtitle="Cuando la unidad no se puede reparar aquí y se manda a un taller externo"
+              actions={puedeLlenar && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/mecanico/foraneo/nueva?servicio=${s.id}`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                             bg-[#9F2241] hover:bg-[#7d1a33] text-white transition shrink-0"
+                >
+                  <Plus size={14} />
+                  Generar orden foránea
+                </button>
+              )}
+            >
+              {s.ordenes_foraneas.length === 0 ? (
+                <p className="text-sm text-slate-400">Este servicio no se ha remitido a ningún taller externo.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100 -my-2">
+                  {s.ordenes_foraneas.map((o) => (
+                    <li key={o.id}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`${FORANEO_BASE[role]}/${o.id}`)}
+                        className="w-full flex items-center gap-3 py-3 text-left hover:bg-slate-50 rounded-lg px-2 -mx-2 transition"
+                      >
+                        <span className="w-9 h-9 rounded-lg bg-[#9F2241]/10 text-[#9F2241] flex items-center justify-center shrink-0">
+                          <Truck size={17} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-slate-800">
+                            <span className="font-mono">{o.folio}</span>
+                            <span className="ml-2 text-xs font-normal text-slate-500">{fechaCorta(o.fecha_remision)}</span>
+                          </span>
+                          <span className="block text-xs text-slate-500 truncate">
+                            {TALLERES_FORANEOS.filter((t) => o.talleres[t.key])
+                              .map((t) => `${t.label}: ${o.talleres[t.key]}`)
+                              .join(" · ")}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Section>
-            <Section title="Piezas a comprar">
-              <RefaccionesEditor
-                items={form.refacciones}
-                tipo="por_comprar"
-                onChange={set("refacciones")}
-                disabled={bloqueado}
-                vacio="Sin piezas por comprar"
-              />
-            </Section>
-          </div>
+          )}
         </div>
 
         {/* ═════ Columna lateral ═════ */}

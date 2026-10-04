@@ -37,6 +37,31 @@ export const CAMPOS_INGRESO = [
   { key: "placas",        label: "Placas", mono: true },
 ];
 
+// "Datos del vehículo/maquinaria" de la Orden de reparación en taller foráneo
+export const CAMPOS_FORANEA = [
+  { key: "area",          label: "Área" },
+  { key: "unidad",        label: "Vehículo" },
+  { key: "color",         label: "Color" },
+  { key: "serie",         label: "No. de serie", mono: true },
+  { key: "no_inventario", label: "No. de inventario", mono: true },
+  { key: "marca",         label: "Marca" },
+  { key: "placas",        label: "Placas", mono: true },
+  { key: "modelo",        label: "Modelo" },
+];
+
+// Taller al que se remite: se llena solo la columna que corresponda
+export const TALLERES_FORANEOS = [
+  { key: "muelles",     label: "Muelles" },
+  { key: "llantas",     label: "Llantas" },
+  { key: "transmision", label: "Transmisión" },
+];
+
+// Ruta base de las órdenes foráneas según el rol
+export const FORANEO_BASE = {
+  [ROLES.ADMIN]: "/admin/foraneo",
+  [ROLES.MECANICO]: "/mecanico/foraneo",
+};
+
 // "Accesorios y herramientas" del formato de ingreso: cada concepto es SI o NO.
 // Las claves de conceptos que ya existían se conservan para no perder lo
 // capturado en servicios anteriores (ej. "espejo_interior" = Espejo retrovisor).

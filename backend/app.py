@@ -11,6 +11,7 @@ from routes.solicitudes import solicitudes_bp
 from routes.general import general_bp
 from routes.reportes import reportes_bp
 from routes.fotos import fotos_bp
+from routes.foraneas import foraneas_bp
 
 # Columnas agregadas a tablas que ya existían. create_all() no las añade,
 # así que se agregan al arrancar si faltan (solo agrega, nunca borra datos).
@@ -56,6 +57,7 @@ def create_app():
     app.register_blueprint(general_bp)
     app.register_blueprint(reportes_bp)
     app.register_blueprint(fotos_bp)
+    app.register_blueprint(foraneas_bp)
 
     # Crea las tablas que falten al arrancar (no modifica las que ya existen),
     # así un módulo nuevo no deja al sistema sin funcionar.

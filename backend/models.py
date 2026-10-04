@@ -158,6 +158,10 @@ class Solicitud(db.Model):
         "SolicitudFoto", backref="solicitud",
         cascade="all, delete-orphan", order_by="SolicitudFoto.id",
     )
+    ordenes_foraneas = db.relationship(
+        "OrdenForanea", backref="solicitud",
+        cascade="all, delete-orphan", order_by="OrdenForanea.id",
+    )
 
     def to_dict(self, detalle=False):
         v = self.vehiculo
@@ -202,16 +206,19 @@ class Solicitud(db.Model):
                 "fallas": self.fallas,
                 "acciones": self.acciones,
                 "observaciones": self.observaciones,
-                "refacciones": [r.to_dict() for r in self.refacciones],
                 "eventos": [e.to_dict() for e in self.eventos],
                 "fotos": {f.tipo: f.to_dict() for f in self.fotos},
+                "ordenes_foraneas": [o.to_dict(resumen=True) for o in self.ordenes_foraneas],
                 "creado_por": self.creado_por.to_dict() if self.creado_por else None,
             })
         return data
 
 
 class SolicitudRefaccion(db.Model):
-    """Refacciones utilizadas o piezas a comprar de una solicitud."""
+    """
+    Refacciones utilizadas / piezas a comprar. Ya no se capturan ni se muestran
+    en el sistema; la tabla se conserva para no perder lo registrado antes.
+    """
     __tablename__ = "solicitud_refacciones"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -257,6 +264,76 @@ class SolicitudFoto(db.Model):
             "subido_por": (self.subido_por.nombre_completo or self.subido_por.username) if self.subido_por else None,
             "fecha": _iso(self.created_at),
         }
+
+
+class OrdenForanea(db.Model):
+    """
+    Orden de reparación en taller foráneo: cuando la unidad no se puede reparar
+    en el taller del área y se manda a un taller externo. Se genera a partir de
+    un ingreso a taller y toma de él los datos del vehículo.
+    """
+    __tablename__ = "ordenes_foraneas"
+
+    id = db.Column(db.Integer, primary_key=True)
+    folio = db.Column(db.String(20), unique=True, index=True)  # OTF-2026-0001
+    solicitud_id = db.Column(db.Integer, db.ForeignKey("solicitudes.id"), nullable=False, index=True)
+
+    fecha_remision = db.Column(db.Date, nullable=False)
+    diagnostico_inicial = db.Column(db.Text, nullable=False)
+
+    # Taller al que se remite (se llena solo la columna que corresponda)
+    taller_muelles = db.Column(db.String(150))
+    taller_llantas = db.Column(db.String(150))
+    taller_transmision = db.Column(db.String(150))
+
+    creado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    creado_por = db.relationship("Usuario")
+
+    def to_dict(self, resumen=False):
+        talleres = {
+            "muelles": self.taller_muelles,
+            "llantas": self.taller_llantas,
+            "transmision": self.taller_transmision,
+        }
+        data = {
+            "id": self.id,
+            "folio": self.folio,
+            "fecha_remision": self.fecha_remision.isoformat() if self.fecha_remision else None,
+            "talleres": talleres,
+        }
+        if resumen:
+            return data
+
+        s = self.solicitud
+        data.update({
+            "diagnostico_inicial": self.diagnostico_inicial,
+            "solicitud": {
+                "id": s.id,
+                "folio": s.folio,
+                "estado": s.estado,
+                "mecanico_id": s.mecanico_id,
+                "fecha_ingreso": _iso(s.fecha_ingreso),
+            },
+            # Datos del vehículo tal como se registraron en el ingreso a taller
+            "vehiculo": {
+                "area": s.ing_area,
+                "unidad": s.ing_unidad,
+                "color": s.ing_color,
+                "serie": s.ing_serie,
+                "no_inventario": s.ing_no_inventario,
+                "marca": s.ing_marca,
+                "placas": s.ing_placas,
+                "modelo": s.ing_modelo,
+                "nombre": (s.vehiculo.numero_economico or s.vehiculo.unidad or s.vehiculo.no_inventario)
+                if s.vehiculo else None,
+            },
+            "creado_por": (self.creado_por.nombre_completo or self.creado_por.username) if self.creado_por else None,
+            "created_at": _iso(self.created_at),
+        })
+        return data
 
 
 class SolicitudEvento(db.Model):

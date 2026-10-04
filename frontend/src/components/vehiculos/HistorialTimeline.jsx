@@ -105,26 +105,6 @@ export default function HistorialTimeline({ items = [], onItemClick }) {
                   </p>
                 </div>
               </div>
-
-              {/* Refacciones */}
-              {item.refacciones && item.refacciones.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">
-                    Refacciones utilizadas
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {item.refacciones.map((r, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[11px] px-2 py-0.5 rounded-md
-                                   bg-slate-100 text-slate-600 font-medium"
-                      >
-                        {r}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </li>
         );

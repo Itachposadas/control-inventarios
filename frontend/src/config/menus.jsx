@@ -4,7 +4,7 @@
 import {
   LayoutDashboard, Car, Users, BarChart3,
   UserCog, HelpCircle,
-  Wrench, History, Camera,
+  Wrench, History, Camera, Truck,
 } from "lucide-react";
 import { ROLES } from "./roles";
 
@@ -13,6 +13,7 @@ import { ROLES } from "./roles";
 export const ADMIN_MENU = [
   { label: "Panel de control", to: "/admin", icon: <LayoutDashboard size={18} /> },
   { label: "Vehículos", to: "/admin/vehiculos", icon: <Car size={18} /> },
+  { label: "Taller foráneo", to: "/admin/foraneo", icon: <Truck size={18} /> },
   { label: "Usuarios", to: "/admin/usuarios", icon: <Users size={18} /> },
   { label: "Reportes", to: "/admin/reportes", icon: <BarChart3 size={18} /> },
 ];
@@ -28,6 +29,7 @@ export const MECANICO_MENU = [
   { label: "Vehículos", to: "/mecanico/vehiculos", icon: <Car size={18} /> },
   { label: "Mis reparaciones", to: "/mecanico/reparaciones", icon: <Wrench size={18} /> },
   { label: "Evidencia fotográfica", to: "/mecanico/evidencia", icon: <Camera size={18} /> },
+  { label: "Taller foráneo", to: "/mecanico/foraneo", icon: <Truck size={18} /> },
   { label: "Historial", to: "/mecanico/historial", icon: <History size={18} /> },
 ];
 

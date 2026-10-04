@@ -92,9 +92,6 @@ def get_historial(vehiculo_id):
             "fecha": s.fecha_ingreso.isoformat(),
             "mecanico": (s.mecanico.nombre_completo or s.mecanico.username) if s.mecanico else "—",
             "costo": float(s.costo) if s.costo is not None else 0,
-            "refacciones": [
-                f"{r.cantidad} × {r.descripcion}" for r in s.refacciones if r.tipo == "utilizada"
-            ],
         }
         for s in items
     ]), 200

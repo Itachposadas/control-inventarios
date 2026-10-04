@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models import (
-    Solicitud, SolicitudRefaccion, SolicitudEvento, Vehiculo, Usuario,
+    Solicitud, SolicitudEvento, Vehiculo, Usuario,
     ESTADOS_SOLICITUD, TIPOS_SOLICITUD, PRIORIDADES, utcnow,
 )
 from auth_utils import role_required, get_current_user
@@ -142,24 +142,6 @@ def _aplicar_campos_mecanico(s, data):
         if campo in data:
             setattr(s, campo, _texto(data[campo]))
 
-    if "refacciones" in data:
-        if not isinstance(data["refacciones"], list):
-            return "Refacciones inválidas"
-        nuevas = []
-        for r in data["refacciones"]:
-            descripcion = _texto((r or {}).get("descripcion"))
-            if not descripcion:
-                continue  # renglones vacíos se ignoran
-            if r.get("tipo") not in ("utilizada", "por_comprar"):
-                return "Tipo de refacción inválido"
-            try:
-                cantidad = max(1, int(r.get("cantidad") or 1))
-            except (TypeError, ValueError):
-                return "Cantidad de refacción inválida"
-            nuevas.append(SolicitudRefaccion(
-                tipo=r["tipo"], descripcion=descripcion[:255], cantidad=cantidad,
-            ))
-        s.refacciones = nuevas
     return None
 
 

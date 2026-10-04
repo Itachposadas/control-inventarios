@@ -1,8 +1,9 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ROLES } from "./config/roles";
 import RoleRoute from "./components/RoleRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 import Login from "./pages/Login";
 
@@ -23,6 +24,10 @@ import SolicitudNueva from "./pages/solicitudes/SolicitudNueva";
 import SolicitudDetail from "./pages/solicitudes/SolicitudDetail";
 import EvidenciaFotografica from "./pages/solicitudes/EvidenciaFotografica";
 
+// Órdenes de reparación en taller foráneo (mecánico genera, admin consulta)
+import OrdenesForaneas from "./pages/foraneas/OrdenesForaneas";
+import OrdenForanea from "./pages/foraneas/OrdenForanea";
+
 // Reportes (solo admin)
 import Reportes from "./pages/reportes/Reportes";
 
@@ -41,6 +46,13 @@ function PublicRoute({ children }) {
   return user ? <Navigate to={homePath} replace /> : children;
 }
 
+// Si una pantalla falla, muestra un aviso en lugar de dejar la página en blanco.
+// Al cambiar de ruta se vuelve a intentar.
+function ProtegerPantallas({ children }) {
+  const location = useLocation();
+  return <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>;
+}
+
 // Atajo: <Route path=... element={solo([ADMIN], <Pagina />)} />
 const solo = (roles, element) => <RoleRoute allowed={roles}>{element}</RoleRoute>;
 
@@ -48,6 +60,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ProtegerPantallas>
         <Routes>
           {/* ══════════ PÚBLICAS ══════════ */}
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -71,6 +84,9 @@ export default function App() {
 
           <Route path="/admin/reportes" element={solo([ADMIN], <Reportes />)} />
 
+          <Route path="/admin/foraneo" element={solo([ADMIN], <OrdenesForaneas />)} />
+          <Route path="/admin/foraneo/:id" element={solo([ADMIN], <OrdenForanea />)} />
+
           <Route path="/admin/*" element={solo([ADMIN], <EnConstruccion />)} />
 
           {/* ══════════ MECÁNICO ══════════ */}
@@ -89,6 +105,8 @@ export default function App() {
           <Route path="/mecanico/reparaciones/nueva" element={solo([MECANICO], <SolicitudNueva />)} />
           <Route path="/mecanico/reparaciones/:id" element={solo([MECANICO], <SolicitudDetail />)} />
           <Route path="/mecanico/evidencia" element={solo([MECANICO], <EvidenciaFotografica />)} />
+          <Route path="/mecanico/foraneo" element={solo([MECANICO], <OrdenesForaneas />)} />
+          <Route path="/mecanico/foraneo/:id" element={solo([MECANICO], <OrdenForanea />)} />
           <Route
             path="/mecanico/historial"
             element={solo([MECANICO], (
@@ -103,6 +121,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+        </ProtegerPantallas>
       </BrowserRouter>
     </AuthProvider>
   );

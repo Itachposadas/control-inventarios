@@ -7,7 +7,7 @@ import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
   ClipboardPlus, Stethoscope, Wrench, CheckCircle2, History, Car,
-  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy,
+  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck,
 } from "lucide-react";
 
 const GUIA_MECANICO = [
@@ -40,7 +40,6 @@ const GUIA_MECANICO = [
     pasos: [
       "Captura las acciones realizadas y las observaciones de lo que se trabajó.",
       "Mientras cambias la pieza, entra a Evidencia fotográfica, elige el vehículo y toma la foto de reparación.",
-      "Agrega las refacciones utilizadas y las piezas a comprar (descripción y cantidad).",
       "Pulsa “Guardar cambios” cuando quieras; no se pierde lo capturado.",
     ],
   },
@@ -53,6 +52,17 @@ const GUIA_MECANICO = [
       "El vehículo vuelve a estar activo y el administrador captura el costo y lo entrega.",
     ],
     nota: "Una vez completada ya no puedes modificarla. Si hay que corregir algo, pídele al administrador que la regrese a Reparación.",
+  },
+  {
+    icon: <Truck size={20} />,
+    titulo: "Taller foráneo",
+    pasos: [
+      "Si la unidad no se puede reparar aquí, abre su servicio y pulsa “Generar orden foránea” (o ve a Taller foráneo → Nueva orden y elige el ingreso).",
+      "Los datos del vehículo se toman solos del ingreso a taller.",
+      "Escribe el diagnóstico inicial: la falla y por qué no se pudo reparar en el taller del área.",
+      "En “Taller al que se remite” escribe el nombre del taller solo en la columna que corresponda: muelles, llantas o transmisión.",
+    ],
+    nota: "Puedes corregir o eliminar la orden mientras la unidad siga en el taller.",
   },
   {
     icon: <History size={20} />,
@@ -89,6 +99,14 @@ const GUIA_ADMIN = [
       "Da de alta, edita o cambia el estado de las unidades en Vehículos.",
       "Un vehículo con historial no se puede eliminar: cámbialo a estado “Baja”.",
       "El historial de cada unidad muestra todos sus servicios; haz clic en uno para ver el detalle.",
+    ],
+  },
+  {
+    icon: <Truck size={20} />,
+    titulo: "Taller foráneo",
+    pasos: [
+      "En Taller foráneo ves todas las órdenes de reparación en talleres externos que generaron los mecánicos.",
+      "Cada orden indica la fecha de remisión, el diagnóstico inicial y el taller al que se mandó la unidad.",
     ],
   },
   {

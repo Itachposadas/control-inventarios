@@ -18,11 +18,12 @@ export function datosDesdeVehiculo(v) {
   };
 }
 
-export default function DatosVehiculo({ datos = {}, nota = true }) {
+// campos: qué datos mostrar y en qué orden (por defecto, los del formato de ingreso)
+export default function DatosVehiculo({ datos = {}, nota = true, campos = CAMPOS_INGRESO }) {
   return (
     <div>
       <dl className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
-        {CAMPOS_INGRESO.map((c) => (
+        {campos.map((c) => (
           <div key={c.key} className="min-w-0">
             <dt className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">{c.label}</dt>
             <dd className={`mt-0.5 text-sm text-slate-800 break-words ${c.mono ? "font-mono" : ""}`}>
