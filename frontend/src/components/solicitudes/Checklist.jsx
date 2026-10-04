@@ -1,74 +1,143 @@
 // src/components/solicitudes/Checklist.jsx
-import { Check } from "lucide-react";
-import { CHECKLIST } from "../../config/solicitudes";
+// "Accesorios y herramientas" del formato de ingreso: cada concepto se marca
+// SI o NO (solo una opción), en dos columnas como el formato en papel.
+// El concepto 40 (total de birlos) es numérico.
+import { CHECKLIST_IZQUIERDA, CHECKLIST_DERECHA } from "../../config/solicitudes";
+import { inputClass } from "./ui";
 
 /**
- * Accesorios con los que llegó el vehículo.
- * value: { espejo_derecho: true, claxon: false, ... }  (true = sí llegó)
+ * value:        { espejo_derecho: true, claxon: false, ... }  (sin marcar = ausente)
+ * birlos:       número o ""                                    (concepto 40)
+ * resaltarFaltantes: marca en rojo los conceptos sin respuesta
  */
-export default function Checklist({ value = {}, onChange, disabled = false }) {
-  const toggle = (key) => onChange({ ...value, [key]: !value[key] });
+export default function Checklist({
+  value = {},
+  onChange,
+  birlos = "",
+  onBirlosChange,
+  disabled = false,
+  resaltarFaltantes = false,
+}) {
+  const marcar = (key, si) => onChange({ ...value, [key]: si });
 
-  const marcarGrupo = (items, marcado) => {
+  const marcarColumna = (items, si) => {
     const next = { ...value };
-    items.forEach((i) => { next[i.key] = marcado; });
+    items.forEach((i) => { next[i.key] = si; });
     onChange(next);
   };
 
-  return (
-    <div className="space-y-5">
-      {CHECKLIST.map(({ grupo, items }) => (
-        <div key={grupo}>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
-              {grupo}
-            </p>
-            {!disabled && (
-              <div className="flex gap-3 text-[11px]">
-                <button type="button" onClick={() => marcarGrupo(items, true)}
-                        className="text-[#9F2241] hover:underline">
-                  Marcar todos
-                </button>
-                <button type="button" onClick={() => marcarGrupo(items, false)}
-                        className="text-slate-500 hover:underline">
-                  Ninguno
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {items.map((item) => {
-              const checked = Boolean(value[item.key]);
-              return (
-                <button
-                  type="button"
-                  key={item.key}
-                  onClick={() => !disabled && toggle(item.key)}
-                  disabled={disabled}
-                  aria-pressed={checked}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border text-left text-sm transition
-                    ${checked
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : "border-slate-200 bg-white text-slate-600"}
-                    ${disabled ? "cursor-default" : "hover:border-[#9F2241]/40"}`}
-                >
-                  <span
-                    className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0
-                      ${checked ? "bg-emerald-600 border-emerald-600 text-white" : "border-slate-300 bg-white"}`}
-                  >
-                    {checked && <Check size={14} strokeWidth={3} />}
-                  </span>
-                  <span className="flex-1">{item.label}</span>
-                  <span className={`text-[11px] font-semibold ${checked ? "text-emerald-700" : "text-slate-400"}`}>
-                    {checked ? "SÍ" : "NO"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+  const columna = (items, titulo) => (
+    <div>
+      {!disabled && (
+        <div className="flex items-center justify-between mb-2 text-[11px]">
+          <span className="uppercase tracking-wide text-slate-400 font-semibold">{titulo}</span>
+          <span className="flex gap-3">
+            <button type="button" onClick={() => marcarColumna(items, true)} className="text-emerald-700 hover:underline">
+              Todos SI
+            </button>
+            <button type="button" onClick={() => marcarColumna(items, false)} className="text-slate-500 hover:underline">
+              Todos NO
+            </button>
+          </span>
         </div>
-      ))}
+      )}
+      <ul className="rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+        {items.map((item) => (
+          <Concepto
+            key={item.key}
+            item={item}
+            valor={value[item.key]}
+            onMarcar={(si) => marcar(item.key, si)}
+            disabled={disabled}
+            faltante={resaltarFaltantes && typeof value[item.key] !== "boolean"}
+          />
+        ))}
+      </ul>
     </div>
+  );
+
+  const faltaBirlos = resaltarFaltantes && (birlos === "" || birlos === null || birlos === undefined);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+      {columna(CHECKLIST_IZQUIERDA, "Conceptos 1 – 20")}
+      <div>
+        {columna(CHECKLIST_DERECHA, "Conceptos 21 – 40")}
+        {/* 40. Total de número de birlos (numérico) */}
+        <div
+          className={`mt-2 flex items-center gap-3 px-3 py-2 rounded-xl border
+            ${faltaBirlos ? "border-red-300 bg-red-50" : "border-slate-200"}`}
+        >
+          <span className="w-6 text-xs font-semibold text-slate-400 tabular-nums text-right">40.</span>
+          <label htmlFor="total-birlos" className="flex-1 text-sm text-slate-700">
+            Total de número de birlos
+          </label>
+          {disabled ? (
+            <span className="text-sm font-semibold text-slate-800 tabular-nums">{birlos ?? "—"}</span>
+          ) : (
+            <input
+              id="total-birlos"
+              type="number"
+              min="0"
+              max="200"
+              inputMode="numeric"
+              value={birlos ?? ""}
+              onChange={(e) => onBirlosChange(e.target.value)}
+              placeholder="0"
+              className={`${inputClass} !w-24 text-right`}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Concepto({ item, valor, onMarcar, disabled, faltante }) {
+  return (
+    <li
+      className={`flex items-center gap-3 px-3 py-1.5 text-sm transition-colors
+        ${faltante ? "bg-red-50" : ""}`}
+    >
+      <span className="w-6 text-xs font-semibold text-slate-400 tabular-nums text-right shrink-0">{item.n}.</span>
+      <span className={`flex-1 ${faltante ? "text-red-700" : "text-slate-700"}`}>{item.label}</span>
+
+      {/* SI / NO: solo una opción */}
+      <div role="radiogroup" aria-label={item.label} className="flex rounded-lg border border-slate-200 overflow-hidden shrink-0">
+        <Opcion
+          etiqueta="SI"
+          activa={valor === true}
+          clases="bg-emerald-600 text-white"
+          onClick={() => onMarcar(true)}
+          disabled={disabled}
+        />
+        <Opcion
+          etiqueta="NO"
+          activa={valor === false}
+          clases="bg-red-600 text-white"
+          onClick={() => onMarcar(false)}
+          disabled={disabled}
+          borde
+        />
+      </div>
+    </li>
+  );
+}
+
+function Opcion({ etiqueta, activa, clases, onClick, disabled, borde = false }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={activa}
+      onClick={onClick}
+      disabled={disabled}
+      className={`w-11 py-1 text-xs font-semibold transition-colors
+        ${borde ? "border-l border-slate-200" : ""}
+        ${activa ? clases : "bg-white text-slate-400"}
+        ${disabled ? "cursor-default" : activa ? "" : "hover:bg-slate-50 hover:text-slate-600"}`}
+    >
+      {etiqueta}
+    </button>
   );
 }

@@ -16,6 +16,9 @@ from routes.fotos import fotos_bp
 # así que se agregan al arrancar si faltan (solo agrega, nunca borra datos).
 COLUMNAS_NUEVAS = [
     ("vehiculos", "color", "VARCHAR(50) NULL"),
+    ("solicitudes", "total_birlos", "INT NULL"),
+    ("solicitudes", "hoja_no", "INT NULL"),
+    ("solicitudes", "hoja_total", "INT NULL"),
 ]
 
 

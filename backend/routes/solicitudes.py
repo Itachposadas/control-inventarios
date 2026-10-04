@@ -1,4 +1,5 @@
 # backend/routes/solicitudes.py
+from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models import (
@@ -36,6 +37,28 @@ def _sincronizar_vehiculo(vehiculo):
 
 def _texto(valor):
     return (str(valor) if valor is not None else "").strip() or None
+
+
+# Hora del centro de México (UTC-6, sin horario de verano desde 2022)
+UTC_OFFSET = timedelta(hours=6)
+
+
+def _fecha_ingreso(texto):
+    """'AAAA-MM-DD' (fecha local) → datetime UTC. Hoy conserva la hora actual."""
+    try:
+        dia = datetime.strptime(str(texto)[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None, "Fecha de ingreso inválida"
+    ahora = utcnow()
+    hoy = (ahora - UTC_OFFSET).date()
+    if dia > hoy:
+        return None, "La fecha de ingreso no puede ser futura"
+    if dia.year < 2000:
+        return None, "Fecha de ingreso inválida"
+    if dia == hoy:
+        return ahora, None
+    # Otro día: se registra a mediodía (hora local) para que no cambie de fecha
+    return datetime.combine(dia, datetime.min.time()) + timedelta(hours=12) + UTC_OFFSET, None
 
 
 def _to_int(valor):
@@ -89,9 +112,31 @@ def _aplicar_campos_mecanico(s, data):
     # catálogo al registrar el ingreso y solo el admin los corrige en Vehículos.
 
     if "checklist" in data:
-        if not isinstance(data["checklist"], dict):
-            return "Checklist inválido"
-        s.checklist = {str(k)[:60]: bool(v) for k, v in data["checklist"].items()}
+        # Accesorios y herramientas: cada concepto es SI (true) o NO (false)
+        checklist = data["checklist"]
+        if not isinstance(checklist, dict) or not all(isinstance(v, bool) for v in checklist.values()):
+            return "Accesorios inválidos: cada concepto debe ser SI o NO"
+        s.checklist = {str(k)[:60]: v for k, v in checklist.items()}
+
+    if "total_birlos" in data:
+        birlos = data["total_birlos"]
+        if birlos in ("", None):
+            s.total_birlos = None
+        else:
+            try:
+                birlos = int(birlos)
+            except (TypeError, ValueError):
+                return "El total de birlos debe ser un número"
+            if not 0 <= birlos <= 200:
+                return "El total de birlos debe estar entre 0 y 200"
+            s.total_birlos = birlos
+
+    if "hoja_no" in data or "hoja_total" in data:
+        hoja_no = _to_int(data.get("hoja_no", s.hoja_no or 1))
+        hoja_total = _to_int(data.get("hoja_total", s.hoja_total or 1))
+        if hoja_no < 1 or hoja_total < 1 or hoja_no > hoja_total or hoja_total > 99:
+            return "La hoja debe ser válida (ej. hoja 1 de 2)"
+        s.hoja_no, s.hoja_total = hoja_no, hoja_total
 
     for campo in CAMPOS_TEXTO:
         if campo in data:
@@ -227,6 +272,13 @@ def crear():
         return jsonify({"msg": f"Este vehículo ya está en el taller ({en_taller.folio})"}), 409
 
     s = Solicitud(vehiculo=vehiculo, creado_por_id=user.id, estado="recibida")
+
+    # Fecha de ingreso capturada en el formato (por defecto, ahora)
+    if data.get("fecha_ingreso"):
+        fecha, error = _fecha_ingreso(data["fecha_ingreso"])
+        if error:
+            return jsonify({"msg": error}), 400
+        s.fecha_ingreso = fecha
 
     # Datos del vehículo: se copian del catálogo tal como están al ingresar
     # (quedan como registro histórico; el mecánico solo los ve)

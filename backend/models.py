@@ -125,7 +125,10 @@ class Solicitud(db.Model):
 
     # Accesorios y herramientas: {"espejo_derecho": true, "claxon": false, ...}
     checklist = db.Column(db.JSON)
+    total_birlos = db.Column(db.Integer)       # "Total de número de birlos" del formato
     observaciones_ingreso = db.Column(db.Text)
+    hoja_no = db.Column(db.Integer)            # "Hoja no. __ de __" del formato en papel
+    hoja_total = db.Column(db.Integer)
 
     # ─── Trabajo del mecánico ───
     fallas = db.Column(db.Text)          # Diagnóstico de fallas presentadas
@@ -192,7 +195,10 @@ class Solicitud(db.Model):
                     "no_inventario": self.ing_no_inventario,
                 },
                 "checklist": self.checklist or {},
+                "total_birlos": self.total_birlos,
                 "observaciones_ingreso": self.observaciones_ingreso,
+                "hoja_no": self.hoja_no,
+                "hoja_total": self.hoja_total,
                 "fallas": self.fallas,
                 "acciones": self.acciones,
                 "observaciones": self.observaciones,

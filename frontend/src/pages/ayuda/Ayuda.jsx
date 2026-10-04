@@ -17,7 +17,9 @@ const GUIA_MECANICO = [
     pasos: [
       "Entra a Vehículos, busca la unidad y ábrela.",
       "Pulsa “Registrar ingreso a taller”. Los datos del vehículo se llenan solos desde el catálogo (no se pueden modificar; si alguno está mal, avisa al administrador).",
-      "Marca con palomita los accesorios con los que SÍ llegó y escribe las observaciones (ej. “no tenía defensa delantera”).",
+      "Revisa la fecha de ingreso y la hoja (ej. hoja 1 de 1).",
+      "En “Accesorios y herramientas” marca SI o NO en los 39 conceptos y escribe el total de birlos; sin eso no se puede registrar.",
+      "Escribe las observaciones (ej. “No trae faros delanteros”).",
       "Pulsa “Registrar ingreso”. El vehículo queda en mantenimiento y el sistema te lleva a Evidencia fotográfica para tomar la foto de llegada.",
     ],
     nota: "También puedes empezar desde Mis reparaciones → “Nuevo ingreso a taller”.",

@@ -29,6 +29,7 @@ function formDesdeSolicitud(s) {
     tipo: s.tipo,
     prioridad: s.prioridad,
     checklist: { ...s.checklist },
+    total_birlos: s.total_birlos ?? "",
     observaciones_ingreso: s.observaciones_ingreso || "",
     fallas: s.fallas || "",
     acciones: s.acciones || "",
@@ -193,7 +194,9 @@ export default function SolicitudDetail() {
       menu={menu}
       secondaryMenu={secondaryMenu}
       title={`Solicitud ${s.folio}`}
-      subtitle={`${TIPO_LABEL[s.tipo]} · Ingresó ${formatFecha(s.fecha_ingreso)}`}
+      subtitle={`${TIPO_LABEL[s.tipo]} · Ingresó ${formatFecha(s.fecha_ingreso)}${
+        s.hoja_no ? ` · Hoja ${s.hoja_no} de ${s.hoja_total}` : ""
+      }`}
     >
       <button
         onClick={volver}
@@ -242,7 +245,7 @@ export default function SolicitudDetail() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 pb-24">
         {/* ═════ Columna principal ═════ */}
         <div className="xl:col-span-2 space-y-5">
-          <Section title="Datos del vehículo" subtitle="Registrados al ingresar al taller">
+          <Section title="Datos del vehículo/maquinaria" subtitle="Registrados al ingresar al taller">
             <DatosVehiculo datos={s.ingreso} nota={puedeLlenar} />
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Tipo de servicio">
@@ -273,10 +276,16 @@ export default function SolicitudDetail() {
             )}
           />
 
-          <Section title="Accesorios" subtitle="Palomita = sí llegó con el vehículo">
-            <Checklist value={form.checklist} onChange={set("checklist")} disabled={bloqueado} />
+          <Section title="Accesorios y herramientas" subtitle="SI / NO según llegó el vehículo">
+            <Checklist
+              value={form.checklist}
+              onChange={set("checklist")}
+              birlos={form.total_birlos}
+              onBirlosChange={set("total_birlos")}
+              disabled={bloqueado}
+            />
             <div className="mt-5">
-              <Field label="Observaciones de ingreso">
+              <Field label="Observaciones">
                 <TextArea
                   value={form.observaciones_ingreso}
                   onChange={set("observaciones_ingreso")}
