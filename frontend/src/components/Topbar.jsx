@@ -85,7 +85,7 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
               <p className="text-xs text-slate-500 leading-tight">{roleLabel}</p>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" strokeWidth="2" className="hidden sm:block text-slate-400">
+                 stroke="currentColor" strokeWidth="2" className="hidden sm:block text-slate-500">
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
@@ -102,7 +102,7 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
               <button
                 onClick={() => { setUserMenuOpen(false); navigate(`${base}/mi-cuenta`); }}
                 className="w-full flex items-center gap-2 text-left px-4 py-2 text-sm text-slate-700
-                           hover:bg-slate-50 hover:text-[#9F2241] transition"
+                           hover:bg-slate-50 hover:text-institucional transition"
               >
                 <UserCog size={16} />
                 Mi cuenta
@@ -110,7 +110,7 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 text-left px-4 py-2 text-sm text-slate-700
-                           hover:bg-slate-50 hover:text-[#9F2241] transition"
+                           hover:bg-slate-50 hover:text-institucional transition"
               >
                 <LogOut size={16} />
                 Cerrar sesión
@@ -182,7 +182,7 @@ function Buscador({ role }) {
 
   return (
     <div className="relative" ref={ref}>
-      <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+      <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
       <input
         type="text"
         value={q}
@@ -193,16 +193,16 @@ function Buscador({ role }) {
         aria-label="Buscar"
         className="w-full pl-10 pr-9 py-2 rounded-lg bg-slate-100 border border-transparent
                    text-sm text-slate-700 placeholder-slate-400
-                   focus:outline-none focus:bg-white focus:border-[#9F2241]/40
-                   focus:ring-2 focus:ring-[#9F2241]/15 transition"
+                   focus:outline-none focus:bg-white focus:border-institucional/40
+                   focus:ring-2 focus:ring-institucional/15 transition"
       />
       {loading ? (
-        <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 animate-spin" />
+        <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 animate-spin" />
       ) : q && (
         <button
           onClick={() => setQ("")}
           aria-label="Limpiar búsqueda"
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-slate-400 hover:text-slate-600"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-slate-500 hover:text-slate-600"
         >
           <X size={14} />
         </button>
@@ -245,7 +245,7 @@ function Buscador({ role }) {
             </p>
           )}
           {loading && !res.vehiculos.length && !res.solicitudes.length && (
-            <p className="px-4 py-6 text-center text-sm text-slate-400">Buscando...</p>
+            <p className="px-4 py-6 text-center text-sm text-slate-500">Buscando...</p>
           )}
         </div>
       )}
@@ -256,7 +256,7 @@ function Buscador({ role }) {
 function Grupo({ titulo, children }) {
   return (
     <div className="py-1">
-      <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-400 font-semibold">{titulo}</p>
+      <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">{titulo}</p>
       {children}
     </div>
   );
@@ -268,7 +268,7 @@ function Resultado({ icon, titulo, detalle, extra, onClick }) {
       onClick={onClick}
       className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-slate-50 transition"
     >
-      <span className="w-8 h-8 rounded-lg bg-[#9F2241]/10 text-[#9F2241] flex items-center justify-center shrink-0">
+      <span className="w-8 h-8 rounded-lg bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
@@ -349,7 +349,7 @@ function Notificaciones({ role }) {
           <span
             key={data.total}
             className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full
-                       bg-[#9F2241] text-white text-[10px] font-bold flex items-center justify-center animate-pop"
+                       bg-institucional text-white text-[10px] font-bold flex items-center justify-center animate-pop"
           >
             {data.total > 9 ? "9+" : data.total}
           </span>
@@ -367,7 +367,7 @@ function Notificaciones({ role }) {
           </div>
           {data.items.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <CheckCircle2 size={28} className="mx-auto text-emerald-400" />
+              <CheckCircle2 size={28} className="mx-auto text-emerald-500" />
               <p className="mt-2 text-sm text-slate-500">{vacio}</p>
             </div>
           ) : (
@@ -389,7 +389,7 @@ function Notificaciones({ role }) {
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-slate-800">{n.titulo}</span>
                       <span className="block text-xs text-slate-500 truncate">{n.texto}</span>
-                      <span className="block text-[11px] text-slate-400 mt-0.5">
+                      <span className="block text-[11px] text-slate-500 mt-0.5">
                         {n.estado ? `${ESTADO_LABEL[n.estado]} · ` : ""}{formatFecha(n.fecha, true)}
                       </span>
                     </span>

@@ -84,7 +84,7 @@ export default function VehiculoDetail() {
   if (loading) {
     return (
       <DashboardLayout menu={menu} secondaryMenu={secondaryMenu} title="Vehículo">
-        <div className="flex items-center justify-center py-20 text-slate-400">
+        <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
           <span className="ml-3 text-sm">Cargando vehículo...</span>
         </div>
@@ -103,7 +103,7 @@ export default function VehiculoDetail() {
           <button
             onClick={() => navigate(basePath)}
             className="mt-4 inline-flex items-center gap-1 text-sm font-medium
-                       text-[#9F2241] hover:underline"
+                       text-institucional hover:underline"
           >
             <ArrowLeft size={14} />
             Volver al catálogo
@@ -144,7 +144,7 @@ export default function VehiculoDetail() {
       <button
         onClick={() => navigate(basePath)}
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium
-                   text-slate-600 hover:text-[#9F2241] transition"
+                   text-slate-600 hover:text-institucional transition"
       >
         <ArrowLeft size={16} />
         Volver al catálogo
@@ -154,8 +154,8 @@ export default function VehiculoDetail() {
       <div className="bg-white rounded-2xl border border-slate-200
                       shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-6 mb-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#9F2241]/10
-                          flex items-center justify-center text-[#9F2241] shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-institucional/10
+                          flex items-center justify-center text-institucional shrink-0">
             <CarFront size={32} />
           </div>
           <div className="min-w-0 flex-1">
@@ -171,7 +171,7 @@ export default function VehiculoDetail() {
             <p className="mt-1 text-sm text-slate-500 truncate">
               {vehiculo.descripcion}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-500">
               Área: <span className="font-medium text-slate-600">{vehiculo.area}</span>
             </p>
           </div>
@@ -182,7 +182,7 @@ export default function VehiculoDetail() {
               <button
                 onClick={() => navigate(`/mecanico/reparaciones/nueva?vehiculo=${vehiculo.id}`)}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg
-                           bg-[#9F2241] hover:bg-[#7d1a33] text-sm font-semibold text-white transition"
+                           bg-institucional hover:bg-institucional-dark text-sm font-semibold text-white transition"
               >
                 <ClipboardPlus size={15} />
                 Registrar ingreso a taller
@@ -199,7 +199,7 @@ export default function VehiculoDetail() {
                   onClick={() => setModalOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg
                              border border-slate-200 text-sm font-medium text-slate-700
-                             hover:bg-slate-50 hover:text-[#9F2241] transition"
+                             hover:bg-slate-50 hover:text-institucional transition"
                 >
                   <Pencil size={15} />
                   Editar
@@ -239,7 +239,7 @@ export default function VehiculoDetail() {
                     {row.icon}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
                       {row.label}
                     </p>
                     <p className={`mt-0.5 text-sm text-slate-800 break-all ${row.mono ? "font-mono" : ""}`}>

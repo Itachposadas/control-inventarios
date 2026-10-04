@@ -106,7 +106,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"
+            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
           >
             <X size={18} />
           </button>
@@ -286,7 +286,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
               type="submit"
               disabled={saving}
               className="px-4 py-2 text-sm font-semibold rounded-lg
-                         bg-[#9F2241] hover:bg-[#7d1a33]
+                         bg-institucional hover:bg-institucional-dark
                          text-white disabled:bg-slate-300
                          disabled:cursor-not-allowed transition"
             >
@@ -306,14 +306,14 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
 const inputClass = `
   w-full px-3 py-2 rounded-lg border border-slate-200
   text-sm text-slate-800 placeholder-slate-400
-  focus:outline-none focus:border-[#9F2241]
-  focus:ring-2 focus:ring-[#9F2241]/15 transition
+  focus:outline-none focus:border-institucional
+  focus:ring-2 focus:ring-institucional/15 transition
 `;
 
 function Label({ children, required = false }) {
   return (
     <label className="block text-sm font-medium text-slate-700 mb-1">
-      {children} {required && <span className="text-red-500">*</span>}
+      {children} {required && <span className="text-red-600">*</span>}
     </label>
   );
 }

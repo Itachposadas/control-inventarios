@@ -25,9 +25,9 @@ export default function DatosVehiculo({ datos = {}, nota = true, campos = CAMPOS
       <dl className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
         {campos.map((c) => (
           <div key={c.key} className="min-w-0">
-            <dt className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">{c.label}</dt>
+            <dt className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">{c.label}</dt>
             <dd className={`mt-0.5 text-sm text-slate-800 break-words ${c.mono ? "font-mono" : ""}`}>
-              {datos[c.key] || <span className="text-slate-300">—</span>}
+              {datos[c.key] || <span className="text-slate-500">—</span>}
             </dd>
           </div>
         ))}

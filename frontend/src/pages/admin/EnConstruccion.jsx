@@ -18,9 +18,9 @@ export default function EnConstruccion() {
       <div className="flex items-center justify-center py-16">
         <div className="bg-white rounded-2xl border border-slate-200
                         shadow-sm p-10 text-center max-w-md">
-          <div className="w-16 h-16 rounded-2xl bg-[#9F2241]/10
+          <div className="w-16 h-16 rounded-2xl bg-institucional/10
                           flex items-center justify-center
-                          text-[#9F2241] mx-auto">
+                          text-institucional mx-auto">
             <Construction size={32} />
           </div>
           <h2 className="mt-5 text-xl font-bold text-slate-800">
@@ -32,7 +32,7 @@ export default function EnConstruccion() {
           <Link
             to={homePath}
             className="mt-6 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg
-                       bg-[#9F2241] hover:bg-[#7d1a33] text-white
+                       bg-institucional hover:bg-institucional-dark text-white
                        text-sm font-medium transition"
           >
             <ArrowLeft size={14} />

@@ -60,7 +60,7 @@ export default function SolicitudesList({
                       shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 mb-5">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               value={filters.q}
               onChange={set("q")}
@@ -90,7 +90,7 @@ export default function SolicitudesList({
             <button
               onClick={() => navigate(`${BASE}/nueva`)}
               className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg
-                         bg-[#9F2241] hover:bg-[#7d1a33] text-white
+                         bg-institucional hover:bg-institucional-dark text-white
                          text-sm font-semibold transition shrink-0"
             >
               <Plus size={16} />
@@ -107,7 +107,7 @@ export default function SolicitudesList({
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-400">
+        <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
           <span className="ml-3 text-sm">Cargando solicitudes...</span>
         </div>

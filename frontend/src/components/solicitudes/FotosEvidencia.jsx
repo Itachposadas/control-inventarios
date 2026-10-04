@@ -122,9 +122,9 @@ function RanuraFoto({ def, solicitudId, foto, puedeSubir, onActualizada, onAmpli
     <div className="flex flex-col">
       <div className="flex items-center gap-1.5 mb-2">
         {foto ? (
-          <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+          <CheckCircle2 size={15} className="text-emerald-700 shrink-0" />
         ) : (
-          <CircleDashed size={15} className="text-slate-400 shrink-0" />
+          <CircleDashed size={15} className="text-slate-500 shrink-0" />
         )}
         <p className="text-sm font-semibold text-slate-800">{def.titulo}</p>
       </div>
@@ -155,19 +155,19 @@ function RanuraFoto({ def, solicitudId, foto, puedeSubir, onActualizada, onAmpli
           <div className="w-full h-full flex flex-col items-center justify-center text-center px-3
                           border-2 border-dashed border-slate-200 rounded-xl">
             <Camera size={26} className="text-slate-300" />
-            <p className="mt-1.5 text-[11px] text-slate-400">{def.requisito}</p>
+            <p className="mt-1.5 text-[11px] text-slate-500">{def.requisito}</p>
           </div>
         )}
 
         {subiendo && (
           <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
-            <Loader2 size={24} className="animate-spin text-[#9F2241]" />
+            <Loader2 size={24} className="animate-spin text-institucional" />
           </div>
         )}
       </div>
 
       {foto && (
-        <p className="mt-1.5 text-[11px] text-slate-400 truncate">
+        <p className="mt-1.5 text-[11px] text-slate-500 truncate">
           {foto.subido_por} · {formatFecha(foto.fecha, true)}
         </p>
       )}
@@ -183,7 +183,7 @@ function RanuraFoto({ def, solicitudId, foto, puedeSubir, onActualizada, onAmpli
             onClick={() => camaraRef.current?.click()}
             disabled={subiendo}
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold
-                       bg-[#9F2241] hover:bg-[#7d1a33] text-white disabled:bg-slate-300 transition"
+                       bg-institucional hover:bg-institucional-dark text-white disabled:bg-slate-300 transition"
           >
             {foto ? <RefreshCw size={13} /> : <Camera size={13} />}
             {foto ? "Cambiar" : "Tomar foto"}
@@ -204,7 +204,7 @@ function RanuraFoto({ def, solicitudId, foto, puedeSubir, onActualizada, onAmpli
               onClick={handleQuitar}
               disabled={subiendo}
               aria-label="Quitar foto"
-              className="inline-flex items-center px-2 py-1.5 rounded-lg text-xs text-slate-400
+              className="inline-flex items-center px-2 py-1.5 rounded-lg text-xs text-slate-500
                          hover:text-red-600 hover:bg-red-50 disabled:opacity-50 transition"
             >
               <Trash2 size={14} />
@@ -213,7 +213,7 @@ function RanuraFoto({ def, solicitudId, foto, puedeSubir, onActualizada, onAmpli
         </div>
       )}
 
-      {!puedeSubir && !foto && <p className="mt-2 text-xs text-slate-400">Pendiente</p>}
+      {!puedeSubir && !foto && <p className="mt-2 text-xs text-slate-500">Pendiente</p>}
       {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
     </div>
   );

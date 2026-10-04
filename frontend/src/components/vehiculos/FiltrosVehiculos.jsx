@@ -19,7 +19,7 @@ export default function FiltrosVehiculos({
           <div className="relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
             />
             <input
               type="text"
@@ -29,8 +29,8 @@ export default function FiltrosVehiculos({
               className="w-full pl-9 pr-3 py-2 rounded-lg
                          border border-slate-200 bg-slate-50
                          text-sm text-slate-700 placeholder-slate-400
-                         focus:outline-none focus:bg-white focus:border-[#9F2241]
-                         focus:ring-2 focus:ring-[#9F2241]/15 transition"
+                         focus:outline-none focus:bg-white focus:border-institucional
+                         focus:ring-2 focus:ring-institucional/15 transition"
             />
           </div>
         </div>
@@ -43,8 +43,8 @@ export default function FiltrosVehiculos({
             className="w-full px-3 py-2 rounded-lg
                        border border-slate-200 bg-slate-50
                        text-sm text-slate-700
-                       focus:outline-none focus:bg-white focus:border-[#9F2241]
-                       focus:ring-2 focus:ring-[#9F2241]/15 transition cursor-pointer"
+                       focus:outline-none focus:bg-white focus:border-institucional
+                       focus:ring-2 focus:ring-institucional/15 transition cursor-pointer"
           >
             <option value="">Todas las áreas ({areasFromApi.length})</option>
             {areasFromApi.map((a) => (
@@ -61,8 +61,8 @@ export default function FiltrosVehiculos({
             className="w-full px-3 py-2 rounded-lg
                        border border-slate-200 bg-slate-50
                        text-sm text-slate-700
-                       focus:outline-none focus:bg-white focus:border-[#9F2241]
-                       focus:ring-2 focus:ring-[#9F2241]/15 transition cursor-pointer"
+                       focus:outline-none focus:bg-white focus:border-institucional
+                       focus:ring-2 focus:ring-institucional/15 transition cursor-pointer"
           >
             <option value="">Todos</option>
             <option value="activo">Activo</option>
@@ -77,7 +77,7 @@ export default function FiltrosVehiculos({
           Mostrando <span className="font-semibold text-slate-700">{total}</span>{" "}
           {total === 1 ? "vehículo" : "vehículos"}
           {filters.area && (
-            <> en <span className="font-semibold text-[#9F2241]">{filters.area}</span></>
+            <> en <span className="font-semibold text-institucional">{filters.area}</span></>
           )}
         </p>
 
@@ -85,7 +85,7 @@ export default function FiltrosVehiculos({
           <button
             onClick={onClear}
             className="inline-flex items-center gap-1 text-xs font-medium
-                       text-[#9F2241] hover:underline"
+                       text-institucional hover:underline"
           >
             <X size={14} />
             Limpiar filtros

@@ -9,6 +9,7 @@ import { solicitudesApi } from "../../api/solicitudes";
 import {
   Wrench, CheckCircle2, ClipboardList, Stethoscope, Loader2, Plus,
 } from "lucide-react";
+import { COLORS } from "../../config/colors";
 
 const ACTIVAS = ["recibida", "diagnostico", "reparacion"];
 const SIETE_DIAS = 7 * 24 * 60 * 60 * 1000;
@@ -45,7 +46,7 @@ export default function MecanicoDashboard() {
       subtitle="Tus reparaciones asignadas"
     >
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-400">
+        <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
           <span className="ml-3 text-sm">Cargando...</span>
         </div>
@@ -59,7 +60,7 @@ export default function MecanicoDashboard() {
             <KpiCard
               label="Reparaciones activas"
               value={activas.length}
-              accent="#9F2241"
+              accent={COLORS.institucional}
               icon={<ClipboardList size={22} />}
               status="Asignadas a ti"
               statusType="info"
@@ -67,7 +68,7 @@ export default function MecanicoDashboard() {
             <KpiCard
               label="Por diagnosticar"
               value={porDiagnosticar}
-              accent="#F59E0B"
+              accent={COLORS.warning}
               icon={<Stethoscope size={22} />}
               status="Recibidas o en diagnóstico"
               statusType="warning"
@@ -75,7 +76,7 @@ export default function MecanicoDashboard() {
             <KpiCard
               label="En reparación"
               value={enReparacion}
-              accent="#2563EB"
+              accent={COLORS.info}
               icon={<Wrench size={22} />}
               status="Trabajando en ellas"
               statusType="info"
@@ -83,7 +84,7 @@ export default function MecanicoDashboard() {
             <KpiCard
               label="Terminadas"
               value={terminadasSemana}
-              accent="#16A34A"
+              accent={COLORS.success}
               icon={<CheckCircle2 size={22} />}
               status="Últimos 7 días"
               statusType="success"
@@ -98,7 +99,7 @@ export default function MecanicoDashboard() {
             <button
               onClick={() => navigate("/mecanico/reparaciones/nueva")}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg
-                         bg-[#9F2241] hover:bg-[#7d1a33] text-white text-sm font-semibold transition"
+                         bg-institucional hover:bg-institucional-dark text-white text-sm font-semibold transition"
             >
               <Plus size={16} />
               Nuevo ingreso a taller

@@ -46,7 +46,7 @@ export default function SolicitudesTable({
                 onClick={() => navigate(`${basePath}/${s.id}`)}
                 className="hover:bg-slate-50 transition cursor-pointer"
               >
-                <td className="px-5 py-3.5 font-mono text-xs font-semibold text-[#9F2241] whitespace-nowrap">
+                <td className="px-5 py-3.5 font-mono text-xs font-semibold text-institucional whitespace-nowrap">
                   {s.folio}
                 </td>
                 <td className="px-5 py-3.5">

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 const ROLE_CONFIG = {
-  admin:    { label: "Administrador", color: "bg-[#9F2241]/10 text-[#9F2241]", icon: <Shield size={14} /> },
+  admin:    { label: "Administrador", color: "bg-institucional/10 text-institucional", icon: <Shield size={14} /> },
   // Rol retirado; solo para mostrar cuentas antiguas
   almacen:  { label: "Almacén (sin acceso)", color: "bg-slate-100 text-slate-500", icon: <Package size={14} /> },
   mecanico: { label: "Mecánico",      color: "bg-emerald-100 text-emerald-700", icon: <Wrench size={14} /> },
@@ -103,7 +103,7 @@ useEffect(() => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
           <div className="md:col-span-6">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 value={filters.q}
@@ -111,8 +111,8 @@ useEffect(() => {
                 placeholder="Buscar por nombre, usuario o email..."
                 className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-slate-50
                            text-sm text-slate-700 placeholder-slate-400
-                           focus:outline-none focus:bg-white focus:border-[#9F2241]
-                           focus:ring-2 focus:ring-[#9F2241]/15 transition"
+                           focus:outline-none focus:bg-white focus:border-institucional
+                           focus:ring-2 focus:ring-institucional/15 transition"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@ useEffect(() => {
               onChange={(e) => setFilters({ ...filters, role: e.target.value })}
               className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50
                          text-sm text-slate-700 cursor-pointer
-                         focus:outline-none focus:bg-white focus:border-[#9F2241]"
+                         focus:outline-none focus:bg-white focus:border-institucional"
             >
               <option value="">Todos los roles</option>
               <option value="admin">Administrador</option>
@@ -137,7 +137,7 @@ useEffect(() => {
               onChange={(e) => setFilters({ ...filters, activo: e.target.value })}
               className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50
                          text-sm text-slate-700 cursor-pointer
-                         focus:outline-none focus:bg-white focus:border-[#9F2241]"
+                         focus:outline-none focus:bg-white focus:border-institucional"
             >
               <option value="">Todos</option>
               <option value="true">Activos</option>
@@ -147,7 +147,7 @@ useEffect(() => {
             <button
               onClick={handleNuevo}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg
-                         bg-[#9F2241] hover:bg-[#7d1a33] text-white
+                         bg-institucional hover:bg-institucional-dark text-white
                          text-sm font-semibold transition shrink-0"
             >
               <Plus size={16} />
@@ -164,7 +164,7 @@ useEffect(() => {
           {(filters.q || filters.role || filters.activo) && (
             <button
               onClick={() => setFilters({ q: "", role: "", activo: "" })}
-              className="inline-flex items-center gap-1 text-[#9F2241] hover:underline font-medium"
+              className="inline-flex items-center gap-1 text-institucional hover:underline font-medium"
             >
               <X size={14} />
               Limpiar filtros
@@ -180,7 +180,7 @@ useEffect(() => {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-400">
+        <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
           <span className="ml-3 text-sm">Cargando usuarios...</span>
         </div>
@@ -212,7 +212,7 @@ useEffect(() => {
                     <tr key={u.id} className="hover:bg-slate-50 transition">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#9F2241]
+                          <div className="w-9 h-9 rounded-full bg-institucional
                                           flex items-center justify-center
                                           text-white text-sm font-semibold shrink-0">
                             {u.username.charAt(0).toUpperCase()}
@@ -249,16 +249,16 @@ useEffect(() => {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => navigate(`/admin/usuarios/${u.id}`)}
-                            className="p-2 rounded-lg text-slate-400 hover:bg-slate-100
-                                       hover:text-[#9F2241] transition"
+                            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100
+                                       hover:text-institucional transition"
                             title="Ver detalle"
                           >
                             <Eye size={16} />
                           </button>
                           <button
                             onClick={() => handleEditar(u)}
-                            className="p-2 rounded-lg text-slate-400 hover:bg-slate-100
-                                       hover:text-[#9F2241] transition"
+                            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100
+                                       hover:text-institucional transition"
                             title="Editar"
                           >
                             <Pencil size={16} />
@@ -267,7 +267,7 @@ useEffect(() => {
                             onClick={() =>
                               setDeleteModal({ open: true, usuario: u, loading: false })
                             }
-                            className="p-2 rounded-lg text-slate-400 hover:bg-red-50
+                            className="p-2 rounded-lg text-slate-500 hover:bg-red-50
                                        hover:text-red-600 transition"
                             title="Eliminar"
                           >

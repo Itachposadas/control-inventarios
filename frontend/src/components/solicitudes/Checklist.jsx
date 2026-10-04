@@ -30,7 +30,7 @@ export default function Checklist({
     <div>
       {!disabled && (
         <div className="flex items-center justify-between mb-2 text-[11px]">
-          <span className="uppercase tracking-wide text-slate-400 font-semibold">{titulo}</span>
+          <span className="uppercase tracking-wide text-slate-500 font-semibold">{titulo}</span>
           <span className="flex gap-3">
             <button type="button" onClick={() => marcarColumna(items, true)} className="text-emerald-700 hover:underline">
               Todos SI
@@ -68,7 +68,7 @@ export default function Checklist({
           className={`mt-2 flex items-center gap-3 px-3 py-2 rounded-xl border
             ${faltaBirlos ? "border-red-300 bg-red-50" : "border-slate-200"}`}
         >
-          <span className="w-6 text-xs font-semibold text-slate-400 tabular-nums text-right">40.</span>
+          <span className="w-6 text-xs font-semibold text-slate-500 tabular-nums text-right">40.</span>
           <label htmlFor="total-birlos" className="flex-1 text-sm text-slate-700">
             Total de número de birlos
           </label>
@@ -99,7 +99,7 @@ function Concepto({ item, valor, onMarcar, disabled, faltante }) {
       className={`flex items-center gap-3 px-3 py-1.5 text-sm transition-colors
         ${faltante ? "bg-red-50" : ""}`}
     >
-      <span className="w-6 text-xs font-semibold text-slate-400 tabular-nums text-right shrink-0">{item.n}.</span>
+      <span className="w-6 text-xs font-semibold text-slate-500 tabular-nums text-right shrink-0">{item.n}.</span>
       <span className={`flex-1 ${faltante ? "text-red-700" : "text-slate-700"}`}>{item.label}</span>
 
       {/* SI / NO: solo una opción */}
@@ -107,7 +107,7 @@ function Concepto({ item, valor, onMarcar, disabled, faltante }) {
         <Opcion
           etiqueta="SI"
           activa={valor === true}
-          clases="bg-emerald-600 text-white"
+          clases="bg-emerald-700 text-white"
           onClick={() => onMarcar(true)}
           disabled={disabled}
         />
@@ -134,7 +134,7 @@ function Opcion({ etiqueta, activa, clases, onClick, disabled, borde = false }) 
       disabled={disabled}
       className={`w-11 py-1 text-xs font-semibold transition-colors
         ${borde ? "border-l border-slate-200" : ""}
-        ${activa ? clases : "bg-white text-slate-400"}
+        ${activa ? clases : "bg-white text-slate-500"}
         ${disabled ? "cursor-default" : activa ? "" : "hover:bg-slate-50 hover:text-slate-600"}`}
     >
       {etiqueta}

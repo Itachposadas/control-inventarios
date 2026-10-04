@@ -25,7 +25,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] flex">
+    <div className="min-h-screen bg-fondo flex">
       {/* ══════════ SIDEBAR ══════════ */}
       <aside
         className={`
@@ -44,7 +44,7 @@ export default function DashboardLayout({
             className="h-11 w-auto object-contain shrink-0"
           />
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wide whitespace-nowrap text-[#9F2241] font-semibold leading-tight">
+            <p className="text-[11px] uppercase tracking-wide whitespace-nowrap text-institucional font-semibold leading-tight">
               Parque Vehicular
             </p>
             <p className="text-xs text-slate-500 leading-tight truncate">
@@ -55,7 +55,7 @@ export default function DashboardLayout({
 
         {/* Navegación principal */}
         <nav className="flex-1 overflow-y-auto py-3">
-          <p className="px-5 py-2 text-[10px] uppercase tracking-widest text-slate-400 font-semibold">
+          <p className="px-5 py-2 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
             Navegación
           </p>
 
@@ -75,14 +75,14 @@ export default function DashboardLayout({
                       text-sm font-medium transition text-left relative
                       ${
                         active
-                          ? "bg-[#9F2241] text-white shadow-sm"
-                          : "text-slate-700 hover:bg-[#9F2241]/5 hover:text-[#9F2241]"
+                          ? "bg-institucional text-white shadow-sm"
+                          : "text-slate-700 hover:bg-institucional/5 hover:text-institucional"
                       }
                     `}
                   >
                     <span
                       className={`w-5 h-5 flex items-center justify-center transition
-                        ${active ? "text-white" : "text-slate-400 group-hover:text-[#9F2241]"}`}
+                        ${active ? "text-white" : "text-slate-500 group-hover:text-institucional"}`}
                     >
                       {item.icon}
                     </span>
@@ -90,7 +90,7 @@ export default function DashboardLayout({
                     {item.badge && (
                       <span
                         className={`text-[10px] font-semibold px-1.5 py-0.5 rounded
-                          ${active ? "bg-white text-[#9F2241]" : "bg-[#9F2241] text-white"}`}
+                          ${active ? "bg-white text-institucional" : "bg-institucional text-white"}`}
                       >
                         {item.badge}
                       </span>
@@ -104,7 +104,7 @@ export default function DashboardLayout({
           {/* Sección secundaria */}
           {secondaryMenu.length > 0 && (
             <>
-              <p className="px-5 pt-5 pb-2 text-[10px] uppercase tracking-widest text-slate-400 font-semibold">
+              <p className="px-5 pt-5 pb-2 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
                 Sistema
               </p>
               <ul className="space-y-1 px-2">
@@ -116,7 +116,7 @@ export default function DashboardLayout({
                                  text-sm text-slate-600 hover:bg-slate-100
                                  hover:text-slate-800 transition text-left"
                     >
-                      <span className="w-5 h-5 flex items-center justify-center text-slate-400">
+                      <span className="w-5 h-5 flex items-center justify-center text-slate-500">
                         {item.icon}
                       </span>
                       <span className="flex-1">{item.label}</span>

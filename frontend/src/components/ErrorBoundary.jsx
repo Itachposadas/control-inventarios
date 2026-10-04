@@ -27,10 +27,10 @@ export default class ErrorBoundary extends Component {
     if (!this.state.error) return this.props.children;
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA] p-4">
+      <div className="min-h-screen flex items-center justify-center bg-fondo p-4">
         <div className="animate-pop bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-md text-center">
           <div className="mx-auto w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
-            <AlertTriangle size={28} className="text-amber-600" />
+            <AlertTriangle size={28} className="text-amber-700" />
           </div>
           <h2 className="mt-4 text-lg font-semibold text-slate-800">Algo salió mal en esta pantalla</h2>
           <p className="mt-2 text-sm text-slate-500">
@@ -40,8 +40,8 @@ export default class ErrorBoundary extends Component {
           <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
             <button
               onClick={() => window.location.reload()}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#9F2241]
-                         hover:bg-[#7d1a33] text-white text-sm font-semibold transition"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-institucional
+                         hover:bg-institucional-dark text-white text-sm font-semibold transition"
             >
               <RotateCw size={15} />
               Recargar

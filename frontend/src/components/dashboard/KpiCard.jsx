@@ -1,12 +1,13 @@
 // src/components/dashboard/KpiCard.jsx
 import { TrendingUp, TrendingDown, AlertCircle, Clock } from "lucide-react";
 import { useCountUp } from "../../hooks/useCountUp";
+import { COLORS } from "../../config/colors";
 
 export default function KpiCard({
   label,
   value,
   icon,
-  accent = "#9F2241",
+  accent = COLORS.institucional,
   trend,          // ej: "8.2" (positivo) o "-3.4" (negativo) → muestra flecha
   trendLabel = "vs. mes anterior",
   status,         // ej: "2 requieren atención hoy" → muestra punto + texto
@@ -43,19 +44,19 @@ export default function KpiCard({
             {trend && (
               <>
                 {isPositive ? (
-                  <TrendingUp size={13} className="text-emerald-600 shrink-0" />
+                  <TrendingUp size={13} className="text-emerald-700 shrink-0" />
                 ) : (
                   <TrendingDown size={13} className="text-red-600 shrink-0" />
                 )}
                 <span
                   className={`font-semibold ${
-                    isPositive ? "text-emerald-600" : "text-red-600"
+                    isPositive ? "text-emerald-700" : "text-red-600"
                   }`}
                 >
                   {isPositive ? "+" : ""}
                   {trend}%
                 </span>
-                <span className="text-slate-400 truncate">{trendLabel}</span>
+                <span className="text-slate-500 truncate">{trendLabel}</span>
               </>
             )}
 

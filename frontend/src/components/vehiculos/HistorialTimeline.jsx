@@ -50,7 +50,7 @@ export default function HistorialTimeline({ items = [], onItemClick }) {
               onClick={onItemClick ? () => onItemClick(item) : undefined}
               className={`bg-white rounded-xl border border-slate-200
                           shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4
-                          ${onItemClick ? "cursor-pointer hover:border-[#9F2241]/40 transition" : ""}`}
+                          ${onItemClick ? "cursor-pointer hover:border-institucional/40 transition" : ""}`}
             >
               {/* Encabezado */}
               <div className="flex items-start justify-between gap-3">
@@ -85,20 +85,20 @@ export default function HistorialTimeline({ items = [], onItemClick }) {
               <div className="mt-3 pt-3 border-t border-slate-100
                               grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                 <div>
-                  <p className="text-slate-400">Fecha</p>
+                  <p className="text-slate-500">Fecha</p>
                   <p className="mt-0.5 font-medium text-slate-700">
                     {formatFecha(item.fecha)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-400">Mecánico</p>
+                  <p className="text-slate-500">Mecánico</p>
                   <p className="mt-0.5 font-medium text-slate-700 inline-flex items-center gap-1">
                     <User size={11} />
                     {item.mecanico}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-400">Costo</p>
+                  <p className="text-slate-500">Costo</p>
                   <p className="mt-0.5 font-medium text-slate-700 inline-flex items-center gap-1">
                     <DollarSign size={11} />
                     ${(item.costo || 0).toLocaleString("es-MX")}

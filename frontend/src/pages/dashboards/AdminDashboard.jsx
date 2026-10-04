@@ -15,6 +15,7 @@ import { formatFecha } from "../../config/solicitudes";
 import {
   ClipboardList, Wrench, CarFront, Loader2,
 } from "lucide-react";
+import { COLORS } from "../../config/colors";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -60,7 +61,7 @@ export default function AdminDashboard() {
     dot: /Entregada|Completada/.test(e.accion)
       ? "bg-emerald-500"
       : e.accion.startsWith("Registró")
-      ? "bg-[#9F2241]"
+      ? "bg-institucional"
       : "bg-blue-500",
   }));
 
@@ -72,7 +73,7 @@ export default function AdminDashboard() {
       subtitle="Resumen general del parque vehicular"
     >
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-400">
+        <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
           <span className="ml-3 text-sm">Cargando estadísticas...</span>
         </div>
@@ -87,7 +88,7 @@ export default function AdminDashboard() {
             <KpiCard
               label="Servicios abiertos"
               value={kpis.solicitudes_abiertas}
-              accent="#9F2241"
+              accent={COLORS.institucional}
               icon={<ClipboardList size={20} />}
               status={
                 kpis.por_entregar > 0
@@ -99,7 +100,7 @@ export default function AdminDashboard() {
             <KpiCard
               label="Vehículos en mantenimiento"
               value={kpis.en_mantenimiento}
-              accent="#F59E0B"
+              accent={COLORS.warning}
               icon={<Wrench size={20} />}
               status={
                 kpis.en_mantenimiento > 0
@@ -111,7 +112,7 @@ export default function AdminDashboard() {
             <KpiCard
               label="Vehículos activos"
               value={kpis.activos}
-              accent="#16A34A"
+              accent={COLORS.success}
               icon={<CarFront size={20} />}
               status={`${kpis.total_vehiculos} en total`}
               statusType="success"

@@ -14,6 +14,7 @@ import { PERIODOS, rangoDePeriodo, etiquetaMes, moneda, fechaCorta } from "../..
 import {
   FileDown, Loader2, ClipboardList, DollarSign, Timer, Wrench, AlertTriangle, BarChart3,
 } from "lucide-react";
+import { COLORS } from "../../config/colors";
 
 export default function Reportes() {
   const [periodo, setPeriodo] = useState("mes");
@@ -123,7 +124,7 @@ export default function Reportes() {
               onClick={handlePdf}
               disabled={!reporte || loading || generando}
               className="w-full lg:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
-                         bg-[#9F2241] hover:bg-[#7d1a33] text-white text-sm font-semibold
+                         bg-institucional hover:bg-institucional-dark text-white text-sm font-semibold
                          disabled:bg-slate-300 disabled:cursor-not-allowed transition"
             >
               {generando ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
@@ -144,7 +145,7 @@ export default function Reportes() {
       )}
 
       {loading && !reporte ? (
-        <div className="flex items-center justify-center py-20 text-slate-400">
+        <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
           <span className="ml-3 text-sm">Generando reporte...</span>
         </div>
@@ -155,7 +156,7 @@ export default function Reportes() {
             <KpiCard
               label="Servicios ingresados"
               value={res.servicios}
-              accent="#9F2241"
+              accent={COLORS.institucional}
               icon={<ClipboardList size={20} />}
               status={`${res.terminados} terminados`}
               statusType="info"
@@ -163,7 +164,7 @@ export default function Reportes() {
             <KpiCard
               label="Gasto total"
               value={moneda(res.gasto_total, 0)}
-              accent="#16A34A"
+              accent={COLORS.success}
               icon={<DollarSign size={20} />}
               status={`Promedio ${moneda(res.gasto_promedio, 0)} por servicio`}
               statusType="success"
@@ -171,7 +172,7 @@ export default function Reportes() {
             <KpiCard
               label="Tiempo promedio en taller"
               value={res.dias_promedio_taller == null ? "—" : `${res.dias_promedio_taller} días`}
-              accent="#2563EB"
+              accent={COLORS.info}
               icon={<Timer size={20} />}
               status="Del ingreso a completado"
               statusType="info"
@@ -179,7 +180,7 @@ export default function Reportes() {
             <KpiCard
               label="Siguen en taller"
               value={res.en_taller}
-              accent="#F59E0B"
+              accent={COLORS.warning}
               icon={<Wrench size={20} />}
               status="Sin completar"
               statusType="warning"
@@ -282,12 +283,12 @@ function Tarjeta({ titulo, subtitulo, children }) {
 
 // Tabla con barra de proporción del gasto (magnitud, un solo color)
 function TablaProporcion({ filas, columna }) {
-  if (!filas.length) return <p className="text-sm text-slate-400 py-4 text-center">Sin datos</p>;
+  if (!filas.length) return <p className="text-sm text-slate-500 py-4 text-center">Sin datos</p>;
   const max = Math.max(...filas.map((f) => f.gasto), 0);
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="text-[11px] uppercase tracking-wide text-slate-400">
+        <tr className="text-[11px] uppercase tracking-wide text-slate-500">
           <th className="text-left font-semibold pb-2">{columna}</th>
           <th className="text-right font-semibold pb-2 w-20">Servicios</th>
           <th className="text-right font-semibold pb-2 w-44">Gasto</th>
@@ -302,7 +303,7 @@ function TablaProporcion({ filas, columna }) {
               <div className="text-right font-semibold text-slate-800 tabular-nums">{moneda(f.gasto)}</div>
               <div className="mt-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[#9F2241] origin-left animate-grow-x"
+                  className="h-full rounded-full bg-institucional origin-left animate-grow-x"
                   style={{ width: max ? `${(f.gasto / max) * 100}%` : 0 }}
                 />
               </div>
@@ -315,12 +316,12 @@ function TablaProporcion({ filas, columna }) {
 }
 
 function TablaVehiculos({ filas }) {
-  if (!filas.length) return <p className="text-sm text-slate-400 py-4 text-center">Sin datos</p>;
+  if (!filas.length) return <p className="text-sm text-slate-500 py-4 text-center">Sin datos</p>;
   return (
     <div className="overflow-x-auto -mx-5">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">
+          <tr className="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-100">
             <th className="text-left font-semibold px-5 py-2 w-8">#</th>
             <th className="text-left font-semibold px-2 py-2">Vehículo</th>
             <th className="text-right font-semibold px-2 py-2">Servicios</th>
@@ -330,9 +331,9 @@ function TablaVehiculos({ filas }) {
         <tbody className="divide-y divide-slate-100">
           {filas.map((v, i) => (
             <tr key={v.vehiculo_id} className="hover:bg-slate-50 transition">
-              <td className="px-5 py-2.5 text-xs text-slate-400 font-mono">{String(i + 1).padStart(2, "0")}</td>
+              <td className="px-5 py-2.5 text-xs text-slate-500 font-mono">{String(i + 1).padStart(2, "0")}</td>
               <td className="px-2 py-2.5">
-                <Link to={`/admin/vehiculos/${v.vehiculo_id}`} className="font-medium text-slate-800 hover:text-[#9F2241]">
+                <Link to={`/admin/vehiculos/${v.vehiculo_id}`} className="font-medium text-slate-800 hover:text-institucional">
                   {v.nombre}
                 </Link>
                 <p className="text-xs text-slate-500">{[v.no_inventario, v.area].filter(Boolean).join(" · ")}</p>

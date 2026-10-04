@@ -96,14 +96,14 @@ export default function SolicitudDetail() {
     return (
       <DashboardLayout menu={menu} secondaryMenu={secondaryMenu} title="Solicitud">
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-slate-400">
+          <div className="flex items-center justify-center py-20 text-slate-500">
             <Loader2 size={28} className="animate-spin" />
             <span className="ml-3 text-sm">Cargando solicitud...</span>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
             <p className="text-sm font-medium text-slate-700">{loadError || "Solicitud no encontrada"}</p>
-            <button onClick={() => navigate(basePath)} className="mt-4 text-sm font-medium text-[#9F2241] hover:underline">
+            <button onClick={() => navigate(basePath)} className="mt-4 text-sm font-medium text-institucional hover:underline">
               Volver a la lista
             </button>
           </div>
@@ -200,7 +200,7 @@ export default function SolicitudDetail() {
       <button
         onClick={volver}
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium
-                   text-slate-600 hover:text-[#9F2241] transition"
+                   text-slate-600 hover:text-institucional transition"
       >
         <ArrowLeft size={16} />
         Volver
@@ -210,7 +210,7 @@ export default function SolicitudDetail() {
       <div className="bg-white rounded-2xl border border-slate-200
                       shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-5 mb-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#9F2241]/10 flex items-center justify-center text-[#9F2241] shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-institucional/10 flex items-center justify-center text-institucional shrink-0">
             <CarFront size={28} />
           </div>
           <div className="min-w-0 flex-1">
@@ -267,7 +267,7 @@ export default function SolicitudDetail() {
               <button
                 onClick={() => navigate(`/mecanico/evidencia?servicio=${s.id}`)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                           bg-[#9F2241] hover:bg-[#7d1a33] text-white transition shrink-0"
+                           bg-institucional hover:bg-institucional-dark text-white transition shrink-0"
               >
                 <Camera size={14} />
                 Subir fotos
@@ -337,7 +337,7 @@ export default function SolicitudDetail() {
                   type="button"
                   onClick={() => navigate(`/mecanico/foraneo/nueva?servicio=${s.id}`)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                             bg-[#9F2241] hover:bg-[#7d1a33] text-white transition shrink-0"
+                             bg-institucional hover:bg-institucional-dark text-white transition shrink-0"
                 >
                   <Plus size={14} />
                   Generar orden foránea
@@ -345,7 +345,7 @@ export default function SolicitudDetail() {
               )}
             >
               {s.ordenes_foraneas.length === 0 ? (
-                <p className="text-sm text-slate-400">Este servicio no se ha remitido a ningún taller externo.</p>
+                <p className="text-sm text-slate-500">Este servicio no se ha remitido a ningún taller externo.</p>
               ) : (
                 <ul className="divide-y divide-slate-100 -my-2">
                   {s.ordenes_foraneas.map((o) => (
@@ -355,7 +355,7 @@ export default function SolicitudDetail() {
                         onClick={() => navigate(`${FORANEO_BASE[role]}/${o.id}`)}
                         className="w-full flex items-center gap-3 py-3 text-left hover:bg-slate-50 rounded-lg px-2 -mx-2 transition"
                       >
-                        <span className="w-9 h-9 rounded-lg bg-[#9F2241]/10 text-[#9F2241] flex items-center justify-center shrink-0">
+                        <span className="w-9 h-9 rounded-lg bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
                           <Truck size={17} />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -390,13 +390,13 @@ export default function SolicitudDetail() {
                   <li key={e.value} className="flex items-center gap-3">
                     <span
                       className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-300
-                        ${hecho ? "bg-emerald-600 text-white"
-                          : actual ? "bg-[#9F2241] text-white"
-                          : "bg-slate-100 text-slate-400"}`}
+                        ${hecho ? "bg-emerald-700 text-white"
+                          : actual ? "bg-institucional text-white"
+                          : "bg-slate-100 text-slate-500"}`}
                     >
                       {hecho ? <Check size={13} strokeWidth={3} /> : i + 1}
                     </span>
-                    <span className={`text-sm ${actual ? "font-semibold text-slate-800" : hecho ? "text-slate-600" : "text-slate-400"}`}>
+                    <span className={`text-sm ${actual ? "font-semibold text-slate-800" : hecho ? "text-slate-600" : "text-slate-500"}`}>
                       {e.label}
                     </span>
                   </li>
@@ -423,7 +423,7 @@ export default function SolicitudDetail() {
                     onClick={() => handleEstado(siguiente.value)}
                     disabled={saving}
                     className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg
-                               bg-[#9F2241] hover:bg-[#7d1a33] text-white text-sm font-semibold
+                               bg-institucional hover:bg-institucional-dark text-white text-sm font-semibold
                                disabled:bg-slate-300 transition"
                   >
                     {dirty ? "Guardar y pasar a " : "Pasar a "}{siguiente.label}
@@ -470,7 +470,7 @@ export default function SolicitudDetail() {
               <Field label="Costo">
                 {esAdmin ? (
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">$</span>
                     <input
                       type="number"
                       min="0"
@@ -503,7 +503,7 @@ export default function SolicitudDetail() {
                     <span className="text-slate-600">{e.accion.charAt(0).toLowerCase() + e.accion.slice(1)}</span>
                   </p>
                   {e.nota && <p className="text-xs text-slate-500 mt-0.5">“{e.nota}”</p>}
-                  <p className="text-[11px] text-slate-400 mt-0.5">{formatFecha(e.fecha, true)}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{formatFecha(e.fecha, true)}</p>
                 </li>
               ))}
             </ul>
@@ -530,7 +530,7 @@ export default function SolicitudDetail() {
                   onClick={handleGuardar}
                   disabled={saving}
                   className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold rounded-lg
-                             bg-[#9F2241] hover:bg-[#7d1a33] text-white disabled:bg-slate-300 transition"
+                             bg-institucional hover:bg-institucional-dark text-white disabled:bg-slate-300 transition"
                 >
                   <Save size={15} />
                   {saving ? "Guardando..." : "Guardar cambios"}

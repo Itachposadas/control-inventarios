@@ -113,7 +113,7 @@ export default function EvidenciaFotografica() {
           </div>
 
           {cargandoLista ? (
-            <div className="flex items-center justify-center py-10 text-slate-400">
+            <div className="flex items-center justify-center py-10 text-slate-500">
               <Loader2 size={22} className="animate-spin" />
             </div>
           ) : lista.length === 0 ? (
@@ -122,7 +122,7 @@ export default function EvidenciaFotografica() {
               <p className="mt-3 text-sm text-slate-600">No tienes vehículos en mantenimiento</p>
               <button
                 onClick={() => navigate("/mecanico/reparaciones/nueva")}
-                className="mt-3 text-sm font-medium text-[#9F2241] hover:underline"
+                className="mt-3 text-sm font-medium text-institucional hover:underline"
               >
                 Registrar un ingreso a taller
               </button>
@@ -137,9 +137,9 @@ export default function EvidenciaFotografica() {
                     <button
                       onClick={() => elegir(s.id)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition
-                        ${activo ? "bg-[#9F2241]/[0.06] ring-1 ring-[#9F2241]/30" : "hover:bg-slate-50"}`}
+                        ${activo ? "bg-institucional/[0.06] ring-1 ring-institucional/30" : "hover:bg-slate-50"}`}
                     >
-                      <span className="w-10 h-10 rounded-xl bg-[#9F2241]/10 text-[#9F2241] flex items-center justify-center shrink-0">
+                      <span className="w-10 h-10 rounded-xl bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
                         <CarFront size={20} />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -170,7 +170,7 @@ export default function EvidenciaFotografica() {
         {/* ─── Vehículo elegido: datos + 3 fotos ─── */}
         <div ref={panelRef} className="lg:col-span-2 space-y-5 scroll-mt-20">
           {cargandoDetalle && !detalle ? (
-            <div className="flex items-center justify-center py-20 text-slate-400">
+            <div className="flex items-center justify-center py-20 text-slate-500">
               <Loader2 size={26} className="animate-spin" />
             </div>
           ) : !detalle ? (
@@ -193,7 +193,7 @@ export default function EvidenciaFotografica() {
                   <button
                     onClick={() => navigate(`/mecanico/reparaciones/${detalle.id}`)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200
-                               text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-[#9F2241] transition shrink-0"
+                               text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-institucional transition shrink-0"
                   >
                     Ver servicio
                     <ExternalLink size={13} />
@@ -217,7 +217,7 @@ export default function EvidenciaFotografica() {
 
               <FotosEvidencia solicitud={detalle} puedeSubir={puedeSubir} onActualizada={onActualizada} />
 
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 {FOTOS.map((f) => `${f.titulo}: ${f.requisito.toLowerCase()}`).join(" · ")}
               </p>
             </>

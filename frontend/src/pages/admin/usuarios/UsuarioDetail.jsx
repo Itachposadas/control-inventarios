@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const ROLE_CONFIG = {
-  admin:    { label: "Administrador", color: "bg-[#9F2241]/10 text-[#9F2241]", icon: <Shield size={16} /> },
+  admin:    { label: "Administrador", color: "bg-institucional/10 text-institucional", icon: <Shield size={16} /> },
   // Rol retirado; solo para mostrar cuentas antiguas
   almacen:  { label: "Almacén (sin acceso)", color: "bg-slate-100 text-slate-500", icon: <Package size={16} /> },
   mecanico: { label: "Mecánico",      color: "bg-emerald-100 text-emerald-700", icon: <Wrench size={16} /> },
@@ -42,7 +42,7 @@ export default function UsuarioDetail() {
   if (loading) {
     return (
       <DashboardLayout menu={ADMIN_MENU} secondaryMenu={ADMIN_SECONDARY_MENU} title="Usuario">
-        <div className="flex items-center justify-center py-20 text-slate-400">
+        <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
           <span className="ml-3 text-sm">Cargando usuario...</span>
         </div>
@@ -61,7 +61,7 @@ export default function UsuarioDetail() {
           <button
             onClick={() => navigate("/admin/usuarios")}
             className="mt-4 inline-flex items-center gap-1 text-sm font-medium
-                       text-[#9F2241] hover:underline"
+                       text-institucional hover:underline"
           >
             <ArrowLeft size={14} />
             Volver a la lista
@@ -91,7 +91,7 @@ export default function UsuarioDetail() {
       <button
         onClick={() => navigate("/admin/usuarios")}
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium
-                   text-slate-600 hover:text-[#9F2241] transition"
+                   text-slate-600 hover:text-institucional transition"
       >
         <ArrowLeft size={16} />
         Volver a la lista
@@ -101,7 +101,7 @@ export default function UsuarioDetail() {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl border border-slate-200
                           shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-6 text-center">
-            <div className="w-20 h-20 mx-auto rounded-full bg-[#9F2241]
+            <div className="w-20 h-20 mx-auto rounded-full bg-institucional
                             flex items-center justify-center
                             text-white text-3xl font-bold">
               {inicial}
@@ -132,7 +132,7 @@ export default function UsuarioDetail() {
               <button
                 onClick={() => setModalOpen(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                           text-xs font-medium bg-[#9F2241] hover:bg-[#7d1a33]
+                           text-xs font-medium bg-institucional hover:bg-institucional-dark
                            text-white transition"
               >
                 <Pencil size={12} />
@@ -174,7 +174,7 @@ function InfoRow({ icon, label, value, valueClass = "" }) {
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+        <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
           {label}
         </p>
         <p className={`mt-0.5 text-sm text-slate-800 ${valueClass}`}>{value}</p>

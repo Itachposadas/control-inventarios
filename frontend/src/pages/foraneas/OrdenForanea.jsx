@@ -144,13 +144,13 @@ export default function OrdenForanea() {
     return (
       <DashboardLayout menu={menu} secondaryMenu={secondaryMenu} title={titulo}>
         {!loadError ? (
-          <div className="flex items-center justify-center py-20 text-slate-400">
+          <div className="flex items-center justify-center py-20 text-slate-500">
             <Loader2 size={28} className="animate-spin" />
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
             <p className="text-sm font-medium text-slate-700">{loadError}</p>
-            <button onClick={() => navigate(base)} className="mt-4 text-sm font-medium text-[#9F2241] hover:underline">
+            <button onClick={() => navigate(base)} className="mt-4 text-sm font-medium text-institucional hover:underline">
               Ir a Taller foráneo
             </button>
           </div>
@@ -166,7 +166,7 @@ export default function OrdenForanea() {
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-sm text-slate-600">
           Solo el mecánico asignado puede generar la orden, mientras la unidad siga en el taller.
           <div className="mt-4">
-            <button onClick={() => navigate(-1)} className="font-medium text-[#9F2241] hover:underline">Volver</button>
+            <button onClick={() => navigate(-1)} className="font-medium text-institucional hover:underline">Volver</button>
           </div>
         </div>
       </DashboardLayout>
@@ -184,7 +184,7 @@ export default function OrdenForanea() {
     >
       <button
         onClick={() => navigate(-1)}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-[#9F2241] transition"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-institucional transition"
       >
         <ArrowLeft size={16} />
         Volver
@@ -193,7 +193,7 @@ export default function OrdenForanea() {
       <form onSubmit={handleSubmit} className={`space-y-5 ${puedeEditar ? "pb-24" : ""}`}>
         {/* ═════ ENCABEZADO ═════ */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
-          <div className="h-1.5 bg-[#9F2241]" />
+          <div className="h-1.5 bg-institucional" />
           <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center gap-5">
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <img src="/logo-atlacomulco.png" alt="Municipio de Atlacomulco" className="h-14 w-auto object-contain shrink-0" />
@@ -201,13 +201,13 @@ export default function OrdenForanea() {
                 <h2 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight leading-tight">
                   ORDEN DE REPARACIÓN EN TALLER FORÁNEO
                 </h2>
-                <p className="text-sm font-medium text-[#9F2241]">Municipio de Atlacomulco</p>
+                <p className="text-sm font-medium text-institucional">Municipio de Atlacomulco</p>
                 <p className="mt-1 text-xs text-slate-500">
                   {orden?.folio && <span className="font-mono font-semibold text-slate-700 mr-2">{orden.folio}</span>}
                   Ingreso a taller{" "}
                   <Link
                     to={`${SOLICITUDES_BASE[role]}/${sol.id}`}
-                    className="font-mono text-[#9F2241] hover:underline inline-flex items-center gap-0.5"
+                    className="font-mono text-institucional hover:underline inline-flex items-center gap-0.5"
                   >
                     {sol.folio}
                     <ExternalLink size={11} />
@@ -217,7 +217,7 @@ export default function OrdenForanea() {
             </div>
             <div className="lg:w-56 shrink-0">
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Fecha de remisión {puedeEditar && <span className="text-red-500">*</span>}
+                Fecha de remisión {puedeEditar && <span className="text-red-600">*</span>}
               </label>
               <input
                 type="date"
@@ -260,18 +260,18 @@ export default function OrdenForanea() {
                 <div
                   key={t.key}
                   className={`rounded-xl border overflow-hidden transition-colors
-                    ${lleno ? "border-[#9F2241]/40" : "border-slate-200"}`}
+                    ${lleno ? "border-institucional/40" : "border-slate-200"}`}
                 >
                   <div
                     className={`px-4 py-2.5 text-sm font-semibold text-center transition-colors
-                      ${lleno ? "bg-[#9F2241] text-white" : "bg-slate-50 text-slate-700"}`}
+                      ${lleno ? "bg-institucional text-white" : "bg-slate-50 text-slate-700"}`}
                   >
                     {t.label}
                   </div>
                   <div className="p-3">
                     {soloLectura ? (
                       <p className="min-h-[2.5rem] flex items-center justify-center text-sm text-slate-800 text-center">
-                        {form.talleres[t.key] || <span className="text-slate-300">—</span>}
+                        {form.talleres[t.key] || <span className="text-slate-500">—</span>}
                       </p>
                     ) : (
                       <input
@@ -291,7 +291,7 @@ export default function OrdenForanea() {
         </Section>
 
         {orden?.creado_por && (
-          <p className="text-xs text-slate-400">Generada por {orden.creado_por}</p>
+          <p className="text-xs text-slate-500">Generada por {orden.creado_por}</p>
         )}
 
         {/* Barra de acciones (solo el mecánico asignado, con la unidad en el taller) */}
@@ -317,7 +317,7 @@ export default function OrdenForanea() {
               <button
                 type="submit"
                 disabled={saving || (!esNueva && !dirty)}
-                className="px-5 py-2 text-sm font-semibold rounded-lg bg-[#9F2241] hover:bg-[#7d1a33]
+                className="px-5 py-2 text-sm font-semibold rounded-lg bg-institucional hover:bg-institucional-dark
                            text-white disabled:bg-slate-300 disabled:cursor-not-allowed transition"
               >
                 {saving ? "Guardando..." : esNueva ? "Generar orden" : "Guardar cambios"}

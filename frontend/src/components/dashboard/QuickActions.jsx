@@ -1,6 +1,7 @@
 // src/components/dashboard/QuickActions.jsx
 import { useNavigate } from "react-router-dom";
 import { Car, UserPlus } from "lucide-react";
+import { COLORS } from "../../config/colors";
 
 export default function QuickActions({ items }) {
   const navigate = useNavigate();
@@ -9,13 +10,13 @@ export default function QuickActions({ items }) {
     {
       label: "Registrar vehículo",
       icon: <Car size={16} />,
-      accent: "#9F2241",
+      accent: COLORS.institucional,
       to: "/admin/vehiculos?nuevo=1",
     },
     {
       label: "Registrar usuario",
       icon: <UserPlus size={16} />,
-      accent: "#2563EB",
+      accent: COLORS.info,
       to: "/admin/usuarios?nuevo=1",
     },
   ];
@@ -27,7 +28,7 @@ export default function QuickActions({ items }) {
                     shadow-[0_1px_3px_rgba(15,23,42,0.04)] px-5 py-3.5">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-800">Acciones rápidas</h3>
-        <span className="text-[11px] text-slate-400">Atajos frecuentes</span>
+        <span className="text-[11px] text-slate-500">Atajos frecuentes</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -37,7 +38,7 @@ export default function QuickActions({ items }) {
             onClick={() => item.to && navigate(item.to)}
             className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg
                        border border-slate-200 bg-slate-50/50
-                       hover:bg-white hover:border-[#9F2241]/30
+                       hover:bg-white hover:border-institucional/30
                        hover:shadow-[0_2px_8px_rgba(159,34,65,0.08)]
                        transition text-left group"
           >

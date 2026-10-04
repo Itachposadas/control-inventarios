@@ -158,7 +158,7 @@ export default function Ayuda() {
               className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-5"
             >
               <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-[#9F2241]/10 text-[#9F2241] flex items-center justify-center shrink-0">
+                <span className="w-10 h-10 rounded-xl bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
                   {g.icon}
                 </span>
                 <h3 className="text-sm font-semibold text-slate-800">{g.titulo}</h3>
@@ -175,7 +175,7 @@ export default function Ayuda() {
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-            <LifeBuoy size={18} className="text-[#9F2241]" />
+            <LifeBuoy size={18} className="text-institucional" />
             <h3 className="text-sm font-semibold text-slate-800">Preguntas frecuentes</h3>
           </div>
           <ul className="divide-y divide-slate-100">
@@ -183,7 +183,7 @@ export default function Ayuda() {
           </ul>
         </div>
 
-        <p className="text-xs text-slate-400 flex items-center gap-1.5">
+        <p className="text-xs text-slate-500 flex items-center gap-1.5">
           <UserCog size={14} />
           Para cambiar tu contraseña ve a Mi cuenta.
         </p>
@@ -203,7 +203,7 @@ function Pregunta({ p, r }) {
                    text-slate-700 hover:bg-slate-50 transition"
       >
         {p}
-        <ChevronDown size={16} className={`text-slate-400 shrink-0 transition ${abierta ? "rotate-180" : ""}`} />
+        <ChevronDown size={16} className={`text-slate-500 shrink-0 transition ${abierta ? "rotate-180" : ""}`} />
       </button>
       {abierta && <p className="px-5 pb-4 -mt-1 text-sm text-slate-500">{r}</p>}
     </li>

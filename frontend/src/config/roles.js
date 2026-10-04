@@ -25,6 +25,6 @@ export const ROLE_LABEL = {
 
 // Color del badge por rol (para la UI)
 export const ROLE_COLOR = {
-  [ROLES.ADMIN]: "bg-[#9F2241]",
-  [ROLES.MECANICO]: "bg-emerald-600",
+  [ROLES.ADMIN]: "bg-institucional",
+  [ROLES.MECANICO]: "bg-emerald-700",
 };

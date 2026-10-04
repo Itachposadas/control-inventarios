@@ -77,7 +77,7 @@ export default function MiCuenta() {
               <Dato icon={<Calendar size={15} />} label="Cuenta creada" value={formatFecha(user?.created_at)} />
               <Dato icon={<Clock size={15} />} label="Último acceso" value={formatFecha(user?.ultimo_acceso, true)} />
             </ul>
-            <p className="mt-4 text-xs text-slate-400">
+            <p className="mt-4 text-xs text-slate-500">
               Para cambiar tu nombre, correo o rol, pídeselo al administrador.
             </p>
           </Section>
@@ -135,7 +135,7 @@ export default function MiCuenta() {
                 <button
                   type="button"
                   onClick={() => setVer((v) => !v)}
-                  className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#9F2241] transition"
+                  className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-institucional transition"
                 >
                   {ver ? <EyeOff size={16} /> : <Eye size={16} />}
                   {ver ? "Ocultar contraseñas" : "Mostrar contraseñas"}
@@ -143,7 +143,7 @@ export default function MiCuenta() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 text-sm font-semibold rounded-lg bg-[#9F2241] hover:bg-[#7d1a33]
+                  className="px-5 py-2 text-sm font-semibold rounded-lg bg-institucional hover:bg-institucional-dark
                              text-white disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                 >
                   {saving ? "Guardando..." : "Cambiar contraseña"}
@@ -164,7 +164,7 @@ function Dato({ icon, label, value }) {
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold">{label}</p>
+        <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">{label}</p>
         <p className="text-slate-800 truncate">{value || "—"}</p>
       </div>
     </li>

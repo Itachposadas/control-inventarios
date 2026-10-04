@@ -7,8 +7,8 @@ export default function StatsVehiculo({ stats }) {
       label: "Servicios totales",
       value: stats.total,
       icon: <Wrench size={18} />,
-      color: "text-[#9F2241]",
-      bg: "bg-[#9F2241]/10",
+      color: "text-institucional",
+      bg: "bg-institucional/10",
     },
     {
       label: "Completados",

@@ -8,7 +8,7 @@ html, body, #root {
 }
 
 body {
-  background-color: #faf9f8;
+  /* El color de fondo viene de la clase bg-fondo en index.html (src/config/colors.js) */
   color: #1e293b;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;

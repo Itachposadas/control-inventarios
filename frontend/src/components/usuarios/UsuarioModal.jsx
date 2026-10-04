@@ -101,7 +101,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"
+            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
           >
             <X size={18} />
           </button>
@@ -127,8 +127,8 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               placeholder="Juan Pérez López"
               className="w-full px-3 py-2 rounded-lg border border-slate-200
                          text-sm text-slate-800
-                         focus:outline-none focus:border-[#9F2241]
-                         focus:ring-2 focus:ring-[#9F2241]/15 transition"
+                         focus:outline-none focus:border-institucional
+                         focus:ring-2 focus:ring-institucional/15 transition"
             />
           </div>
 
@@ -136,7 +136,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Usuario <span className="text-red-500">*</span>
+                Usuario <span className="text-red-600">*</span>
               </label>
               <input
                 name="username"
@@ -146,13 +146,13 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
                 placeholder="juanperez"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200
                            text-sm text-slate-800
-                           focus:outline-none focus:border-[#9F2241]
-                           focus:ring-2 focus:ring-[#9F2241]/15 transition"
+                           focus:outline-none focus:border-institucional
+                           focus:ring-2 focus:ring-institucional/15 transition"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Email <span className="text-red-500">*</span>
+                Email <span className="text-red-600">*</span>
               </label>
               <input
                 name="email"
@@ -163,8 +163,8 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
                 placeholder="juan@demo.com"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200
                            text-sm text-slate-800
-                           focus:outline-none focus:border-[#9F2241]
-                           focus:ring-2 focus:ring-[#9F2241]/15 transition"
+                           focus:outline-none focus:border-institucional
+                           focus:ring-2 focus:ring-institucional/15 transition"
               />
             </div>
           </div>
@@ -172,9 +172,9 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
           {/* Contraseña */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Contraseña {!editando && <span className="text-red-500">*</span>}
+              Contraseña {!editando && <span className="text-red-600">*</span>}
               {editando && (
-                <span className="text-xs font-normal text-slate-400 ml-1">
+                <span className="text-xs font-normal text-slate-500 ml-1">
                   (dejar vacío para no cambiar)
                 </span>
               )}
@@ -188,14 +188,14 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
                 placeholder="Mínimo 6 caracteres"
                 className="w-full px-3 py-2 pr-11 rounded-lg border border-slate-200
                            text-sm text-slate-800
-                           focus:outline-none focus:border-[#9F2241]
-                           focus:ring-2 focus:ring-[#9F2241]/15 transition"
+                           focus:outline-none focus:border-institucional
+                           focus:ring-2 focus:ring-institucional/15 transition"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
-                           text-slate-400 hover:text-[#9F2241] transition"
+                           text-slate-500 hover:text-institucional transition"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -205,7 +205,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
           {/* Rol */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Rol <span className="text-red-500">*</span>
+              Rol <span className="text-red-600">*</span>
             </label>
             <select
               name="role"
@@ -213,8 +213,8 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               onChange={handleChange}
               className="w-full px-3 py-2 rounded-lg border border-slate-200
                          text-sm text-slate-800
-                         focus:outline-none focus:border-[#9F2241]
-                         focus:ring-2 focus:ring-[#9F2241]/15 transition cursor-pointer"
+                         focus:outline-none focus:border-institucional
+                         focus:ring-2 focus:ring-institucional/15 transition cursor-pointer"
             >
               {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -232,8 +232,8 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
                 name="activo"
                 checked={form.activo}
                 onChange={handleChange}
-                className="w-4 h-4 rounded border-slate-300 text-[#9F2241]
-                           focus:ring-[#9F2241]"
+                className="w-4 h-4 rounded border-slate-300 text-institucional
+                           focus:ring-institucional"
               />
               <span className="text-sm text-slate-700">
                 Usuario activo (puede iniciar sesión)
@@ -255,7 +255,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               type="submit"
               disabled={saving}
               className="px-4 py-2 text-sm font-semibold rounded-lg
-                         bg-[#9F2241] hover:bg-[#7d1a33]
+                         bg-institucional hover:bg-institucional-dark
                          text-white disabled:bg-slate-300
                          disabled:cursor-not-allowed transition"
             >

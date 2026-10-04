@@ -121,7 +121,7 @@ useEffect(() => {
           <button
             onClick={handleNuevo}
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl
-                       bg-[#9F2241] hover:bg-[#7d1a33] text-white
+                       bg-institucional hover:bg-institucional-dark text-white
                        text-sm font-semibold transition shrink-0 self-start sm:self-center"
           >
             <Plus size={16} />
@@ -138,7 +138,7 @@ useEffect(() => {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-400">
+        <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
           <span className="ml-3 text-sm">Cargando vehículos...</span>
         </div>

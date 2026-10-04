@@ -15,7 +15,7 @@ export default function ActivityFeed({
       </div>
 
       {items.length === 0 && (
-        <p className="p-5 text-sm text-slate-400">Sin movimientos todavía</p>
+        <p className="p-5 text-sm text-slate-500">Sin movimientos todavía</p>
       )}
 
       <ul className="p-5 space-y-4">
@@ -30,7 +30,7 @@ export default function ActivityFeed({
             <span
               className={`relative z-10 mt-1.5 w-3.5 h-3.5 rounded-full
                           border-2 border-white shadow-sm shrink-0
-                          ${item.dot || "bg-[#9F2241]"}`}
+                          ${item.dot || "bg-institucional"}`}
             />
 
             <div className="min-w-0 flex-1">
@@ -38,7 +38,7 @@ export default function ActivityFeed({
                 {item.user}
               </p>
               <p className="text-xs text-slate-500 mt-1">{item.action}</p>
-              <p className="text-[11px] text-slate-400 mt-1">{item.time}</p>
+              <p className="text-[11px] text-slate-500 mt-1">{item.time}</p>
             </div>
           </li>
         ))}

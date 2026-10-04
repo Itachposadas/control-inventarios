@@ -1,14 +1,14 @@
 // src/components/dashboard/DonutCard.jsx
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { SERIES_GRAFICAS, SERIE_OTRAS } from "../../config/colors";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Paleta automática para cualquier cantidad de áreas
-const PALETTE = [
-  "#9F2241", "#e07a8c", "#f59e0b", "#10b981",
-  "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6",
-];
+// Color fijo por posición (no se repite): 6 áreas + "Otras" en gris neutro.
+// La paleta está validada para daltonismo y la leyenda muestra nombre y
+// porcentaje, así que nadie depende solo del color.
+const colorDe = (item, i) => (item.otras ? SERIE_OTRAS : SERIES_GRAFICAS[i]);
 
 export default function DonutCard({ data = [] }) {
   // Tomamos las 6 áreas con más vehículos + "Otras"
@@ -17,7 +17,7 @@ export default function DonutCard({ data = [] }) {
   const rest = sorted.slice(6).reduce((s, x) => s + x.total, 0);
 
   const items = [...top];
-  if (rest > 0) items.push({ area: "Otras áreas", total: rest });
+  if (rest > 0) items.push({ area: "Otras áreas", total: rest, otras: true });
 
   const total = items.reduce((s, i) => s + i.total, 0);
 
@@ -26,10 +26,10 @@ export default function DonutCard({ data = [] }) {
     datasets: [
       {
         data: items.map((i) => i.total),
-        backgroundColor: items.map(
-          (_, i) => PALETTE[i % PALETTE.length]
-        ),
-        borderWidth: 0,
+        backgroundColor: items.map(colorDe),
+        // 2 px de separación blanca entre rebanadas
+        borderColor: "#ffffff",
+        borderWidth: 2,
       },
     ],
   };
@@ -56,7 +56,7 @@ export default function DonutCard({ data = [] }) {
 
       <div className="p-5 flex flex-col items-center">
         {items.length === 0 ? (
-          <div className="py-12 text-slate-400 text-sm">
+          <div className="py-12 text-slate-500 text-sm">
             Sin datos disponibles
           </div>
         ) : (
@@ -83,7 +83,7 @@ export default function DonutCard({ data = [] }) {
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{
-                          background: PALETTE[i % PALETTE.length],
+                          background: colorDe(item, i),
                         }}
                       />
                       <span className="text-slate-600 truncate">
@@ -91,7 +91,7 @@ export default function DonutCard({ data = [] }) {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-slate-400">{pct}%</span>
+                      <span className="text-slate-500">{pct}%</span>
                       <span className="font-semibold text-slate-800 w-6 text-right">
                         {item.total}
                       </span>

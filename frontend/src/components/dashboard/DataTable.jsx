@@ -31,7 +31,7 @@ export default function DataTable({
                 key={`${row.area}-${i}`}
                 className="hover:bg-slate-50 transition"
               >
-                <td className="px-5 py-3.5 text-slate-400 font-mono text-xs">
+                <td className="px-5 py-3.5 text-slate-500 font-mono text-xs">
                   {String(i + 1).padStart(2, "0")}
                 </td>
                 <td className="px-5 py-3.5 font-semibold text-slate-800">

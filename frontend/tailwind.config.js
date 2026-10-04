@@ -1,27 +1,18 @@
+import { INSTITUCIONAL, FONDO } from "./src/config/colors.js";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      // Los valores viven en src/config/colors.js (única fuente de la paleta).
+      // Uso: bg-institucional, hover:bg-institucional-dark, text-institucional,
+      //      bg-institucional/10, bg-fondo ...
       colors: {
-        brand: {
-          50:  "#eff6ff",
-          100: "#dbeafe",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          900: "#1e3a8a",
-        },
-        institucional: {
-          DEFAULT: "#9F2241",
-          dark:    "#7d1a33",
-          light:   "#b83a58",
-        },
-
-        lienzo: "#faf9f8",  // fondo claro
-        tinta:  "#1e293b",  // texto oscuro
+        institucional: INSTITUCIONAL,
+        fondo: FONDO,
       },
-     
+
       fontFamily: {
         sans: ['"Inter"', "system-ui", "sans-serif"],
       },

@@ -79,7 +79,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row font-sans">
       {/* ══════════ PANEL GUINDA (solo escritorio) ══════════ */}
-      <aside className="relative hidden lg:flex overflow-hidden bg-[#9F2241] text-white lg:w-[42%]">
+      <aside className="relative hidden lg:flex overflow-hidden bg-institucional text-white lg:w-[42%]">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -107,9 +107,9 @@ export default function Login() {
       </aside>
 
       {/* ══════════ PANEL DEL FORMULARIO ══════════ */}
-      <main className="relative flex-1 lg:w-[58%] bg-[#faf9f8] overflow-y-auto">
+      <main className="relative flex-1 lg:w-[58%] bg-fondo overflow-y-auto">
         {/* Franja institucional (solo celular) */}
-        <div className="lg:hidden h-1.5 bg-[#9F2241]" />
+        <div className="lg:hidden h-1.5 bg-institucional" />
 
         <div className="w-full max-w-md mx-auto min-h-full flex flex-col
                         px-5 sm:px-8 pt-6 pb-6 lg:py-10">
@@ -132,7 +132,7 @@ export default function Login() {
             <p className="text-lg font-bold text-slate-800 leading-tight">
               Coordinación de Parque Vehicular
             </p>
-            <p className="text-sm font-medium text-[#9F2241]">Atlacomulco</p>
+            <p className="text-sm font-medium text-institucional">Atlacomulco</p>
           </div>
 
           <div className="flex-1 flex flex-col lg:justify-center">
@@ -155,7 +155,7 @@ export default function Login() {
                   <button
                     onClick={handleUseSaved}
                     className="group w-full flex items-center gap-3 p-4 rounded-xl border border-slate-200
-                               hover:border-[#9F2241]/40 hover:bg-[#9F2241]/[0.03] transition text-left"
+                               hover:border-institucional/40 hover:bg-institucional/[0.03] transition text-left"
                   >
                     <Avatar name={nombreGuardado} />
                     <div className="flex-1 min-w-0">
@@ -164,15 +164,15 @@ export default function Login() {
                     </div>
                     <ArrowRight
                       size={18}
-                      className="text-slate-300 group-hover:text-[#9F2241] group-hover:translate-x-0.5 transition"
+                      className="text-slate-300 group-hover:text-institucional group-hover:translate-x-0.5 transition"
                     />
                   </button>
 
                   <div className="flex items-center justify-between text-sm">
-                    <button onClick={handleOtraCuenta} className="text-slate-600 hover:text-[#9F2241] transition">
+                    <button onClick={handleOtraCuenta} className="text-slate-600 hover:text-institucional transition">
                       Usar otra cuenta
                     </button>
-                    <button onClick={handleRemoveSaved} className="text-slate-400 hover:text-red-600 transition">
+                    <button onClick={handleRemoveSaved} className="text-slate-500 hover:text-red-600 transition">
                       Quitar de este equipo
                     </button>
                   </div>
@@ -200,7 +200,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={handleOtraCuenta}
-                        className="text-xs font-medium text-[#9F2241] hover:underline shrink-0"
+                        className="text-xs font-medium text-institucional hover:underline shrink-0"
                       >
                         No soy yo
                       </button>
@@ -254,8 +254,8 @@ export default function Login() {
                         aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                         title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                         className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-lg
-                                   text-slate-400 hover:text-[#9F2241] hover:bg-slate-100
-                                   focus:outline-none focus-visible:ring-2 focus-visible:ring-[#9F2241]/30 transition"
+                                   text-slate-500 hover:text-institucional hover:bg-slate-100
+                                   focus:outline-none focus-visible:ring-2 focus-visible:ring-institucional/30 transition"
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -272,11 +272,11 @@ export default function Login() {
                     type="submit"
                     disabled={loading}
                     className="group w-full flex items-center justify-center gap-2 mt-2
-                               py-3 rounded-xl bg-[#9F2241] hover:bg-[#8a1d38] active:bg-[#7d1a33]
+                               py-3 rounded-xl bg-institucional hover:bg-institucional-dark active:bg-institucional-dark
                                text-white font-semibold text-sm
                                shadow-[0_6px_16px_-6px_rgba(159,34,65,0.55)]
                                disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed
-                               focus:outline-none focus-visible:ring-4 focus-visible:ring-[#9F2241]/25
+                               focus:outline-none focus-visible:ring-4 focus-visible:ring-institucional/25
                                transition"
                   >
                     {loading ? (
@@ -303,7 +303,7 @@ export default function Login() {
           </div>
 
           {/* Pie (solo celular; en escritorio está en el panel guinda) */}
-          <p className="lg:hidden mt-8 text-center text-[11px] text-slate-400">
+          <p className="lg:hidden mt-8 text-center text-[11px] text-slate-500">
             © {new Date().getFullYear()} · Coordinación de Parque Vehicular · Atlacomulco
           </p>
         </div>
@@ -318,14 +318,14 @@ const inputClass = `
   w-full pl-10 pr-3 py-3 rounded-xl
   border border-slate-200 bg-white
   text-[15px] text-slate-800 placeholder-slate-400
-  focus:outline-none focus:border-[#9F2241]/60 focus:ring-4 focus:ring-[#9F2241]/10
+  focus:outline-none focus:border-institucional/60 focus:ring-4 focus:ring-institucional/10
   transition
 `;
 
 function InputConIcono({ icon, children }) {
   return (
     <div className="relative">
-      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
         {icon}
       </span>
       {children}
@@ -337,7 +337,7 @@ function Avatar({ name = "?", size = 40 }) {
   const initial = (name || "?").charAt(0).toUpperCase();
   return (
     <div
-      className="rounded-full bg-gradient-to-br from-[#b83a58] to-[#7d1a33]
+      className="rounded-full bg-gradient-to-br from-institucional-light to-institucional-dark
                  flex items-center justify-center text-white font-semibold shrink-0"
       style={{ width: size, height: size, fontSize: size * 0.42 }}
     >

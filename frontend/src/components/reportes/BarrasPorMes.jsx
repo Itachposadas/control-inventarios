@@ -6,10 +6,11 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import { INSTITUCIONAL } from "../../config/colors";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-const GUINDA = "#9F2241";
+const GUINDA = INSTITUCIONAL.DEFAULT;
 
 const BarrasPorMes = forwardRef(function BarrasPorMes({ labels, values, formato = (v) => v }, ref) {
   const data = {
@@ -17,7 +18,7 @@ const BarrasPorMes = forwardRef(function BarrasPorMes({ labels, values, formato 
     datasets: [{
       data: values,
       backgroundColor: GUINDA,
-      hoverBackgroundColor: "#7d1a33",
+      hoverBackgroundColor: INSTITUCIONAL.dark,
       borderRadius: { topLeft: 4, topRight: 4 },
       borderSkipped: "bottom",
       maxBarThickness: 32,
@@ -47,7 +48,7 @@ const BarrasPorMes = forwardRef(function BarrasPorMes({ labels, values, formato 
         beginAtZero: true,
         grid: { color: "#f1f5f9" },
         border: { display: false },
-        ticks: { color: "#94a3b8", font: { size: 11 }, callback: (v) => formato(v), maxTicksLimit: 5, precision: 0 },
+        ticks: { color: "#64748b", font: { size: 11 }, callback: (v) => formato(v), maxTicksLimit: 5, precision: 0 },
       },
     },
   };

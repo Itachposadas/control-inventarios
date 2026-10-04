@@ -135,7 +135,7 @@ export default function SolicitudNueva() {
       <button
         onClick={() => navigate(-1)}
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium
-                   text-slate-600 hover:text-[#9F2241] transition"
+                   text-slate-600 hover:text-institucional transition"
       >
         <ArrowLeft size={16} />
         Volver
@@ -144,7 +144,7 @@ export default function SolicitudNueva() {
       <form onSubmit={handleSubmit} className="space-y-5 pb-24">
         {/* ═════ ENCABEZADO ═════ */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
-          <div className="h-1.5 bg-[#9F2241]" />
+          <div className="h-1.5 bg-institucional" />
           <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center gap-5">
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <img src="/logo-atlacomulco.png" alt="Municipio de Atlacomulco" className="h-14 w-auto object-contain shrink-0" />
@@ -152,7 +152,7 @@ export default function SolicitudNueva() {
                 <h2 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight leading-tight">
                   FORMATO DE INGRESO A TALLER
                 </h2>
-                <p className="text-sm font-medium text-[#9F2241]">Municipio de Atlacomulco</p>
+                <p className="text-sm font-medium text-institucional">Municipio de Atlacomulco</p>
               </div>
             </div>
 
@@ -201,7 +201,7 @@ export default function SolicitudNueva() {
           {vehiculo ? (
             <div className="space-y-5">
               <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="w-11 h-11 rounded-xl bg-[#9F2241]/10 text-[#9F2241] flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
                   <CarFront size={22} />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -213,7 +213,7 @@ export default function SolicitudNueva() {
                 <button
                   type="button"
                   onClick={() => setVehiculo(null)}
-                  className="text-sm font-medium text-[#9F2241] hover:underline shrink-0"
+                  className="text-sm font-medium text-institucional hover:underline shrink-0"
                 >
                   Cambiar
                 </button>
@@ -222,7 +222,7 @@ export default function SolicitudNueva() {
             </div>
           ) : (
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-[11px] text-slate-400" />
+              <Search size={16} className="absolute left-3 top-[11px] text-slate-500" />
               <input
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
@@ -231,7 +231,7 @@ export default function SolicitudNueva() {
                 autoFocus
               />
               {buscando && (
-                <Loader2 size={16} className="absolute right-3 top-[11px] text-slate-400 animate-spin" />
+                <Loader2 size={16} className="absolute right-3 top-[11px] text-slate-500 animate-spin" />
               )}
               {resultados.length > 0 && (
                 <ul className="mt-2 border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden animate-pop origin-top">
@@ -250,7 +250,7 @@ export default function SolicitudNueva() {
                             {v.numeroEconomico || v.unidad || v.noInventario}
                             {deBaja && <span className="ml-2 text-xs font-medium text-red-600">(de baja)</span>}
                             {v.estado === "mantenimiento" && (
-                              <span className="ml-2 text-xs font-medium text-amber-600">(ya está en taller)</span>
+                              <span className="ml-2 text-xs font-medium text-amber-700">(ya está en taller)</span>
                             )}
                           </p>
                           <p className="text-xs text-slate-500">
@@ -327,7 +327,7 @@ export default function SolicitudNueva() {
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 text-sm font-semibold rounded-lg bg-[#9F2241] hover:bg-[#7d1a33]
+              className="px-5 py-2 text-sm font-semibold rounded-lg bg-institucional hover:bg-institucional-dark
                          text-white disabled:bg-slate-300 disabled:cursor-not-allowed transition"
             >
               {saving ? "Registrando..." : "Registrar ingreso"}

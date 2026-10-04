@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { MoreVertical } from "lucide-react";
+import { INSTITUCIONAL } from "../../config/colors";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement,
@@ -36,11 +37,11 @@ export default function LineChartCard({ data = [], sinAnio = 0 }) {
       {
         label: "Vehículos",
         data: values,
-        borderColor: "#9F2241",
+        borderColor: INSTITUCIONAL.DEFAULT,
         backgroundColor: "rgba(159, 34, 65, 0.08)",
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: "#9F2241",
+        pointBackgroundColor: INSTITUCIONAL.DEFAULT,
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         pointRadius: 4,
@@ -60,11 +61,11 @@ export default function LineChartCard({ data = [], sinAnio = 0 }) {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: "#94a3b8", font: { size: 11 } },
+        ticks: { color: "#64748b", font: { size: 11 } },
       },
       y: {
         grid: { color: "#f1f5f9" },
-        ticks: { color: "#94a3b8", font: { size: 11 } },
+        ticks: { color: "#64748b", font: { size: 11 } },
         beginAtZero: true,
       },
     },
@@ -82,7 +83,7 @@ export default function LineChartCard({ data = [], sinAnio = 0 }) {
             Distribución del parque vehicular por año
           </p>
         </div>
-        <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+        <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
           <MoreVertical size={16} />
         </button>
       </div>
@@ -92,7 +93,7 @@ export default function LineChartCard({ data = [], sinAnio = 0 }) {
           {labels.length > 0 ? (
             <Line data={chartData} options={options} />
           ) : (
-            <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+            <div className="flex items-center justify-center h-full text-slate-500 text-sm">
               Sin datos disponibles
             </div>
           )}

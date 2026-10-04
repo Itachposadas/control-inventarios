@@ -15,13 +15,13 @@ export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) 
       className="text-left bg-white rounded-2xl border border-slate-200
                  shadow-[0_1px_3px_rgba(15,23,42,0.04)]
                  hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]
-                 hover:border-[#9F2241]/30 hover:-translate-y-0.5
+                 hover:border-institucional/30 hover:-translate-y-0.5
                  transition-all duration-200 overflow-hidden group"
     >
       {/* Encabezado */}
       <div className="px-5 pt-4 pb-3 border-b border-slate-100 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-slate-400 font-mono truncate">
+          <p className="text-xs text-slate-500 font-mono truncate">
             {vehiculo.noInventario}
           </p>
           <p className="mt-1 text-base font-bold text-slate-800 leading-tight truncate">
@@ -32,8 +32,8 @@ export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) 
           </p>
         </div>
         <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center
-                        text-slate-500 group-hover:bg-[#9F2241]/10
-                        group-hover:text-[#9F2241] transition shrink-0">
+                        text-slate-500 group-hover:bg-institucional/10
+                        group-hover:text-institucional transition shrink-0">
           <Car size={20} />
         </div>
       </div>
@@ -42,7 +42,7 @@ export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) 
       <div className="px-5 py-4 space-y-2.5">
         {/* Área */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
             Área
           </span>
           <span className="text-xs font-medium text-slate-700 truncate">
