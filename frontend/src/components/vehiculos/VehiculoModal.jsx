@@ -1,6 +1,7 @@
 // src/components/vehiculos/VehiculoModal.jsx
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
+import { vehiculosApi } from "../../api/vehiculos";
 
 export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }) {
   const editando = Boolean(vehiculo);
@@ -22,9 +23,13 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [areas, setAreas] = useState([]);
+  const [nuevaArea, setNuevaArea] = useState(false);
 
   useEffect(() => {
     if (open) {
+      vehiculosApi.areas().then(setAreas).catch(() => setAreas([]));
+      setNuevaArea(false);
       setForm({
         np: vehiculo?.np ?? "",
         no_inventario: vehiculo?.noInventario || "",
@@ -143,15 +148,56 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
               />
             </div>
             <div className="sm:col-span-2">
-              <Label required>Área</Label>
-              <input
-                name="area"
-                value={form.area}
-                onChange={handleChange}
-                required
-                placeholder="ALUMBRADO PUBLICO"
-                className={inputClass}
-              />
+              <div className="flex items-center justify-between">
+                <Label required>Área</Label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNuevaArea((v) => !v);
+                    setForm((f) => ({ ...f, area: "" }));
+                  }}
+                  className="mb-1 inline-flex items-center gap-1 text-xs font-medium
+                             text-institucional hover:underline"
+                >
+                  {nuevaArea ? (
+                    "Elegir existente"
+                  ) : (
+                    <>
+                      <Plus size={12} /> Nueva área
+                    </>
+                  )}
+                </button>
+              </div>
+              {nuevaArea ? (
+                <input
+                  name="area"
+                  value={form.area}
+                  onChange={handleChange}
+                  required
+                  autoFocus
+                  placeholder="Nombre de la nueva área"
+                  className={inputClass}
+                />
+              ) : (
+                <select
+                  name="area"
+                  value={form.area}
+                  onChange={handleChange}
+                  required
+                  className={inputClass}
+                >
+                  <option value="">Selecciona un área</option>
+                  {/* Conserva el área actual aunque no venga en la lista */}
+                  {form.area && !areas.includes(form.area) && (
+                    <option value={form.area}>{form.area}</option>
+                  )}
+                  {areas.map((a) => (
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
