@@ -24,6 +24,7 @@ export default function OrdenesForaneas() {
   const esMecanico = role === ROLES.MECANICO;
 
   const [q, setQ] = useState("");
+  const [entregadas, setEntregadas] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,7 +35,7 @@ export default function OrdenesForaneas() {
     setLoading(true);
     const timer = setTimeout(() => {
       foraneasApi
-        .listar({ q })
+        .listar({ q, entregadas })
         .then((d) => !cancel && setItems(d))
         .catch((e) => !cancel && setError(e.message || "No se pudieron cargar las órdenes"))
         .finally(() => !cancel && setLoading(false));
@@ -43,7 +44,7 @@ export default function OrdenesForaneas() {
       cancel = true;
       clearTimeout(timer);
     };
-  }, [q]);
+  }, [q, entregadas]);
 
   return (
     <DashboardLayout
@@ -52,6 +53,23 @@ export default function OrdenesForaneas() {
       title="Taller foráneo"
       subtitle="Órdenes de reparación en talleres externos"
     >
+      <div className="mb-5 inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200">
+        {[
+          { valor: false, label: "En proceso" },
+          { valor: true, label: "Entregadas" },
+        ].map((t) => (
+          <button
+            key={t.label}
+            onClick={() => setEntregadas(t.valor)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
+              entregadas === t.valor ? "bg-white text-institucional shadow-sm" : "text-slate-600 hover:text-slate-800"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 mb-5">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -88,9 +106,13 @@ export default function OrdenesForaneas() {
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <Truck size={44} className="mx-auto text-slate-300" />
           <p className="mt-4 text-sm font-medium text-slate-700">
-            {q ? "No se encontraron órdenes" : "Aún no hay órdenes de taller foráneo"}
+            {q
+              ? "No se encontraron órdenes"
+              : entregadas
+              ? "Aún no hay órdenes de vehículos entregados"
+              : "No hay órdenes de taller foráneo en proceso"}
           </p>
-          {esMecanico && !q && (
+          {esMecanico && !q && !entregadas && (
             <p className="mt-1 text-xs text-slate-500">
               Se generan a partir de un ingreso a taller cuando la unidad se tiene que mandar a un taller externo.
             </p>

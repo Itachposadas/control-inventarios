@@ -67,12 +67,18 @@ def listar():
     user = get_current_user()
     q = (request.args.get("q") or "").strip()
     solicitud_id = request.args.get("solicitud_id", type=int)
+    # Por defecto, solo las de vehículos que aún no se entregan; "entregadas=1" muestra el historial
+    entregadas = request.args.get("entregadas") == "1"
 
     query = OrdenForanea.query.join(Solicitud).join(Vehiculo)
     if user.role != "admin":
         query = query.filter(Solicitud.mecanico_id == user.id)
     if solicitud_id:
         query = query.filter(OrdenForanea.solicitud_id == solicitud_id)
+    elif entregadas:
+        query = query.filter(Solicitud.estado == "entregada")
+    else:
+        query = query.filter(Solicitud.estado != "entregada")
     if q:
         like = f"%{q}%"
         query = query.filter(db.or_(

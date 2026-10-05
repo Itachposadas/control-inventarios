@@ -3,7 +3,9 @@
 import { request, toQuery } from "./client";
 
 export const foraneasApi = {
-  listar: ({ q = "", solicitud_id = "" } = {}) => request(`/foraneas${toQuery({ q, solicitud_id })}`),
+  // entregadas: true → solo las de vehículos ya entregados (historial)
+  listar: ({ q = "", solicitud_id = "", entregadas = false } = {}) =>
+    request(`/foraneas${toQuery({ q, solicitud_id, entregadas: entregadas ? "1" : "" })}`),
 
   obtener: (id) => request(`/foraneas/${id}`),
 
