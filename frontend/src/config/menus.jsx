@@ -25,7 +25,7 @@ export const ADMIN_SECONDARY_MENU = [
 
 // ─── Mecánico ───
 export const MECANICO_MENU = [
-  { label: "Panel de control", to: "/mecanico", icon: <LayoutDashboard size={18} /> },
+  { label: "Inicio", to: "/mecanico", icon: <LayoutDashboard size={18} /> },
   { label: "Vehículos", to: "/mecanico/vehiculos", icon: <Car size={18} /> },
   { label: "Mis reparaciones", to: "/mecanico/reparaciones", icon: <Wrench size={18} /> },
   { label: "Evidencia fotográfica", to: "/mecanico/evidencia", icon: <Camera size={18} /> },

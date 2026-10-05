@@ -1,6 +1,6 @@
 // src/components/solicitudes/SolicitudesTable.jsx
 import { useNavigate } from "react-router-dom";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, ChevronRight } from "lucide-react";
 import { EstadoBadge, PrioridadBadge } from "./Badges";
 import { TIPO_LABEL, formatFecha } from "../../config/solicitudes";
 
@@ -21,8 +21,39 @@ export default function SolicitudesTable({
     );
   }
 
+  const nombre = (s) => s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario;
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200
+    <>
+    {/* Celular: una tarjeta por servicio (sin tabla que se tenga que deslizar) */}
+    <ul className="sm:hidden space-y-2">
+      {items.map((s) => (
+        <li key={s.id}>
+          <button
+            onClick={() => navigate(`${basePath}/${s.id}`)}
+            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white border border-slate-200 text-left
+                       active:bg-slate-50 transition"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2 flex-wrap">
+                <span className="text-base font-bold text-slate-800 truncate">{nombre(s)}</span>
+                <EstadoBadge estado={s.estado} />
+              </span>
+              <span className="block text-xs text-slate-500 mt-1">
+                {[s.vehiculo?.placas, s.vehiculo?.area].filter(Boolean).join(" · ")}
+              </span>
+              <span className="block text-xs text-slate-500 mt-0.5">
+                Ingresó {formatFecha(s.fecha_ingreso)}
+                {mostrarMecanico && ` · ${s.mecanico?.nombre_completo || s.mecanico?.username || "Sin mecánico"}`}
+              </span>
+            </span>
+            <ChevronRight size={20} className="text-slate-300 shrink-0" />
+          </button>
+        </li>
+      ))}
+    </ul>
+
+    <div className="hidden sm:block bg-white rounded-2xl border border-slate-200
                     shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -50,9 +81,7 @@ export default function SolicitudesTable({
                   {s.folio}
                 </td>
                 <td className="px-5 py-3.5">
-                  <p className="font-semibold text-slate-800">
-                    {s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario}
-                  </p>
+                  <p className="font-semibold text-slate-800">{nombre(s)}</p>
                   <p className="text-xs text-slate-500">
                     {[s.vehiculo?.placas, s.vehiculo?.area].filter(Boolean).join(" · ")}
                   </p>
@@ -78,5 +107,6 @@ export default function SolicitudesTable({
         </table>
       </div>
     </div>
+    </>
   );
 }

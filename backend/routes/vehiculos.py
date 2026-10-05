@@ -34,8 +34,9 @@ def list_vehiculos():
         query = query.filter(Vehiculo.area == area)
     if estado:
         query = query.filter(Vehiculo.estado == estado)
-    if q:
-        like = f"%{q}%"
+    # Cada palabra debe aparecer en algún dato: "bomberos ford" → unidades Ford de Bomberos
+    for palabra in q.split():
+        like = f"%{palabra}%"
         query = query.filter(
             db.or_(
                 Vehiculo.no_inventario.like(like),
@@ -45,6 +46,9 @@ def list_vehiculos():
                 Vehiculo.unidad.like(like),
                 Vehiculo.descripcion.like(like),
                 Vehiculo.serie.like(like),
+                Vehiculo.area.like(like),
+                Vehiculo.modelo.like(like),
+                Vehiculo.color.like(like),
             )
         )
 

@@ -1,7 +1,7 @@
 // src/pages/solicitudes/SolicitudDetail.jsx
 // Detalle de una solicitud: formato de ingreso, diagnóstico, trabajo realizado,
 // taller foráneo, costo (admin) y avance de estado.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -17,19 +17,21 @@ import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
   ESTADOS, TIPOS, PRIORIDADES, TIPO_LABEL, SOLICITUDES_BASE,
-  FORANEO_BASE, TALLERES_FORANEOS, formatFecha, formatMoneda,
+  FORANEO_BASE, TALLERES_FORANEOS, formatFecha, formatMoneda, pasoSiguiente,
 } from "../../config/solicitudes";
 import { fechaCorta } from "../../config/reportes";
 import {
   ArrowLeft, ArrowRight, Undo2, Check, Loader2, CarFront, Trash2, Save, Camera, Truck, Plus,
+  PencilLine, CheckCircle2,
 } from "lucide-react";
+
+const NOMBRE_FOTO = { llegada: "de llegada", reparacion: "de la reparación", final: "final" };
 
 function formDesdeSolicitud(s) {
   return {
     tipo: s.tipo,
     prioridad: s.prioridad,
     checklist: { ...s.checklist },
-    total_birlos: s.total_birlos ?? "",
     observaciones_ingreso: s.observaciones_ingreso || "",
     fallas: s.fallas || "",
     acciones: s.acciones || "",
@@ -66,6 +68,10 @@ export default function SolicitudDetail() {
   const [saving, setSaving] = useState(false);
   const [nota, setNota] = useState("");
   const [deleteModal, setDeleteModal] = useState({ open: false, loading: false });
+  const [confirmarFin, setConfirmarFin] = useState(false);
+  // Secciones a las que lleva el botón "Escribir aquí" de "¿Qué sigue?"
+  const fallasRef = useRef(null);
+  const accionesRef = useRef(null);
 
   const cargar = (data) => {
     setS(data);
@@ -187,12 +193,28 @@ export default function SolicitudDetail() {
   };
 
   const bloqueado = !puedeLlenar;
+  const esMecanico = role === ROLES.MECANICO;
+  const nombreVehiculo = s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario;
+  const paso = pasoSiguiente(s, form);
+
+  // Terminar la reparación no se puede deshacer (solo el admin la regresa): se pide confirmación
+  const avanzar = () =>
+    !esAdmin && siguiente?.value === "completada" ? setConfirmarFin(true) : handleEstado(siguiente.value);
+  const etiquetaAvance = !esAdmin && siguiente?.value === "completada"
+    ? "Terminar reparación"
+    : `${dirty ? "Guardar y pasar a " : "Pasar a "}${siguiente?.label}`;
+
+  const irAEscribir = (campo) => {
+    const el = (campo === "fallas" ? fallasRef : accionesRef).current;
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => el?.querySelector("textarea")?.focus({ preventScroll: true }), 400);
+  };
 
   return (
     <DashboardLayout
       menu={menu}
       secondaryMenu={secondaryMenu}
-      title={`Solicitud ${s.folio}`}
+      title={esMecanico ? `Reparación: ${nombreVehiculo}` : `Solicitud ${s.folio}`}
       subtitle={`${TIPO_LABEL[s.tipo]} · Ingresó ${formatFecha(s.fecha_ingreso)}${
         s.hoja_no ? ` · Hoja ${s.hoja_no} de ${s.hoja_total}` : ""
       }`}
@@ -241,6 +263,52 @@ export default function SolicitudDetail() {
         </div>
       </div>
 
+      {esMecanico && esSuya && (
+        <div
+          className={`rounded-2xl border-2 p-5 mb-5 flex flex-col sm:flex-row sm:items-center gap-4 ${
+            cerrada ? "border-emerald-200 bg-emerald-50" : "border-institucional/30 bg-institucional/[0.04]"
+          }`}
+        >
+          <div className="flex-1 min-w-0">
+            <p className={`text-xs font-bold uppercase tracking-wide ${cerrada ? "text-emerald-700" : "text-institucional"}`}>
+              {cerrada ? "Listo" : "¿Qué sigue?"}
+            </p>
+            <p className="mt-1 text-lg font-semibold text-slate-800 leading-snug">{paso.texto}</p>
+          </div>
+          {puedeLlenar && paso.accion === "foto" && (
+            <button
+              onClick={() => navigate(`/mecanico/evidencia?servicio=${s.id}`)}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold
+                         bg-institucional hover:bg-institucional-dark text-white transition shrink-0"
+            >
+              <Camera size={20} />
+              Tomar foto {NOMBRE_FOTO[paso.foto]}
+            </button>
+          )}
+          {puedeLlenar && paso.accion === "escribir" && (
+            <button
+              onClick={() => irAEscribir(paso.campo)}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold
+                         bg-institucional hover:bg-institucional-dark text-white transition shrink-0"
+            >
+              <PencilLine size={20} />
+              Escribir aquí
+            </button>
+          )}
+          {puedeLlenar && paso.accion === "avanzar" && puedeAvanzar && (
+            <button
+              onClick={avanzar}
+              disabled={saving}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold
+                         bg-institucional hover:bg-institucional-dark text-white disabled:bg-slate-300 transition shrink-0"
+            >
+              {siguiente.value === "completada" ? <CheckCircle2 size={20} /> : <ArrowRight size={20} />}
+              {saving ? "Guardando..." : etiquetaAvance}
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 pb-24">
         {/* ═════ Columna principal ═════ */}
         <div className="xl:col-span-2 space-y-5">
@@ -279,8 +347,6 @@ export default function SolicitudDetail() {
             <Checklist
               value={form.checklist}
               onChange={set("checklist")}
-              birlos={form.total_birlos}
-              onBirlosChange={set("total_birlos")}
               disabled={bloqueado}
             />
             <div className="mt-5">
@@ -296,6 +362,7 @@ export default function SolicitudDetail() {
             </div>
           </Section>
 
+          <div ref={fallasRef} className="scroll-mt-24">
           <Section title="Diagnóstico de fallas presentadas">
             <TextArea
               value={form.fallas}
@@ -304,17 +371,20 @@ export default function SolicitudDetail() {
               placeholder="Describe las fallas que presenta el vehículo..."
             />
           </Section>
+          </div>
 
           <Section title="Trabajo realizado">
             <div className="space-y-4">
-              <Field label="Acciones realizadas">
-                <TextArea
-                  value={form.acciones}
-                  onChange={set("acciones")}
-                  disabled={bloqueado}
-                  placeholder="Ej. Se cambió batería, se ajustaron frenos..."
-                />
-              </Field>
+              <div ref={accionesRef} className="scroll-mt-24">
+                <Field label="Acciones realizadas">
+                  <TextArea
+                    value={form.acciones}
+                    onChange={set("acciones")}
+                    disabled={bloqueado}
+                    placeholder="Ej. Se cambió batería, se ajustaron frenos..."
+                  />
+                </Field>
+              </div>
               <Field label="Observaciones">
                 <TextArea
                   value={form.observaciones}
@@ -407,6 +477,8 @@ export default function SolicitudDetail() {
             <p className="mt-4 text-xs text-slate-500">
               {esAdmin && !cerrada
                 ? "El mecánico registra el avance. Podrás capturar el costo y entregarlo cuando esté Completada."
+                : esMecanico
+                ? paso.texto
                 : AYUDA_PASO[s.estado]}
             </p>
 
@@ -420,13 +492,13 @@ export default function SolicitudDetail() {
                 />
                 {puedeAvanzar && (
                   <button
-                    onClick={() => handleEstado(siguiente.value)}
+                    onClick={avanzar}
                     disabled={saving}
                     className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg
                                bg-institucional hover:bg-institucional-dark text-white text-sm font-semibold
                                disabled:bg-slate-300 transition"
                   >
-                    {dirty ? "Guardar y pasar a " : "Pasar a "}{siguiente.label}
+                    {etiquetaAvance}
                     <ArrowRight size={15} />
                   </button>
                 )}
@@ -445,7 +517,8 @@ export default function SolicitudDetail() {
             )}
           </Section>
 
-          {/* Administración */}
+          {/* Administración (el mecánico no la necesita) */}
+          {esAdmin && (
           <Section title="Administración" subtitle={esAdmin ? "Solo el administrador puede modificar esto" : undefined}>
             <div className="space-y-4">
               <Field label="Mecánico asignado">
@@ -492,6 +565,7 @@ export default function SolicitudDetail() {
               )}
             </div>
           </Section>
+          )}
 
           {/* Bitácora */}
           <Section title="Bitácora" subtitle="Movimientos de esta solicitud">
@@ -546,6 +620,22 @@ export default function SolicitudDetail() {
           {error}
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmarFin}
+        tono="confirmar"
+        onClose={() => setConfirmarFin(false)}
+        onConfirm={async () => {
+          setConfirmarFin(false);
+          await handleEstado("completada");
+        }}
+        title="¿Terminaste la reparación?"
+        confirmLabel="Sí, ya terminé"
+        loadingLabel="Guardando..."
+      >
+        Después ya no podrás cambiar nada de este servicio. Si te equivocas, tendrás que pedirle al
+        administrador que lo regrese.
+      </ConfirmModal>
 
       <ConfirmModal
         open={deleteModal.open}

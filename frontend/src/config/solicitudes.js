@@ -108,7 +108,7 @@ export const CHECKLIST_DERECHA = [
   { n: 37, key: "placa_delantera",    label: "Placa delantera" },
   { n: 38, key: "placa_trasera",      label: "Placa trasera" },
   { n: 39, key: "llantas",            label: "Llantas" },
-  // 40. "Total de número de birlos" es numérico: se guarda aparte (total_birlos)
+  { n: 40, key: "birlos",             label: "Birlos" },
 ];
 
 export const CHECKLIST_ITEMS = [...CHECKLIST_IZQUIERDA, ...CHECKLIST_DERECHA];
@@ -116,6 +116,48 @@ export const CHECKLIST_ITEMS = [...CHECKLIST_IZQUIERDA, ...CHECKLIST_DERECHA];
 /** Conceptos que todavía no tienen SI ni NO */
 export function conceptosSinMarcar(checklist = {}) {
   return CHECKLIST_ITEMS.filter((i) => typeof checklist[i.key] !== "boolean");
+}
+
+/**
+ * Qué le toca hacer al mecánico con este servicio, en palabras sencillas.
+ * Sigue las mismas reglas que el backend para avanzar de paso.
+ * texto: instrucción · accion: "foto" | "escribir" | "avanzar" | null
+ * (foto: cuál toma · campo: qué escribe — "fallas" o "acciones")
+ * Con `campos` (lo capturado en pantalla) revisa también lo escrito;
+ * sin ellos (listas) solo da la instrucción general del paso.
+ */
+export function pasoSiguiente(s, campos) {
+  const fotos = new Set(s.fotos_tipos || Object.keys(s.fotos || {}));
+  const vacio = (v) => !(v || "").trim();
+
+  if (s.estado === "recibida") {
+    if (!fotos.has("llegada")) {
+      return { texto: "Toma la foto de cómo llegó el vehículo.", accion: "foto", foto: "llegada" };
+    }
+    return { texto: "Revisa el vehículo y pásalo a Diagnóstico.", accion: "avanzar" };
+  }
+  if (s.estado === "diagnostico") {
+    if (!campos || vacio(campos.fallas)) {
+      return { texto: "Escribe qué fallas tiene el vehículo.", accion: "escribir", campo: "fallas" };
+    }
+    return { texto: "Diagnóstico escrito. Ya puedes pasarlo a Reparación.", accion: "avanzar" };
+  }
+  if (s.estado === "reparacion") {
+    if (!fotos.has("reparacion")) {
+      return { texto: "Toma la foto mientras cambias la pieza.", accion: "foto", foto: "reparacion" };
+    }
+    if (!campos || vacio(campos.acciones)) {
+      return { texto: "Escribe qué le hiciste al vehículo (acciones realizadas).", accion: "escribir", campo: "acciones" };
+    }
+    if (!fotos.has("final")) {
+      return { texto: "Toma la foto final del vehículo ya reparado.", accion: "foto", foto: "final" };
+    }
+    return { texto: "Todo listo. Marca la reparación como terminada.", accion: "avanzar" };
+  }
+  if (s.estado === "completada") {
+    return { texto: "Terminada. El administrador captura el costo y la entrega.", accion: null };
+  }
+  return { texto: "Servicio entregado.", accion: null };
 }
 
 // Ruta base del módulo según el rol

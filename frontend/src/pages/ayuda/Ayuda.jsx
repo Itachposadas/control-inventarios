@@ -18,11 +18,11 @@ const GUIA_MECANICO = [
       "Entra a Vehículos, busca la unidad y ábrela.",
       "Pulsa “Registrar ingreso a taller”. Los datos del vehículo se llenan solos desde el catálogo (no se pueden modificar; si alguno está mal, avisa al administrador).",
       "Revisa la fecha de ingreso y la hoja (ej. hoja 1 de 1).",
-      "En “Accesorios y herramientas” marca SI o NO en los 39 conceptos y escribe el total de birlos; sin eso no se puede registrar.",
+      "En “Accesorios y herramientas” marca SI o NO en los 40 conceptos (incluidos los birlos); sin eso no se puede registrar.",
       "Escribe las observaciones (ej. “No trae faros delanteros”).",
       "Pulsa “Registrar ingreso”. El vehículo queda en mantenimiento y el sistema te lleva a Evidencia fotográfica para tomar la foto de llegada.",
     ],
-    nota: "También puedes empezar desde Mis reparaciones → “Nuevo ingreso a taller”.",
+    nota: "También puedes empezar desde Inicio → “Llegó un vehículo”. Al abrir cualquier reparación, el recuadro “¿Qué sigue?” te dice qué hacer y tiene el botón para hacerlo.",
   },
   {
     icon: <Stethoscope size={20} />,
@@ -48,7 +48,7 @@ const GUIA_MECANICO = [
     titulo: "4. Completar",
     pasos: [
       "Cuando termines, toma la foto final del vehículo ya reparado (también en Evidencia fotográfica).",
-      "Pulsa “Pasar a Completada”. Sin las 3 fotos (llegada, reparación y final) no se puede completar.",
+      "Pulsa “Terminar reparación” y confirma. Sin las 3 fotos (llegada, reparación y final) no se puede terminar.",
       "El vehículo vuelve a estar activo y el administrador captura el costo y lo entrega.",
     ],
     nota: "Una vez completada ya no puedes modificarla. Si hay que corregir algo, pídele al administrador que la regrese a Reparación.",

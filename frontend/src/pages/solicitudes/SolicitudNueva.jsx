@@ -2,7 +2,7 @@
 // FORMATO DE INGRESO A TALLER (Municipio de Atlacomulco). Solo lo llena el mecánico.
 //  1. Encabezado: fecha de ingreso y "Hoja no. __ de __"
 //  2. Datos del vehículo/maquinaria (del catálogo, solo lectura)
-//  3. Accesorios y herramientas: SI / NO por concepto + total de birlos
+//  3. Accesorios y herramientas: SI / NO por concepto
 //  4. Observaciones
 // Las fotos se suben después en "Evidencia fotográfica".
 import { useEffect, useRef, useState } from "react";
@@ -15,7 +15,7 @@ import { solicitudesApi } from "../../api/solicitudes";
 import { vehiculosApi } from "../../api/vehiculos";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { CHECKLIST_ITEMS, conceptosSinMarcar } from "../../config/solicitudes";
-import { ArrowLeft, Search, CarFront, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, CarFront, Loader2, MapPin } from "lucide-react";
 
 // Fecha local de hoy en formato AAAA-MM-DD (para el <input type="date">)
 function hoyISO() {
@@ -30,6 +30,8 @@ export default function SolicitudNueva() {
 
   // Selección de vehículo
   const [busqueda, setBusqueda] = useState("");
+  const [area, setArea] = useState("");
+  const [areas, setAreas] = useState([]);
   const [resultados, setResultados] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const [vehiculo, setVehiculo] = useState(null);
@@ -40,7 +42,6 @@ export default function SolicitudNueva() {
     hoja_no: 1,
     hoja_total: 1,
     checklist: {},
-    total_birlos: "",
     observaciones_ingreso: "",
   });
   const [error, setError] = useState("");
@@ -62,9 +63,15 @@ export default function SolicitudNueva() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Búsqueda de vehículos
   useEffect(() => {
-    if (busqueda.trim().length < 2) {
+    vehiculosApi.areas().then(setAreas).catch(() => {});
+  }, []);
+
+  // Búsqueda de vehículos: por texto (2+ letras) y/o por área.
+  // Con un área elegida se muestran todas sus unidades aunque no se escriba nada.
+  const hayBusqueda = busqueda.trim().length >= 2 || Boolean(area);
+  useEffect(() => {
+    if (!hayBusqueda) {
       setResultados([]);
       return;
     }
@@ -72,8 +79,8 @@ export default function SolicitudNueva() {
     setBuscando(true);
     const timer = setTimeout(() => {
       vehiculosApi
-        .listar({ q: busqueda.trim() })
-        .then((data) => !cancel && setResultados(data.slice(0, 8)))
+        .listar({ q: busqueda.trim(), area })
+        .then((data) => !cancel && setResultados(data.slice(0, 50)))
         .catch(() => !cancel && setResultados([]))
         .finally(() => !cancel && setBuscando(false));
     }, 250);
@@ -81,7 +88,7 @@ export default function SolicitudNueva() {
       cancel = true;
       clearTimeout(timer);
     };
-  }, [busqueda]);
+  }, [busqueda, area, hayBusqueda]);
 
   const sinMarcar = conceptosSinMarcar(form.checklist);
   const marcados = CHECKLIST_ITEMS.length - sinMarcar.length;
@@ -97,13 +104,12 @@ export default function SolicitudNueva() {
     if (!hojaNo || !hojaTotal || hojaNo > hojaTotal) return setError("Revisa la hoja (ej. hoja 1 de 1)");
     if (!vehiculo) return setError("Selecciona el vehículo o maquinaria que ingresa al taller");
 
-    if (sinMarcar.length || form.total_birlos === "") {
+    if (sinMarcar.length) {
       setResaltarFaltantes(true);
       accesoriosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      const partes = [];
-      if (sinMarcar.length) partes.push(`${sinMarcar.length} ${sinMarcar.length === 1 ? "concepto" : "conceptos"} sin marcar`);
-      if (form.total_birlos === "") partes.push("el total de birlos");
-      return setError(`Falta en accesorios y herramientas: ${partes.join(" y ")}`);
+      return setError(
+        `Falta en accesorios y herramientas: ${sinMarcar.length} ${sinMarcar.length === 1 ? "concepto" : "conceptos"} sin marcar`
+      );
     }
 
     setSaving(true);
@@ -114,7 +120,6 @@ export default function SolicitudNueva() {
         hoja_no: hojaNo,
         hoja_total: hojaTotal,
         checklist: form.checklist,
-        total_birlos: Number(form.total_birlos),
         observaciones_ingreso: form.observaciones_ingreso,
       });
       // Siguiente paso natural: tomar la foto de llegada
@@ -221,20 +226,50 @@ export default function SolicitudNueva() {
               <DatosVehiculo datos={datosDesdeVehiculo(vehiculo)} />
             </div>
           ) : (
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-[11px] text-slate-500" />
-              <input
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Escribe No. inventario, placas, No. económico o unidad..."
-                className={`${inputClass} pl-9`}
-                autoFocus
-              />
-              {buscando && (
-                <Loader2 size={16} className="absolute right-3 top-[11px] text-slate-500 animate-spin" />
+            <div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative sm:w-64 shrink-0">
+                  <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <select
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    aria-label="Área"
+                    className={`${inputClass} pl-9 cursor-pointer ${area ? "border-institucional/50 font-medium" : ""}`}
+                  >
+                    <option value="">Todas las áreas</option>
+                    {areas.map((a) => (
+                      <option key={a} value={a}>{a}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Escribe placas, No. económico, marca, área (ej. BOMBEROS)..."
+                    className={`${inputClass} pl-9`}
+                    autoFocus
+                  />
+                  {buscando && (
+                    <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 animate-spin" />
+                  )}
+                </div>
+              </div>
+              {!hayBusqueda && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Elige el área de donde viene el vehículo para ver todas sus unidades, o escribe para buscarlo.
+                </p>
+              )}
+              {hayBusqueda && !buscando && resultados.length > 0 && (
+                <p className="mt-2 text-xs text-slate-500">
+                  {resultados.length === 50 ? "Más de 50" : resultados.length}{" "}
+                  {resultados.length === 1 ? "unidad encontrada" : "unidades encontradas"}
+                  {area && ` en ${area}`} · toca la que llegó
+                </p>
               )}
               {resultados.length > 0 && (
-                <ul className="mt-2 border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden animate-pop origin-top">
+                <ul className="mt-2 max-h-96 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 animate-pop origin-top">
                   {resultados.map((v) => {
                     const deBaja = v.estado === "baja";
                     return (
@@ -243,7 +278,7 @@ export default function SolicitudNueva() {
                           type="button"
                           disabled={deBaja}
                           onClick={() => elegirVehiculo(v)}
-                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition
+                          className="w-full text-left px-4 py-3 hover:bg-slate-50 transition
                                      disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <p className="text-sm font-semibold text-slate-800">
@@ -254,7 +289,7 @@ export default function SolicitudNueva() {
                             )}
                           </p>
                           <p className="text-xs text-slate-500">
-                            {[v.noInventario, v.placas, v.marca, v.area].filter(Boolean).join(" · ")}
+                            {[v.area, v.placas, v.marca, v.modelo, v.color, v.noInventario].filter(Boolean).join(" · ")}
                           </p>
                         </button>
                       </li>
@@ -262,9 +297,10 @@ export default function SolicitudNueva() {
                   })}
                 </ul>
               )}
-              {busqueda.trim().length >= 2 && !buscando && resultados.length === 0 && (
+              {hayBusqueda && !buscando && resultados.length === 0 && (
                 <p className="mt-2 text-sm text-slate-500">
-                  No se encontró. Si es un vehículo nuevo, primero el administrador debe darlo de alta en Vehículos.
+                  No se encontró{area && busqueda.trim() ? ` en ${area}; prueba con “Todas las áreas”` : ""}.
+                  Si es un vehículo nuevo, primero el administrador debe darlo de alta en Vehículos.
                 </p>
               )}
             </div>
@@ -288,8 +324,6 @@ export default function SolicitudNueva() {
             <Checklist
               value={form.checklist}
               onChange={(v) => set("checklist", v)}
-              birlos={form.total_birlos}
-              onBirlosChange={(v) => set("total_birlos", v)}
               resaltarFaltantes={resaltarFaltantes}
             />
           </Section>
