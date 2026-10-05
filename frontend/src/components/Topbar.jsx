@@ -34,7 +34,7 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
     navigate("/login", { replace: true });
   };
 
-  const roleLabel = ROLE_LABEL[role] || "Usuario";
+  const roleLabel = user?.rol_nombre || ROLE_LABEL[role] || "Usuario";
   const roleColor = ROLE_COLOR[role] || "bg-slate-500";
   const base = role === ROLES.ADMIN ? "/admin" : "/mecanico";
 

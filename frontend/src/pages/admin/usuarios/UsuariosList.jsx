@@ -234,7 +234,7 @@ useEffect(() => {
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1
                                           rounded-full text-xs font-medium ${cfg.color}`}>
                           {cfg.icon}
-                          {cfg.label}
+                          {u.rol_nombre || cfg.label}
                         </span>
                       </td>
                       <td className="px-5 py-3">

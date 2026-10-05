@@ -66,14 +66,14 @@ export default function MiCuenta() {
               {(user?.username || "?").charAt(0).toUpperCase()}
             </div>
             <h2 className="mt-4 text-lg font-bold text-slate-800">{nombre}</h2>
-            <p className="text-sm text-slate-500">{ROLE_LABEL[role]}</p>
+            <p className="text-sm text-slate-500">{user?.rol_nombre || ROLE_LABEL[role]}</p>
           </div>
 
           <Section title="Información">
             <ul className="space-y-3 text-sm">
               <Dato icon={<UserIcon size={15} />} label="Usuario" value={user?.username} />
               <Dato icon={<Mail size={15} />} label="Correo" value={user?.email} />
-              <Dato icon={<Shield size={15} />} label="Rol" value={ROLE_LABEL[role]} />
+              <Dato icon={<Shield size={15} />} label="Rol" value={user?.rol_nombre || ROLE_LABEL[role]} />
               <Dato icon={<Calendar size={15} />} label="Cuenta creada" value={formatFecha(user?.created_at)} />
               <Dato icon={<Clock size={15} />} label="Último acceso" value={formatFecha(user?.ultimo_acceso, true)} />
             </ul>

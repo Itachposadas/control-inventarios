@@ -117,7 +117,7 @@ export default function UsuarioDetail() {
             <span className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1
                               rounded-full text-xs font-medium ${cfg.color}`}>
               {cfg.icon}
-              {cfg.label}
+              {usuario.rol_nombre || cfg.label}
             </span>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function UsuarioDetail() {
             <ul className="divide-y divide-slate-100">
               <InfoRow icon={<UserIcon size={16} />} label="Usuario" value={usuario.username} />
               <InfoRow icon={<Mail size={16} />} label="Email" value={usuario.email} />
-              <InfoRow icon={cfg.icon} label="Rol" value={cfg.label} />
+              <InfoRow icon={cfg.icon} label="Rol" value={usuario.rol_nombre || cfg.label} />
               <InfoRow
                 icon={usuario.activo ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
                 label="Estado"

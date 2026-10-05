@@ -3,9 +3,27 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
 from auth_utils import role_required
 from extensions import db
-from models import Usuario, Solicitud, SolicitudEvento, ROLES
+from models import Usuario, Rol, Solicitud, SolicitudEvento, ROLES
 
 usuarios_bp = Blueprint("usuarios", __name__, url_prefix="/api/usuarios")
+
+
+def _resolver_rol(data, role_actual="mecanico"):
+    """
+    Devuelve (role, rol_id) a partir del payload. Con rol_id, el permiso se
+    toma del rol base de ese Rol; si no, se usa "role" (admin/mecanico).
+    Lanza ValueError si el rol no es válido.
+    """
+    rol_id = data.get("rol_id")
+    if rol_id:
+        rol = db.session.get(Rol, int(rol_id))
+        if not rol:
+            raise ValueError("Rol inválido")
+        return rol.base, rol.id
+    role = data.get("role", role_actual)
+    if role not in ROLES:
+        raise ValueError("Rol inválido")
+    return role, None
 
 
 # ─── Listar usuarios ───
@@ -57,7 +75,6 @@ def crear_usuario():
     username = (data.get("username") or "").strip()
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
-    role = data.get("role", "mecanico")
     nombre_completo = (data.get("nombre_completo") or "").strip()
 
     # Validaciones
@@ -65,8 +82,10 @@ def crear_usuario():
         return jsonify({"msg": "Usuario, email y contraseña son obligatorios"}), 400
     if len(password) < 6:
         return jsonify({"msg": "La contraseña debe tener al menos 6 caracteres"}), 400
-    if role not in ROLES:
-        return jsonify({"msg": "Rol inválido"}), 400
+    try:
+        role, rol_id = _resolver_rol(data)
+    except ValueError as e:
+        return jsonify({"msg": str(e)}), 400
 
     # Duplicados
     if Usuario.query.filter(
@@ -78,6 +97,7 @@ def crear_usuario():
         username=username,
         email=email,
         role=role,
+        rol_id=rol_id,
         nombre_completo=nombre_completo or None,
         activo=True,
     )
@@ -118,13 +138,16 @@ def editar_usuario(user_id):
 
     es_uno_mismo = user.id == int(get_jwt_identity())
 
-    if "role" in data:
-        if data["role"] not in ROLES:
-            return jsonify({"msg": "Rol inválido"}), 400
+    if "role" in data or "rol_id" in data:
+        try:
+            role, rol_id = _resolver_rol(data, user.role)
+        except ValueError as e:
+            return jsonify({"msg": str(e)}), 400
         # Evita que el admin se quite su propio rol y pierda el acceso
-        if es_uno_mismo and data["role"] != "admin":
+        if es_uno_mismo and role != "admin":
             return jsonify({"msg": "No puedes quitarte el rol de administrador"}), 400
-        user.role = data["role"]
+        user.role = role
+        user.rol_id = rol_id
 
     if "activo" in data:
         if es_uno_mismo and not data["activo"]:

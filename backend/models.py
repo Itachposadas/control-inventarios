@@ -13,6 +13,22 @@ def utcnow():
 ROLES = ("admin", "mecanico")
 
 
+class Rol(db.Model):
+    """
+    Rol con nombre propio (ej. "Supervisor"). Los permisos los hereda de un
+    rol base de ROLES, así que el resto del sistema solo revisa Usuario.role.
+    """
+    __tablename__ = "roles"
+
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(60), unique=True, nullable=False)
+    base = db.Column(db.Enum(*ROLES), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    def to_dict(self):
+        return {"id": self.id, "nombre": self.nombre, "base": self.base}
+
+
 class Usuario(db.Model):
     __tablename__ = "usuarios"
 
@@ -22,10 +38,13 @@ class Usuario(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     nombre_completo = db.Column(db.String(150))
     role = db.Column(db.Enum("admin", "almacen", "mecanico"), default="mecanico", nullable=False)
+    rol_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=True)
     activo = db.Column(db.Boolean, default=True, nullable=False)
     ultimo_acceso = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    rol = db.relationship("Rol")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -40,6 +59,8 @@ class Usuario(db.Model):
             "email": self.email,
             "nombre_completo": self.nombre_completo,
             "role": self.role,
+            "rol_id": self.rol_id,
+            "rol_nombre": self.rol.nombre if self.rol else None,
             "activo": self.activo,
             "ultimo_acceso": self.ultimo_acceso.isoformat() if self.ultimo_acceso else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,

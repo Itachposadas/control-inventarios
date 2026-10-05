@@ -1,11 +1,21 @@
 // src/components/usuarios/UsuarioModal.jsx
 import { useEffect, useState } from "react";
-import { X, Eye, EyeOff } from "lucide-react";
+import { X, Eye, EyeOff, Plus } from "lucide-react";
+import { rolesApi } from "../../api/roles";
 
+// Roles base: definen los permisos. Los roles creados heredan de uno de ellos.
 const ROLES = [
   { value: "admin",    label: "Administrador" },
   { value: "mecanico", label: "Mecánico" },
 ];
+
+// Valor del <select>: "admin" / "mecanico" o "rol:<id>" para un rol creado
+const valorRol = (u) => (u?.rol_id ? `rol:${u.rol_id}` : u?.role || "mecanico");
+
+const inputClass = `w-full px-3 py-2 rounded-lg border border-slate-200
+  text-sm text-slate-800
+  focus:outline-none focus:border-institucional
+  focus:ring-2 focus:ring-institucional/15 transition`;
 
 export default function UsuarioModal({ open, onClose, onSave, usuario = null }) {
   const editando = Boolean(usuario);
@@ -18,6 +28,10 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
     role: "mecanico",
     activo: true,
   });
+  const [roles, setRoles] = useState([]);
+  const [nuevoRol, setNuevoRol] = useState(false);
+  const [rolNombre, setRolNombre] = useState("");
+  const [rolBase, setRolBase] = useState("mecanico");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -30,12 +44,16 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
         email: usuario?.email || "",
         nombre_completo: usuario?.nombre_completo || "",
         password: "",
-        role: usuario?.role || "mecanico",
+        role: valorRol(usuario),
         activo: usuario?.activo ?? true,
       });
       setError("");
       setSaving(false);
       setShowPassword(false);
+      setNuevoRol(false);
+      setRolNombre("");
+      setRolBase("mecanico");
+      rolesApi.listar().then(setRoles).catch(() => setRoles([]));
     }
   }, [open, usuario]);
 
@@ -60,14 +78,29 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
     if (form.password && form.password.length < 6) {
       return setError("La contraseña debe tener al menos 6 caracteres");
     }
+    if (nuevoRol && !rolNombre.trim()) {
+      return setError("Escribe el nombre del nuevo rol");
+    }
 
     setSaving(true);
     try {
+      // Rol: uno nuevo (se crea primero), uno creado antes o un rol base
+      let rolSel = form.role;
+      if (nuevoRol) {
+        const creado = await rolesApi.crear({ nombre: rolNombre.trim(), base: rolBase });
+        setRoles((rs) => [...rs, creado]);
+        setNuevoRol(false);
+        rolSel = `rol:${creado.id}`;
+        setForm((f) => ({ ...f, role: rolSel }));
+      }
+      const rolId = rolSel.startsWith("rol:") ? Number(rolSel.slice(4)) : null;
+
       const payload = {
         username: form.username.trim(),
         email: form.email.trim().toLowerCase(),
         nombre_completo: form.nombre_completo.trim(),
-        role: form.role,
+        role: rolId ? undefined : rolSel,
+        rol_id: rolId,
         activo: form.activo,
       };
       // Solo incluir password si se escribió
@@ -204,24 +237,67 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
 
           {/* Rol */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Rol <span className="text-red-600">*</span>
-            </label>
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full px-3 py-2 rounded-lg border border-slate-200
-                         text-sm text-slate-800
-                         focus:outline-none focus:border-institucional
-                         focus:ring-2 focus:ring-institucional/15 transition cursor-pointer"
-            >
-              {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-slate-700">
+                Rol <span className="text-red-600">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setNuevoRol((v) => !v)}
+                className="inline-flex items-center gap-1 text-xs font-medium
+                           text-institucional hover:underline"
+              >
+                {nuevoRol ? (
+                  "Elegir existente"
+                ) : (
+                  <>
+                    <Plus size={12} /> Nuevo rol
+                  </>
+                )}
+              </button>
+            </div>
+
+            {nuevoRol ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  value={rolNombre}
+                  onChange={(e) => setRolNombre(e.target.value)}
+                  autoFocus
+                  maxLength={60}
+                  placeholder="Nombre del rol (ej. Supervisor)"
+                  className={inputClass}
+                />
+                <select
+                  value={rolBase}
+                  onChange={(e) => setRolBase(e.target.value)}
+                  className={`${inputClass} cursor-pointer`}
+                >
+                  {ROLES.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      Permisos de {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <select
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                className={`${inputClass} cursor-pointer`}
+              >
+                {ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+                {roles.map((r) => (
+                  <option key={r.id} value={`rol:${r.id}`}>
+                    {r.nombre} (permisos de {ROLES.find((b) => b.value === r.base)?.label})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Activo (solo al editar) */}
