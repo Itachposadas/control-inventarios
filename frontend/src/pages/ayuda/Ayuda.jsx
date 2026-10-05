@@ -7,7 +7,7 @@ import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
   ClipboardPlus, Stethoscope, Wrench, CheckCircle2, History, Car,
-  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck,
+  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck, Hammer,
 } from "lucide-react";
 
 const GUIA_MECANICO = [
@@ -63,6 +63,18 @@ const GUIA_MECANICO = [
       "En “Taller al que se remite” escribe el nombre del taller solo en la columna que corresponda: muelles, llantas o transmisión.",
     ],
     nota: "Puedes corregir o eliminar la orden mientras la unidad siga en el taller.",
+  },
+  {
+    icon: <Hammer size={20} />,
+    titulo: "Préstamo de herramientas",
+    pasos: [
+      "En Préstamo de herramientas → Catálogo están las herramientas del taller y cuántas piezas hay de cada una. Ahí puedes registrar, editar o eliminar herramientas.",
+      "Cuando un mecánico pida herramientas, ve a la pestaña Prestadas y pulsa “Nuevo préstamo”: escribe el nombre del mecánico y elige las herramientas y la cantidad.",
+      "Cuando las regrese, pulsa “Devolvió todo”. Si solo regresó algunas, pulsa “Devolvió algunas”, marca las que entregó (y cuántas piezas) y confirma: lo que falta queda como Pendiente.",
+      "Cuando ya regresó todo, el préstamo pasa a la pestaña Devueltas.",
+      "Para saber quién tiene una herramienta, búscala por nombre en Prestadas o en Catálogo (columna “La tiene”).",
+    ],
+    nota: "No se puede prestar más piezas de las disponibles; el catálogo muestra cuántas quedan.",
   },
   {
     icon: <History size={20} />,

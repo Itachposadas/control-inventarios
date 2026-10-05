@@ -3,7 +3,7 @@ import os
 import secrets
 from app import create_app
 from extensions import db
-from models import Usuario, Vehiculo, Solicitud, SolicitudRefaccion, SolicitudEvento  # noqa: F401 (registran sus tablas)
+from models import Usuario, Vehiculo, Solicitud, SolicitudRefaccion, SolicitudEvento, Herramienta, Prestamo, PrestamoItem  # noqa: F401 (registran sus tablas)
 
 def seed_password():
     """

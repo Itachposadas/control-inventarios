@@ -13,6 +13,7 @@ from routes.reportes import reportes_bp
 from routes.fotos import fotos_bp
 from routes.foraneas import foraneas_bp
 from routes.roles import roles_bp
+from routes.herramientas import herramientas_bp
 
 # Columnas agregadas a tablas que ya existían. create_all() no las añade,
 # así que se agregan al arrancar si faltan (solo agrega, nunca borra datos).
@@ -33,6 +34,18 @@ def _agregar_columnas_faltantes(app):
             with db.engine.begin() as conn:
                 conn.execute(db.text(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo}"))
             app.logger.info("Columna agregada: %s.%s", tabla, columna)
+
+
+def _cargar_catalogo_herramientas(app):
+    """Llena el catálogo de herramientas la primera vez (si está vacío y nunca se ha prestado nada)."""
+    from models import Herramienta, PrestamoItem
+    from catalogo_herramientas import HERRAMIENTAS_INICIALES
+
+    if Herramienta.query.first() or PrestamoItem.query.first():
+        return
+    db.session.add_all(Herramienta(nombre=n, cantidad=c) for n, c in HERRAMIENTAS_INICIALES)
+    db.session.commit()
+    app.logger.info("Catálogo de herramientas cargado (%d)", len(HERRAMIENTAS_INICIALES))
 
 
 def create_app():
@@ -61,6 +74,7 @@ def create_app():
     app.register_blueprint(fotos_bp)
     app.register_blueprint(foraneas_bp)
     app.register_blueprint(roles_bp)
+    app.register_blueprint(herramientas_bp)
 
     # Crea las tablas que falten al arrancar (no modifica las que ya existen),
     # así un módulo nuevo no deja al sistema sin funcionar.
@@ -69,6 +83,7 @@ def create_app():
         try:
             db.create_all()
             _agregar_columnas_faltantes(app)
+            _cargar_catalogo_herramientas(app)
         except Exception as e:
             app.logger.error("No se pudieron crear las tablas: %s", e)
 

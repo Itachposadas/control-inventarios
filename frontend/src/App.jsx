@@ -28,6 +28,9 @@ import EvidenciaFotografica from "./pages/solicitudes/EvidenciaFotografica";
 import OrdenesForaneas from "./pages/foraneas/OrdenesForaneas";
 import OrdenForanea from "./pages/foraneas/OrdenForanea";
 
+// Préstamo de herramientas (solo mecánico)
+import PrestamoHerramientas from "./pages/herramientas/PrestamoHerramientas";
+
 // Reportes (solo admin)
 import Reportes from "./pages/reportes/Reportes";
 
@@ -107,6 +110,7 @@ export default function App() {
           <Route path="/mecanico/evidencia" element={solo([MECANICO], <EvidenciaFotografica />)} />
           <Route path="/mecanico/foraneo" element={solo([MECANICO], <OrdenesForaneas />)} />
           <Route path="/mecanico/foraneo/:id" element={solo([MECANICO], <OrdenForanea />)} />
+          <Route path="/mecanico/herramientas" element={solo([MECANICO], <PrestamoHerramientas />)} />
           <Route
             path="/mecanico/historial"
             element={solo([MECANICO], (

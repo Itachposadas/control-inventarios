@@ -378,3 +378,84 @@ class SolicitudEvento(db.Model):
             "usuario": self.usuario.nombre_completo or self.usuario.username if self.usuario else None,
             "fecha": _iso(self.created_at),
         }
+
+
+def _nombre_usuario(u):
+    return (u.nombre_completo or u.username) if u else None
+
+
+class Herramienta(db.Model):
+    """Catálogo de herramientas del taller que se prestan a los mecánicos."""
+    __tablename__ = "herramientas"
+
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(120), unique=True, nullable=False)
+    cantidad = db.Column(db.Integer, nullable=False, default=1)  # piezas que tiene el taller
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    def to_dict(self, en_uso=None):
+        # en_uso: [{"mecanico", "cantidad"}] de quienes la tienen sin devolver
+        en_uso = en_uso or []
+        prestadas = sum(e["cantidad"] for e in en_uso)
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "cantidad": self.cantidad,
+            "prestadas": prestadas,
+            "disponibles": max(self.cantidad - prestadas, 0),
+            "en_uso": en_uso,
+        }
+
+
+class Prestamo(db.Model):
+    """
+    Préstamo de herramientas a un mecánico (la hoja donde se anotaba a mano).
+    El nombre del mecánico se escribe tal cual, como en la hoja.
+    Sigue abierto mientras tenga herramientas sin devolver.
+    """
+    __tablename__ = "prestamos_herramientas"
+
+    id = db.Column(db.Integer, primary_key=True)
+    mecanico = db.Column(db.String(150), nullable=False)
+    registrado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
+    observaciones = db.Column(db.Text)
+    fecha_prestamo = db.Column(db.DateTime, default=utcnow, nullable=False, index=True)
+    fecha_devolucion = db.Column(db.DateTime)  # se llena cuando ya regresó todo
+
+    registrado_por = db.relationship("Usuario")
+    items = db.relationship(
+        "PrestamoItem", backref="prestamo", cascade="all, delete-orphan", order_by="PrestamoItem.id"
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "mecanico": self.mecanico,
+            "registrado_por": _nombre_usuario(self.registrado_por),
+            "observaciones": self.observaciones,
+            "fecha_prestamo": _iso(self.fecha_prestamo),
+            "fecha_devolucion": _iso(self.fecha_devolucion),
+            "items": [i.to_dict() for i in self.items],
+        }
+
+
+class PrestamoItem(db.Model):
+    """Una herramienta (y cuántas piezas) dentro de un préstamo."""
+    __tablename__ = "prestamos_herramientas_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    prestamo_id = db.Column(db.Integer, db.ForeignKey("prestamos_herramientas.id"), nullable=False, index=True)
+    herramienta_id = db.Column(db.Integer, db.ForeignKey("herramientas.id"), nullable=False, index=True)
+    cantidad = db.Column(db.Integer, nullable=False, default=1)
+    devuelto_at = db.Column(db.DateTime)
+
+    herramienta = db.relationship("Herramienta")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "herramienta_id": self.herramienta_id,
+            "herramienta": self.herramienta.nombre if self.herramienta else None,
+            "cantidad": self.cantidad,
+            "devuelto_at": _iso(self.devuelto_at),
+        }

@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
 from auth_utils import role_required
 from extensions import db
-from models import Usuario, Rol, Solicitud, SolicitudEvento, ROLES
+from models import Usuario, Rol, Solicitud, SolicitudEvento, Prestamo, ROLES
 
 usuarios_bp = Blueprint("usuarios", __name__, url_prefix="/api/usuarios")
 
@@ -184,10 +184,11 @@ def eliminar_usuario(user_id):
             (Solicitud.mecanico_id == user.id) | (Solicitud.creado_por_id == user.id)
         ).first()
         or SolicitudEvento.query.filter_by(usuario_id=user.id).first()
+        or Prestamo.query.filter_by(registrado_por_id=user.id).first()
     )
     if tiene_historial:
         return jsonify({
-            "msg": "No se puede eliminar: el usuario tiene solicitudes registradas. "
+            "msg": "No se puede eliminar: el usuario tiene solicitudes o préstamos registrados. "
                    "Desactívalo en su lugar."
         }), 409
 
