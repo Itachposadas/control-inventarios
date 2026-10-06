@@ -13,6 +13,7 @@ import {
   ClipboardPlus, Camera, Hammer, Loader2, CarFront, ChevronRight, CheckCircle2,
 } from "lucide-react";
 
+import { Alerta } from "../../components/ui";
 const ACTIVAS = ["recibida", "diagnostico", "reparacion"];
 
 const ACCIONES = [
@@ -98,7 +99,7 @@ export default function MecanicoDashboard() {
           <span className="ml-3 text-sm">Cargando...</span>
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-4 rounded-lg">{error}</div>
+        <Alerta>{error}</Alerta>
       ) : activas.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
           <CheckCircle2 size={40} className="mx-auto text-emerald-600" />

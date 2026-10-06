@@ -18,6 +18,7 @@ import {
   Car, ArrowLeft, CarFront, Hash, Tag, KeyRound, Wrench as WrenchIcon,
   CircleDot, Calendar, Loader2, Pencil, Trash2, ClipboardPlus, } from "lucide-react";
 
+import { Boton } from "../../../components/ui";
 export default function VehiculoDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -177,14 +178,12 @@ export default function VehiculoDetail() {
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             {/* Solo el mecánico registra el ingreso a taller */}
             {esMecanico && vehiculo.estado === "activo" && (
-              <button
+              <Boton
                 onClick={() => navigate(`/mecanico/reparaciones/nueva?vehiculo=${vehiculo.id}`)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg
-                           bg-institucional hover:bg-institucional-dark text-sm font-semibold text-white transition"
+                icono={<ClipboardPlus size={15} />}
               >
-                <ClipboardPlus size={15} />
                 Registrar ingreso a taller
-              </button>
+              </Boton>
             )}
             {esMecanico && vehiculo.estado === "mantenimiento" && (
               <span className="text-xs font-medium text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">

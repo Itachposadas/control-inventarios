@@ -9,7 +9,7 @@ import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
 import FotosEvidencia from "../../components/solicitudes/FotosEvidencia";
 import { EstadoBadge, PrioridadBadge } from "../../components/solicitudes/Badges";
-import { Section, Field, TextArea, inputClass } from "../../components/solicitudes/ui";
+import { Section, Field, TextArea, inputClass, Boton, Alerta } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
 import { usuariosApi } from "../../api/usuarios";
 import { useAuth } from "../../context/AuthContext";
@@ -276,35 +276,35 @@ export default function SolicitudDetail() {
             <p className="mt-1 text-lg font-semibold text-slate-800 leading-snug">{paso.texto}</p>
           </div>
           {puedeLlenar && paso.accion === "foto" && (
-            <button
+            <Boton
+              tamano="lg"
               onClick={() => navigate(`/mecanico/evidencia?servicio=${s.id}`)}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold
-                         bg-institucional hover:bg-institucional-dark text-white transition shrink-0"
+              icono={<Camera size={20} />}
+              className="shrink-0"
             >
-              <Camera size={20} />
               Tomar foto {NOMBRE_FOTO[paso.foto]}
-            </button>
+            </Boton>
           )}
           {puedeLlenar && paso.accion === "escribir" && (
-            <button
+            <Boton
+              tamano="lg"
               onClick={() => irAEscribir(paso.campo)}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold
-                         bg-institucional hover:bg-institucional-dark text-white transition shrink-0"
+              icono={<PencilLine size={20} />}
+              className="shrink-0"
             >
-              <PencilLine size={20} />
               Escribir aquí
-            </button>
+            </Boton>
           )}
           {puedeLlenar && paso.accion === "avanzar" && puedeAvanzar && (
-            <button
+            <Boton
+              tamano="lg"
               onClick={avanzar}
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold
-                         bg-institucional hover:bg-institucional-dark text-white disabled:bg-slate-300 transition shrink-0"
+              icono={siguiente.value === "completada" ? <CheckCircle2 size={20} /> : <ArrowRight size={20} />}
+              className="shrink-0"
             >
-              {siguiente.value === "completada" ? <CheckCircle2 size={20} /> : <ArrowRight size={20} />}
               {saving ? "Guardando..." : etiquetaAvance}
-            </button>
+            </Boton>
           )}
         </div>
       )}
@@ -332,14 +332,14 @@ export default function SolicitudDetail() {
             solicitud={s}
             puedeSubir={false}
             accion={puedeLlenar && (
-              <button
+              <Boton
+                tamano="sm"
                 onClick={() => navigate(`/mecanico/evidencia?servicio=${s.id}`)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                           bg-institucional hover:bg-institucional-dark text-white transition shrink-0"
+                icono={<Camera size={14} />}
+                className="shrink-0"
               >
-                <Camera size={14} />
                 Subir fotos
-              </button>
+              </Boton>
             )}
           />
 
@@ -403,15 +403,14 @@ export default function SolicitudDetail() {
               title="Taller foráneo"
               subtitle="Cuando la unidad no se puede reparar aquí y se manda a un taller externo"
               actions={puedeLlenar && (
-                <button
-                  type="button"
+                <Boton
+                  tamano="sm"
                   onClick={() => navigate(`/mecanico/foraneo/nueva?servicio=${s.id}`)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                             bg-institucional hover:bg-institucional-dark text-white transition shrink-0"
+                  icono={<Plus size={14} />}
+                  className="shrink-0"
                 >
-                  <Plus size={14} />
                   Generar orden foránea
-                </button>
+                </Boton>
               )}
             >
               {s.ordenes_foraneas.length === 0 ? (
@@ -491,27 +490,21 @@ export default function SolicitudDetail() {
                   className={inputClass}
                 />
                 {puedeAvanzar && (
-                  <button
-                    onClick={avanzar}
-                    disabled={saving}
-                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg
-                               bg-institucional hover:bg-institucional-dark text-white text-sm font-semibold
-                               disabled:bg-slate-300 transition"
-                  >
+                  <Boton onClick={avanzar} disabled={saving} className="w-full">
                     {etiquetaAvance}
                     <ArrowRight size={15} />
-                  </button>
+                  </Boton>
                 )}
                 {puedeRegresar && (
-                  <button
+                  <Boton
+                    variante="fantasma"
                     onClick={() => handleEstado(anterior.value)}
                     disabled={saving}
-                    className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg
-                               text-slate-600 hover:bg-slate-100 text-sm font-medium transition"
+                    icono={<Undo2 size={15} />}
+                    className="w-full"
                   >
-                    <Undo2 size={15} />
                     Regresar a {anterior.label}
-                  </button>
+                  </Boton>
                 )}
               </div>
             )}
@@ -594,21 +587,12 @@ export default function SolicitudDetail() {
             {!error && dirty && <p className="text-sm text-slate-500 mr-auto">Tienes cambios sin guardar</p>}
             {dirty && (
               <>
-                <button
-                  onClick={() => { setForm(formDesdeSolicitud(s)); setError(""); }}
-                  className="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 transition"
-                >
+                <Boton variante="fantasma" onClick={() => { setForm(formDesdeSolicitud(s)); setError(""); }}>
                   Descartar
-                </button>
-                <button
-                  onClick={handleGuardar}
-                  disabled={saving}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold rounded-lg
-                             bg-institucional hover:bg-institucional-dark text-white disabled:bg-slate-300 transition"
-                >
-                  <Save size={15} />
+                </Boton>
+                <Boton onClick={handleGuardar} disabled={saving} icono={<Save size={15} />}>
                   {saving ? "Guardando..." : "Guardar cambios"}
-                </button>
+                </Boton>
               </>
             )}
           </div>
@@ -616,9 +600,7 @@ export default function SolicitudDetail() {
       )}
       {/* Errores cuando no hay barra de guardado (ej. mecánico con la solicitud cerrada) */}
       {!puedeEditar && error && (
-        <div className="fixed bottom-4 right-4 z-20 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">
-          {error}
-        </div>
+        <Alerta className="fixed bottom-4 right-4 z-20">{error}</Alerta>
       )}
 
       <ConfirmModal

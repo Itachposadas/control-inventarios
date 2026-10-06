@@ -10,7 +10,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import DatosVehiculo, { datosDesdeVehiculo } from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
-import { Section, Field, TextArea, inputClass } from "../../components/solicitudes/ui";
+import { Section, Field, TextArea, inputClass, Boton } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
 import { vehiculosApi } from "../../api/vehiculos";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
@@ -360,21 +360,12 @@ export default function SolicitudNueva() {
                   : "Accesorios y herramientas completos"}
               </p>
             )}
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 transition"
-            >
+            <Boton variante="fantasma" onClick={() => navigate(-1)}>
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving || !vehiculo}
-              className="px-5 py-2 text-sm font-semibold rounded-lg bg-institucional hover:bg-institucional-dark
-                         text-white disabled:bg-slate-300 disabled:cursor-not-allowed transition"
-            >
+            </Boton>
+            <Boton type="submit" disabled={saving || !vehiculo}>
               {saving ? "Registrando..." : "Registrar ingreso"}
-            </button>
+            </Boton>
           </div>
         </div>
       </form>

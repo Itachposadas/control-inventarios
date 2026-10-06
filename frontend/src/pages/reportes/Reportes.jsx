@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import KpiCard from "../../components/dashboard/KpiCard";
 import BarrasPorMes from "../../components/reportes/BarrasPorMes";
-import { inputClass } from "../../components/solicitudes/ui";
+import { inputClass, Boton, Alerta } from "../../components/ui";
 import { reportesApi } from "../../api/reportes";
 import { vehiculosApi } from "../../api/vehiculos";
 import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../config/menus";
@@ -120,16 +120,14 @@ export default function Reportes() {
           </Filtro>
 
           <div className="lg:ml-auto">
-            <button
+            <Boton
               onClick={handlePdf}
               disabled={!reporte || loading || generando}
-              className="w-full lg:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
-                         bg-institucional hover:bg-institucional-dark text-white text-sm font-semibold
-                         disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+              icono={generando ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+              className="w-full lg:w-auto"
             >
-              {generando ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
               {generando ? "Generando PDF..." : "Descargar PDF"}
-            </button>
+            </Boton>
           </div>
         </div>
         {reporte && (
@@ -141,7 +139,7 @@ export default function Reportes() {
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">{error}</div>
+        <Alerta className="mb-4">{error}</Alerta>
       )}
 
       {loading && !reporte ? (

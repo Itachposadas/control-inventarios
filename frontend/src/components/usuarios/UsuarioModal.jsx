@@ -1,7 +1,8 @@
 // src/components/usuarios/UsuarioModal.jsx
 import { useEffect, useState } from "react";
-import { X, Eye, EyeOff, Plus } from "lucide-react";
+import { Eye, EyeOff, Plus } from "lucide-react";
 import { rolesApi } from "../../api/roles";
+import { Modal, Boton, Alerta, Field, inputClass } from "../ui";
 
 // Roles base: definen los permisos. Los roles creados heredan de uno de ellos.
 const ROLES = [
@@ -11,11 +12,6 @@ const ROLES = [
 
 // Valor del <select>: "admin" / "mecanico" o "rol:<id>" para un rol creado
 const valorRol = (u) => (u?.rol_id ? `rol:${u.rol_id}` : u?.role || "mecanico");
-
-const inputClass = `w-full px-3 py-2 rounded-lg border border-slate-200
-  text-sm text-slate-800
-  focus:outline-none focus:border-institucional
-  focus:ring-2 focus:ring-institucional/15 transition`;
 
 export default function UsuarioModal({ open, onClose, onSave, usuario = null }) {
   const editando = Boolean(usuario);
@@ -118,228 +114,171 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 animate-fade-in">
-      <div className="animate-pop bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-800">
-              {editando ? "Editar usuario" : "Nuevo usuario"}
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {editando
-                ? "Modifica los datos del usuario"
-                : "Registra una nueva cuenta en el sistema"}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
-          >
-            <X size={18} />
-          </button>
+    <Modal
+      titulo={editando ? "Editar usuario" : "Nuevo usuario"}
+      subtitulo={editando ? "Modifica los datos del usuario" : "Registra una nueva cuenta en el sistema"}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {error && <Alerta>{error}</Alerta>}
+
+        <Field label="Nombre completo">
+          <input
+            name="nombre_completo"
+            value={form.nombre_completo}
+            onChange={handleChange}
+            placeholder="Juan Pérez López"
+            className={inputClass}
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Usuario" required>
+            <input
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              required
+              placeholder="juanperez"
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Email" required>
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              placeholder="juan@demo.com"
+              className={inputClass}
+            />
+          </Field>
         </div>
 
-        {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          {/* Nombre completo */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Nombre completo
-            </label>
-            <input
-              name="nombre_completo"
-              value={form.nombre_completo}
-              onChange={handleChange}
-              placeholder="Juan Pérez López"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200
-                         text-sm text-slate-800
-                         focus:outline-none focus:border-institucional
-                         focus:ring-2 focus:ring-institucional/15 transition"
-            />
-          </div>
-
-          {/* Username + Email */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Usuario <span className="text-red-600">*</span>
-              </label>
-              <input
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-                required
-                placeholder="juanperez"
-                className="w-full px-3 py-2 rounded-lg border border-slate-200
-                           text-sm text-slate-800
-                           focus:outline-none focus:border-institucional
-                           focus:ring-2 focus:ring-institucional/15 transition"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Email <span className="text-red-600">*</span>
-              </label>
-              <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                placeholder="juan@demo.com"
-                className="w-full px-3 py-2 rounded-lg border border-slate-200
-                           text-sm text-slate-800
-                           focus:outline-none focus:border-institucional
-                           focus:ring-2 focus:ring-institucional/15 transition"
-              />
-            </div>
-          </div>
-
-          {/* Contraseña */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Contraseña {!editando && <span className="text-red-600">*</span>}
+        <Field
+          label={
+            <>
+              Contraseña
               {editando && (
-                <span className="text-xs font-normal text-slate-500 ml-1">
-                  (dejar vacío para no cambiar)
-                </span>
+                <span className="text-xs font-normal text-slate-500 ml-1">(dejar vacío para no cambiar)</span>
               )}
+            </>
+          }
+          required={!editando}
+        >
+          <div className="relative">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Mínimo 6 caracteres"
+              className={`${inputClass} pr-11`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
+                         text-slate-500 hover:text-institucional transition"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </Field>
+
+        {/* Rol */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-slate-700">
+              Rol <span className="text-red-600">*</span>
             </label>
-            <div className="relative">
-              <input
-                name="password"
-                type={showPassword ? "text" : "password"}
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Mínimo 6 caracteres"
-                className="w-full px-3 py-2 pr-11 rounded-lg border border-slate-200
-                           text-sm text-slate-800
-                           focus:outline-none focus:border-institucional
-                           focus:ring-2 focus:ring-institucional/15 transition"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
-                           text-slate-500 hover:text-institucional transition"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setNuevoRol((v) => !v)}
+              className="inline-flex items-center gap-1 text-xs font-medium
+                         text-institucional hover:underline"
+            >
+              {nuevoRol ? (
+                "Elegir existente"
+              ) : (
+                <>
+                  <Plus size={12} /> Nuevo rol
+                </>
+              )}
+            </button>
           </div>
 
-          {/* Rol */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-slate-700">
-                Rol <span className="text-red-600">*</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setNuevoRol((v) => !v)}
-                className="inline-flex items-center gap-1 text-xs font-medium
-                           text-institucional hover:underline"
-              >
-                {nuevoRol ? (
-                  "Elegir existente"
-                ) : (
-                  <>
-                    <Plus size={12} /> Nuevo rol
-                  </>
-                )}
-              </button>
-            </div>
-
-            {nuevoRol ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  value={rolNombre}
-                  onChange={(e) => setRolNombre(e.target.value)}
-                  autoFocus
-                  maxLength={60}
-                  placeholder="Nombre del rol (ej. Supervisor)"
-                  className={inputClass}
-                />
-                <select
-                  value={rolBase}
-                  onChange={(e) => setRolBase(e.target.value)}
-                  className={`${inputClass} cursor-pointer`}
-                >
-                  {ROLES.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      Permisos de {r.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
+          {nuevoRol ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                value={rolNombre}
+                onChange={(e) => setRolNombre(e.target.value)}
+                autoFocus
+                maxLength={60}
+                placeholder="Nombre del rol (ej. Supervisor)"
+                className={inputClass}
+              />
               <select
-                name="role"
-                value={form.role}
-                onChange={handleChange}
+                value={rolBase}
+                onChange={(e) => setRolBase(e.target.value)}
                 className={`${inputClass} cursor-pointer`}
               >
                 {ROLES.map((r) => (
                   <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-                {roles.map((r) => (
-                  <option key={r.id} value={`rol:${r.id}`}>
-                    {r.nombre} (permisos de {ROLES.find((b) => b.value === r.base)?.label})
+                    Permisos de {r.label}
                   </option>
                 ))}
               </select>
-            )}
-          </div>
-
-          {/* Activo (solo al editar) */}
-          {editando && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="activo"
-                checked={form.activo}
-                onChange={handleChange}
-                className="w-4 h-4 rounded border-slate-300 text-institucional
-                           focus:ring-institucional"
-              />
-              <span className="text-sm text-slate-700">
-                Usuario activo (puede iniciar sesión)
-              </span>
-            </label>
+            </div>
+          ) : (
+            <select
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              className={`${inputClass} cursor-pointer`}
+            >
+              {ROLES.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+              {roles.map((r) => (
+                <option key={r.id} value={`rol:${r.id}`}>
+                  {r.nombre} (permisos de {ROLES.find((b) => b.value === r.base)?.label})
+                </option>
+              ))}
+            </select>
           )}
+        </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium rounded-lg
-                         text-slate-600 hover:bg-slate-100 transition"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 text-sm font-semibold rounded-lg
-                         bg-institucional hover:bg-institucional-dark
-                         text-white disabled:bg-slate-300
-                         disabled:cursor-not-allowed transition"
-            >
-              {saving ? "Guardando..." : editando ? "Guardar cambios" : "Crear usuario"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Activo (solo al editar) */}
+        {editando && (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="activo"
+              checked={form.activo}
+              onChange={handleChange}
+              className="w-4 h-4 rounded border-slate-300 text-institucional
+                         focus:ring-institucional"
+            />
+            <span className="text-sm text-slate-700">
+              Usuario activo (puede iniciar sesión)
+            </span>
+          </label>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+          <Boton variante="fantasma" onClick={onClose}>
+            Cancelar
+          </Boton>
+          <Boton type="submit" disabled={saving}>
+            {saving ? "Guardando..." : editando ? "Guardar cambios" : "Crear usuario"}
+          </Boton>
+        </div>
+      </form>
+    </Modal>
   );
 }

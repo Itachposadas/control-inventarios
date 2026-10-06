@@ -8,7 +8,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import DashboardLayout from "../../layouts/DashboardLayout";
 import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import ConfirmModal from "../../components/ConfirmModal";
-import { Section, TextArea, inputClass } from "../../components/solicitudes/ui";
+import { Section, TextArea, inputClass, Boton } from "../../components/ui";
 import { foraneasApi } from "../../api/foraneas";
 import { solicitudesApi } from "../../api/solicitudes";
 import { useAuth } from "../../context/AuthContext";
@@ -314,14 +314,9 @@ export default function OrdenForanea() {
                   Eliminar
                 </button>
               )}
-              <button
-                type="submit"
-                disabled={saving || (!esNueva && !dirty)}
-                className="px-5 py-2 text-sm font-semibold rounded-lg bg-institucional hover:bg-institucional-dark
-                           text-white disabled:bg-slate-300 disabled:cursor-not-allowed transition"
-              >
+              <Boton type="submit" disabled={saving || (!esNueva && !dirty)}>
                 {saving ? "Guardando..." : esNueva ? "Generar orden" : "Guardar cambios"}
-              </button>
+              </Boton>
             </div>
           </div>
         )}

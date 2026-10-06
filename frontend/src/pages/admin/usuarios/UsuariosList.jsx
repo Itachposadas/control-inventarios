@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 
+import { Boton, Alerta } from "../../../components/ui";
 const ROLE_CONFIG = {
   admin:    { label: "Administrador", color: "bg-institucional/10 text-institucional", icon: <Shield size={14} /> },
   // Rol retirado; solo para mostrar cuentas antiguas
@@ -144,15 +145,9 @@ useEffect(() => {
               <option value="false">Inactivos</option>
             </select>
 
-            <button
-              onClick={handleNuevo}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg
-                         bg-institucional hover:bg-institucional-dark text-white
-                         text-sm font-semibold transition shrink-0"
-            >
-              <Plus size={16} />
+            <Boton onClick={handleNuevo} icono={<Plus size={16} />} aria-label="Nuevo usuario" className="shrink-0">
               <span className="hidden sm:inline">Nuevo</span>
-            </button>
+            </Boton>
           </div>
         </div>
 
@@ -174,9 +169,7 @@ useEffect(() => {
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">
-          {error}
-        </div>
+        <Alerta className="mb-4">{error}</Alerta>
       )}
 
       {loading ? (

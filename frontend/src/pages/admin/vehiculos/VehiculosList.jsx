@@ -14,6 +14,7 @@ import {
   CarFront, Loader2, Plus,
 } from "lucide-react";
 
+import { Boton, Alerta } from "../../../components/ui";
 export default function VehiculosList() {
   const navigate = useNavigate();
   const { role } = useAuth();
@@ -118,23 +119,18 @@ useEffect(() => {
         </div>
 
         {esAdmin && (
-          <button
+          <Boton
             onClick={handleNuevo}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl
-                       bg-institucional hover:bg-institucional-dark text-white
-                       text-sm font-semibold transition shrink-0 self-start sm:self-center"
+            icono={<Plus size={16} />}
+            className="shrink-0 self-start sm:self-center"
           >
-            <Plus size={16} />
             Nuevo vehículo
-          </button>
+          </Boton>
         )}
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700
-                        text-sm p-3 rounded-lg">
-          {error}
-        </div>
+        <Alerta className="mb-4">{error}</Alerta>
       )}
 
       {loading ? (

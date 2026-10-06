@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { COLORS } from "../../config/colors";
 
+import { Alerta } from "../../components/ui";
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [porEntregar, setPorEntregar] = useState([]);
@@ -78,9 +79,7 @@ export default function AdminDashboard() {
           <span className="ml-3 text-sm">Cargando estadísticas...</span>
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-4 rounded-lg">
-          {error}
-        </div>
+        <Alerta>{error}</Alerta>
       ) : (
         <>
           {/* KPIs */}

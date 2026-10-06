@@ -10,6 +10,7 @@ import {
   Calendar, CheckCircle2, XCircle, Loader2, Pencil,
 } from "lucide-react";
 
+import { Boton } from "../../../components/ui";
 const ROLE_CONFIG = {
   admin:    { label: "Administrador", color: "bg-institucional/10 text-institucional", icon: <Shield size={16} /> },
   // Rol retirado; solo para mostrar cuentas antiguas
@@ -129,15 +130,9 @@ export default function UsuarioDetail() {
               <h3 className="text-sm font-semibold text-slate-800">
                 Información de la cuenta
               </h3>
-              <button
-                onClick={() => setModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                           text-xs font-medium bg-institucional hover:bg-institucional-dark
-                           text-white transition"
-              >
-                <Pencil size={12} />
+              <Boton tamano="sm" onClick={() => setModalOpen(true)} icono={<Pencil size={12} />}>
                 Editar
-              </button>
+              </Boton>
             </div>
             <ul className="divide-y divide-slate-100">
               <InfoRow icon={<UserIcon size={16} />} label="Usuario" value={usuario.username} />

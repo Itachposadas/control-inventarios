@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ConfirmModal from "../../components/ConfirmModal";
-import { inputClass, Field } from "../../components/solicitudes/ui";
+import { inputClass, Field, Boton, Alerta, Modal, Insignia } from "../../components/ui";
 import { herramientasApi } from "../../api/herramientas";
 import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
@@ -21,9 +21,6 @@ const PESTANAS = [
 ];
 
 const card = "bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]";
-const btnPrimario = `inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg
-  bg-institucional hover:bg-institucional-dark text-white text-sm font-semibold transition shrink-0
-  disabled:bg-slate-300 disabled:cursor-not-allowed`;
 
 export default function PrestamoHerramientas() {
   const { role } = useAuth();
@@ -136,10 +133,9 @@ function Prestamos({ estado }) {
             />
           </div>
           {activos && (
-            <button onClick={() => setNuevo(true)} className={btnPrimario}>
-              <Plus size={16} />
+            <Boton onClick={() => setNuevo(true)} icono={<Plus size={16} />} className="shrink-0">
               Nuevo préstamo
-            </button>
+            </Boton>
           )}
         </div>
         {q && !loading && (
@@ -154,7 +150,7 @@ function Prestamos({ estado }) {
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">{error}</div>
+        <Alerta className="mb-4">{error}</Alerta>
       )}
 
       {loading ? (
@@ -235,10 +231,9 @@ function TarjetaPrestamo({ prestamo: p, activo, resaltar, ocupado, onDevolver })
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-base font-semibold text-slate-800 truncate">{p.mecanico}</p>
             {parcial && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">
-                <Clock size={11} />
+              <Insignia tono="ambar" icono={<Clock size={11} />} className="!py-0.5 !text-[11px] font-semibold">
                 Pendiente: faltan {piezas(piezasPendientes)}
-              </span>
+              </Insignia>
             )}
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -349,45 +344,38 @@ function TarjetaPrestamo({ prestamo: p, activo, resaltar, ocupado, onDevolver })
                   ? `Quedarán pendientes ${piezas(faltarian)}`
                   : "Regresó todo"}
               </span>
-              <button
-                onClick={() => setMarcando(null)}
-                disabled={ocupado}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
-              >
+              <Boton variante="fantasma" tamano="sm" onClick={() => setMarcando(null)} disabled={ocupado}>
                 Cancelar
-              </button>
-              <button
+              </Boton>
+              <Boton
+                tamano="sm"
                 onClick={confirmar}
                 disabled={ocupado || piezasMarcadas === 0}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                           bg-institucional hover:bg-institucional-dark text-white
-                           disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                icono={<Check size={14} />}
               >
-                <Check size={14} />
                 {ocupado ? "Guardando..." : "Confirmar devolución"}
-              </button>
+              </Boton>
             </>
           ) : (
             <>
-              <button
+              <Boton
+                variante="secundario"
+                tamano="sm"
                 onClick={() => setMarcando({})}
                 disabled={ocupado}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
-                           text-slate-600 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 transition"
+                icono={<ListChecks size={14} />}
               >
-                <ListChecks size={14} />
                 Devolvió algunas
-              </button>
-              <button
+              </Boton>
+              <Boton
+                variante="contorno"
+                tamano="sm"
                 onClick={() => onDevolver()}
                 disabled={ocupado}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                           border border-institucional/30 text-institucional hover:bg-institucional/5
-                           disabled:opacity-50 transition"
+                icono={<Undo2 size={14} />}
               >
-                <Undo2 size={14} />
                 {ocupado ? "Guardando..." : "Devolvió todo"}
-              </button>
+              </Boton>
             </>
           )}
         </div>
@@ -460,182 +448,169 @@ function NuevoPrestamo({ onClose, onGuardado }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 animate-fade-in">
-      <div className="animate-pop bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-800">Nuevo préstamo</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Da clic en las herramientas que se lleva el mecánico</p>
-          </div>
-          <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
-            <X size={18} />
-          </button>
-        </div>
+    <Modal
+      titulo="Nuevo préstamo"
+      subtitulo="Da clic en las herramientas que se lleva el mecánico"
+      onClose={onClose}
+      ancho="max-w-3xl"
+    >
+      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {error && <Alerta>{error}</Alerta>}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">{error}</div>
-          )}
+        <Field label="Nombre del mecánico" required>
+          <input
+            value={mecanico}
+            onChange={(e) => setMecanico(e.target.value)}
+            autoFocus
+            maxLength={150}
+            placeholder="Luis Hernández"
+            className={inputClass}
+          />
+        </Field>
 
-          <Field label="Nombre del mecánico" required>
-            <input
-              value={mecanico}
-              onChange={(e) => setMecanico(e.target.value)}
-              autoFocus
-              maxLength={150}
-              placeholder="Luis Hernández"
-              className={inputClass}
-            />
-          </Field>
+        {catalogo === null ? (
+          <div className="flex justify-center py-6 text-slate-500"><Loader2 size={20} className="animate-spin" /></div>
+        ) : catalogo.length === 0 ? (
+          <p className="text-sm text-slate-500 bg-slate-50 rounded-lg px-3 py-3">
+            El catálogo está vacío. Primero registra las herramientas en la pestaña “Catálogo”.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Catálogo para elegir */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Herramientas <span className="text-red-600">*</span>
+              </label>
+              <div className="relative mb-2">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar por nombre (llave, dado, gato...)"
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
+              <ul className="h-72 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100">
+                {filtradas.length === 0 ? (
+                  <li className="px-3 py-8 text-center text-sm text-slate-500">No se encontraron herramientas</li>
+                ) : (
+                  filtradas.map((h) => {
+                    const elegida = seleccion[h.id] || 0;
+                    const agotada = h.disponibles === 0;
+                    const completa = elegida >= h.disponibles;
+                    return (
+                      <li key={h.id}>
+                        <button
+                          type="button"
+                          onClick={() => agregar(h)}
+                          disabled={completa}
+                          className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm transition
+                            disabled:cursor-not-allowed ${
+                              elegida ? "bg-institucional/5" : "hover:bg-slate-50"
+                            } ${agotada ? "opacity-50" : ""}`}
+                        >
+                          <span className="flex-1 min-w-0">
+                            <span className={`block truncate ${elegida ? "font-semibold text-institucional" : "text-slate-800"}`}>
+                              {h.nombre}
+                            </span>
+                            <span className="block text-[11px] text-slate-500">
+                              {agotada
+                                ? "Sin piezas disponibles"
+                                : `${h.disponibles - elegida} de ${h.disponibles} disponible${h.disponibles === 1 ? "" : "s"}`}
+                            </span>
+                            {h.en_uso.length > 0 && (
+                              <span className="block text-[11px] text-amber-700 truncate">
+                                La tiene: {quienLaTiene(h)}
+                              </span>
+                            )}
+                          </span>
+                          {elegida > 0 ? (
+                            <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-institucional shrink-0">
+                              <Check size={14} /> {elegida}
+                            </span>
+                          ) : (
+                            !agotada && <Plus size={15} className="text-slate-400 shrink-0" />
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })
+                )}
+              </ul>
+            </div>
 
-          {catalogo === null ? (
-            <div className="flex justify-center py-6 text-slate-500"><Loader2 size={20} className="animate-spin" /></div>
-          ) : catalogo.length === 0 ? (
-            <p className="text-sm text-slate-500 bg-slate-50 rounded-lg px-3 py-3">
-              El catálogo está vacío. Primero registra las herramientas en la pestaña “Catálogo”.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Catálogo para elegir */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Herramientas <span className="text-red-600">*</span>
-                </label>
-                <div className="relative mb-2">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder="Buscar por nombre (llave, dado, gato...)"
-                    className={`${inputClass} pl-9`}
-                  />
-                </div>
-                <ul className="h-72 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100">
-                  {filtradas.length === 0 ? (
-                    <li className="px-3 py-8 text-center text-sm text-slate-500">No se encontraron herramientas</li>
-                  ) : (
-                    filtradas.map((h) => {
-                      const elegida = seleccion[h.id] || 0;
-                      const agotada = h.disponibles === 0;
-                      const completa = elegida >= h.disponibles;
-                      return (
-                        <li key={h.id}>
+            {/* Vista de lo que se va a prestar */}
+            <div className="flex flex-col">
+              <p className="block text-sm font-medium text-slate-700 mb-1">
+                Herramientas a prestar
+                {totalPiezas > 0 && (
+                  <span className="ml-1.5 text-xs font-semibold text-institucional">
+                    ({totalPiezas} pieza{totalPiezas === 1 ? "" : "s"})
+                  </span>
+                )}
+              </p>
+              <div className="flex-1 min-h-[14rem] [contain:size] overflow-y-auto rounded-xl border border-dashed border-slate-300 bg-slate-50/60">
+                {elegidas.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center px-6 text-center text-slate-500">
+                    <Hammer size={30} className="text-slate-300" />
+                    <p className="mt-2 text-sm">Aún no hay herramientas</p>
+                    <p className="text-xs">Da clic en una herramienta de la lista para agregarla</p>
+                  </div>
+                ) : (
+                  <ul className="p-2 space-y-1.5">
+                    {elegidas.map(({ h, cantidad }) => (
+                      <li
+                        key={h.id}
+                        className="animate-pop flex items-center gap-2 bg-white rounded-lg border border-slate-200 px-3 py-2"
+                      >
+                        <span className="flex-1 min-w-0 text-sm text-slate-800 truncate">{h.nombre}</span>
+                        <span className="inline-flex items-center rounded-lg border border-slate-200 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => quitarUna(h.id)}
+                            aria-label={`Una pieza menos de ${h.nombre}`}
+                            className="px-2 py-0.5 text-slate-500 hover:text-institucional"
+                          >
+                            −
+                          </button>
+                          <span className="min-w-[1.5rem] text-center text-sm font-semibold text-slate-800">{cantidad}</span>
                           <button
                             type="button"
                             onClick={() => agregar(h)}
-                            disabled={completa}
-                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm transition
-                              disabled:cursor-not-allowed ${
-                                elegida ? "bg-institucional/5" : "hover:bg-slate-50"
-                              } ${agotada ? "opacity-50" : ""}`}
+                            disabled={cantidad >= h.disponibles}
+                            aria-label={`Una pieza más de ${h.nombre}`}
+                            className="px-2 py-0.5 text-slate-500 hover:text-institucional disabled:opacity-30"
                           >
-                            <span className="flex-1 min-w-0">
-                              <span className={`block truncate ${elegida ? "font-semibold text-institucional" : "text-slate-800"}`}>
-                                {h.nombre}
-                              </span>
-                              <span className="block text-[11px] text-slate-500">
-                                {agotada
-                                  ? "Sin piezas disponibles"
-                                  : `${h.disponibles - elegida} de ${h.disponibles} disponible${h.disponibles === 1 ? "" : "s"}`}
-                              </span>
-                              {h.en_uso.length > 0 && (
-                                <span className="block text-[11px] text-amber-700 truncate">
-                                  La tiene: {quienLaTiene(h)}
-                                </span>
-                              )}
-                            </span>
-                            {elegida > 0 ? (
-                              <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-institucional shrink-0">
-                                <Check size={14} /> {elegida}
-                              </span>
-                            ) : (
-                              !agotada && <Plus size={15} className="text-slate-400 shrink-0" />
-                            )}
+                            +
                           </button>
-                        </li>
-                      );
-                    })
-                  )}
-                </ul>
-              </div>
-
-              {/* Vista de lo que se va a prestar */}
-              <div className="flex flex-col">
-                <p className="block text-sm font-medium text-slate-700 mb-1">
-                  Herramientas a prestar
-                  {totalPiezas > 0 && (
-                    <span className="ml-1.5 text-xs font-semibold text-institucional">
-                      ({totalPiezas} pieza{totalPiezas === 1 ? "" : "s"})
-                    </span>
-                  )}
-                </p>
-                <div className="flex-1 min-h-[14rem] [contain:size] overflow-y-auto rounded-xl border border-dashed border-slate-300 bg-slate-50/60">
-                  {elegidas.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center px-6 text-center text-slate-500">
-                      <Hammer size={30} className="text-slate-300" />
-                      <p className="mt-2 text-sm">Aún no hay herramientas</p>
-                      <p className="text-xs">Da clic en una herramienta de la lista para agregarla</p>
-                    </div>
-                  ) : (
-                    <ul className="p-2 space-y-1.5">
-                      {elegidas.map(({ h, cantidad }) => (
-                        <li
-                          key={h.id}
-                          className="animate-pop flex items-center gap-2 bg-white rounded-lg border border-slate-200 px-3 py-2"
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => quitar(h.id)}
+                          aria-label={`Quitar ${h.nombre}`}
+                          className="p-1 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600 shrink-0"
                         >
-                          <span className="flex-1 min-w-0 text-sm text-slate-800 truncate">{h.nombre}</span>
-                          <span className="inline-flex items-center rounded-lg border border-slate-200 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => quitarUna(h.id)}
-                              aria-label={`Una pieza menos de ${h.nombre}`}
-                              className="px-2 py-0.5 text-slate-500 hover:text-institucional"
-                            >
-                              −
-                            </button>
-                            <span className="min-w-[1.5rem] text-center text-sm font-semibold text-slate-800">{cantidad}</span>
-                            <button
-                              type="button"
-                              onClick={() => agregar(h)}
-                              disabled={cantidad >= h.disponibles}
-                              aria-label={`Una pieza más de ${h.nombre}`}
-                              className="px-2 py-0.5 text-slate-500 hover:text-institucional disabled:opacity-30"
-                            >
-                              +
-                            </button>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => quitar(h.id)}
-                            aria-label={`Quitar ${h.nombre}`}
-                            className="p-1 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600 shrink-0"
-                          >
-                            <X size={15} />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                          <X size={15} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
-          )}
-
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 transition"
-            >
-              Cancelar
-            </button>
-            <button type="submit" disabled={saving || !catalogo?.length} className={btnPrimario}>
-              {saving ? "Guardando..." : "Registrar préstamo"}
-            </button>
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+          <Boton variante="fantasma" onClick={onClose}>
+            Cancelar
+          </Boton>
+          <Boton type="submit" disabled={saving || !catalogo?.length}>
+            {saving ? "Guardando..." : "Registrar préstamo"}
+          </Boton>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -693,15 +668,14 @@ function Catalogo() {
               className={`${inputClass} pl-9`}
             />
           </div>
-          <button onClick={() => setEditando({})} className={btnPrimario}>
-            <Plus size={16} />
+          <Boton onClick={() => setEditando({})} icono={<Plus size={16} />} className="shrink-0">
             Registrar herramienta
-          </button>
+          </Boton>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">{error}</div>
+        <Alerta className="mb-4">{error}</Alerta>
       )}
 
       {loading ? (
@@ -825,53 +799,41 @@ function HerramientaModal({ herramienta, onClose, onGuardado }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 animate-fade-in">
-      <div className="animate-pop bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-800">
-            {herramienta ? "Editar herramienta" : "Registrar herramienta"}
-          </h3>
-          <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
-            <X size={18} />
-          </button>
+    <Modal
+      titulo={herramienta ? "Editar herramienta" : "Registrar herramienta"}
+      onClose={onClose}
+      ancho="max-w-md"
+    >
+      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {error && <Alerta>{error}</Alerta>}
+        <Field label="Nombre" required>
+          <input
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            autoFocus
+            maxLength={120}
+            placeholder="Gato hidráulico"
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Cantidad (piezas en el taller)" required>
+          <input
+            type="number"
+            min={Math.max(herramienta?.prestadas || 0, 1)}
+            value={cantidad}
+            onChange={(e) => setCantidad(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+          <Boton variante="fantasma" onClick={onClose}>
+            Cancelar
+          </Boton>
+          <Boton type="submit" disabled={saving}>
+            {saving ? "Guardando..." : herramienta ? "Guardar cambios" : "Registrar"}
+          </Boton>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">{error}</div>
-          )}
-          <Field label="Nombre" required>
-            <input
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              autoFocus
-              maxLength={120}
-              placeholder="Gato hidráulico"
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Cantidad (piezas en el taller)" required>
-            <input
-              type="number"
-              min={Math.max(herramienta?.prestadas || 0, 1)}
-              value={cantidad}
-              onChange={(e) => setCantidad(e.target.value)}
-              className={inputClass}
-            />
-          </Field>
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 transition"
-            >
-              Cancelar
-            </button>
-            <button type="submit" disabled={saving} className={btnPrimario}>
-              {saving ? "Guardando..." : herramienta ? "Guardar cambios" : "Registrar"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 }

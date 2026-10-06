@@ -6,6 +6,7 @@ import { comprimirImagen } from "../../utils/comprimirImagen";
 import { formatFecha } from "../../config/solicitudes";
 import { Camera, ImagePlus, Loader2, RefreshCw, Trash2, X, CheckCircle2, CircleDashed } from "lucide-react";
 
+import { Boton } from "../ui";
 export const FOTOS = [
   { tipo: "llegada",    titulo: "Llegada",    ayuda: "Cómo llegó el vehículo",         requisito: "Obligatoria para pasar a Diagnóstico" },
   { tipo: "reparacion", titulo: "Reparación", ayuda: "Durante el cambio de la pieza", requisito: "Obligatoria para completar" },
@@ -178,16 +179,14 @@ function RanuraFoto({ def, solicitudId, foto, puedeSubir, onActualizada, onAmpli
           <input ref={camaraRef} type="file" accept="image/*" capture="environment" hidden onChange={handleArchivo} />
           <input ref={galeriaRef} type="file" accept="image/*" hidden onChange={handleArchivo} />
 
-          <button
-            type="button"
+          <Boton
+            tamano="sm"
             onClick={() => camaraRef.current?.click()}
             disabled={subiendo}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold
-                       bg-institucional hover:bg-institucional-dark text-white disabled:bg-slate-300 transition"
+            icono={foto ? <RefreshCw size={13} /> : <Camera size={13} />}
           >
-            {foto ? <RefreshCw size={13} /> : <Camera size={13} />}
             {foto ? "Cambiar" : "Tomar foto"}
-          </button>
+          </Boton>
           <button
             type="button"
             onClick={() => galeriaRef.current?.click()}

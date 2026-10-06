@@ -1,16 +1,10 @@
 // src/components/solicitudes/Badges.jsx
 import { ESTADO_STYLES, PRIORIDAD_STYLES } from "../../config/colors";
 import { ESTADO_LABEL, PRIORIDAD_LABEL } from "../../config/solicitudes";
+import { Insignia } from "../ui";
 
 export function EstadoBadge({ estado }) {
-  return (
-    <span
-      className={`inline-flex items-center text-xs font-medium px-2 py-1 rounded-full
-                  ${ESTADO_STYLES[estado] || "bg-slate-100 text-slate-700"}`}
-    >
-      {ESTADO_LABEL[estado] || estado}
-    </span>
-  );
+  return <Insignia tono={ESTADO_STYLES[estado] || "gris"}>{ESTADO_LABEL[estado] || estado}</Insignia>;
 }
 
 export function PrioridadBadge({ prioridad }) {

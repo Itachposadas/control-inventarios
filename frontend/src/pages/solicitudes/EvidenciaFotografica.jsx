@@ -12,6 +12,7 @@ import { useAuth } from "../../context/AuthContext";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { Camera, CarFront, ChevronRight, ExternalLink, Loader2 } from "lucide-react";
 
+import { Alerta } from "../../components/ui";
 const EN_TALLER = ["recibida", "diagnostico", "reparacion"];
 
 function nombreVehiculo(v) {
@@ -101,7 +102,7 @@ export default function EvidenciaFotografica() {
       subtitle="Fotos de tus vehículos en mantenimiento"
     >
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">{error}</div>
+        <Alerta className="mb-4">{error}</Alerta>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">

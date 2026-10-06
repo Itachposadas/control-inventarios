@@ -1,6 +1,8 @@
-// src/components/solicitudes/ui.jsx
-// Piezas de interfaz compartidas por las pantallas de solicitudes.
+// src/components/ui/Formulario.jsx
+// Piezas de formulario: estilo de los campos, campo con etiqueta, área de texto
+// y sección (tarjeta con título).
 
+// Estilo único de inputs, selects y textareas de todo el sistema
 export const inputClass = `
   w-full px-3 py-2 rounded-lg border border-slate-200 bg-white
   text-sm text-slate-800 placeholder-slate-400
@@ -25,6 +27,7 @@ export function Section({ title, subtitle, children, actions }) {
   );
 }
 
+// Etiqueta + campo. "required" agrega el asterisco rojo.
 export function Field({ label, required = false, children, className = "" }) {
   return (
     <div className={className}>

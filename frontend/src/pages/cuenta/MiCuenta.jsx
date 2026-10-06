@@ -2,7 +2,7 @@
 // Datos del usuario y cambio de su propia contraseña (admin y mecánico).
 import { useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { Section, Field, inputClass } from "../../components/solicitudes/ui";
+import { Section, Field, inputClass, Boton, Alerta } from "../../components/ui";
 import { authApi } from "../../api/auth";
 import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
@@ -88,16 +88,10 @@ export default function MiCuenta() {
           <Section title="Cambiar contraseña" subtitle="Usa al menos 6 caracteres. Evita contraseñas fáciles como 123456.">
             <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
               {error && (
-                <div role="alert" className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl">
-                  <AlertCircle size={18} className="shrink-0 mt-px" />
-                  {error}
-                </div>
+                <Alerta icono={<AlertCircle size={18} />}>{error}</Alerta>
               )}
               {exito && (
-                <div role="status" className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm p-3 rounded-xl">
-                  <CheckCircle2 size={18} className="shrink-0 mt-px" />
-                  {exito}
-                </div>
+                <Alerta tipo="exito" icono={<CheckCircle2 size={18} />}>{exito}</Alerta>
               )}
 
               <Field label="Contraseña actual" required>
@@ -140,14 +134,9 @@ export default function MiCuenta() {
                   {ver ? <EyeOff size={16} /> : <Eye size={16} />}
                   {ver ? "Ocultar contraseñas" : "Mostrar contraseñas"}
                 </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 text-sm font-semibold rounded-lg bg-institucional hover:bg-institucional-dark
-                             text-white disabled:bg-slate-300 disabled:cursor-not-allowed transition"
-                >
+                <Boton type="submit" disabled={saving}>
                   {saving ? "Guardando..." : "Cambiar contraseña"}
-                </button>
+                </Boton>
               </div>
             </form>
           </Section>

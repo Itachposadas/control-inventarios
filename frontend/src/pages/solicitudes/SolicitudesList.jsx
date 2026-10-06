@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import SolicitudesTable from "../../components/solicitudes/SolicitudesTable";
-import { inputClass } from "../../components/solicitudes/ui";
+import { inputClass, Boton, Alerta } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { ESTADOS, PRIORIDADES } from "../../config/solicitudes";
@@ -87,23 +87,15 @@ export default function SolicitudesList({
           </select>
 
           {puedeCrear && (
-            <button
-              onClick={() => navigate(`${BASE}/nueva`)}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg
-                         bg-institucional hover:bg-institucional-dark text-white
-                         text-sm font-semibold transition shrink-0"
-            >
-              <Plus size={16} />
+            <Boton onClick={() => navigate(`${BASE}/nueva`)} icono={<Plus size={16} />} className="shrink-0">
               Nuevo ingreso a taller
-            </button>
+            </Boton>
           )}
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">
-          {error}
-        </div>
+        <Alerta className="mb-4">{error}</Alerta>
       )}
 
       {loading ? (
