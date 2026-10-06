@@ -402,7 +402,6 @@ function NuevoPrestamo({ onClose, onGuardado }) {
   const [busqueda, setBusqueda] = useState("");
   // { herramienta_id: piezas } — cada clic en una herramienta suma una pieza
   const [seleccion, setSeleccion] = useState({});
-  const [observaciones, setObservaciones] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -452,7 +451,6 @@ function NuevoPrestamo({ onClose, onGuardado }) {
       await herramientasApi.prestar({
         mecanico: mecanico.trim(),
         items: elegidas.map((x) => ({ herramienta_id: x.h.id, cantidad: x.cantidad })),
-        observaciones,
       });
       onGuardado();
     } catch (err) {
@@ -622,16 +620,6 @@ function NuevoPrestamo({ onClose, onGuardado }) {
               </div>
             </div>
           )}
-
-          <Field label="Observaciones">
-            <textarea
-              value={observaciones}
-              onChange={(e) => setObservaciones(e.target.value)}
-              rows={2}
-              placeholder="Opcional (ej. para la unidad PV-204)"
-              className={`${inputClass} resize-y`}
-            />
-          </Field>
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
             <button
