@@ -1,13 +1,19 @@
 # backend/routes/fotos.py
 # Evidencia fotográfica de cada servicio: llegada, reparación y final.
+#
+# Los archivos se guardan ordenados para encontrarlos sin entrar al sistema:
+#   uploads/<Área>/<No. inventario>/<AAAA-MM-DD>/<folio>_<tipo>_<HH-MM-SS>.<ext>
+#   ej. uploads/SEGURIDAD PUBLICA/ATL024 Q00104-138/2026-10-06/SOL-2026-0003_llegada_14-35-02.jpg
+# En la BD se guarda la ruta de cada foto, así que las fotos anteriores
+# (uploads/solicitudes/<id>/...) se siguen viendo aunque estén en otro lugar.
 import io
 import os
-import uuid
+import re
 from flask import Blueprint, request, jsonify, send_file, current_app
 from extensions import db
-from models import Solicitud, SolicitudFoto, TIPOS_FOTO
+from models import Solicitud, SolicitudFoto, TIPOS_FOTO, utcnow
 from auth_utils import role_required, get_current_user
-from routes.solicitudes import _puede_ver, _registrar
+from routes.solicitudes import _puede_ver, _registrar, UTC_OFFSET
 
 fotos_bp = Blueprint("fotos", __name__, url_prefix="/api/solicitudes")
 
@@ -34,11 +40,46 @@ def _ruta_absoluta(relativa):
     return os.path.join(current_app.config["UPLOAD_FOLDER"], *relativa.split("/"))
 
 
+def _nombre_carpeta(texto, si_vacio):
+    """Quita lo que Windows/Linux no aceptan en un nombre de carpeta (\\ / : * ? " < > |)."""
+    limpio = re.sub(r'[\\/:*?"<>|\x00-\x1f]', "-", (texto or "").strip())
+    limpio = re.sub(r"\s+", " ", limpio).strip(" .")  # Windows no acepta punto o espacio al final
+    return limpio[:80] or si_vacio
+
+
+def _ruta_nueva(s, tipo, ext):
+    """Ruta relativa (con "/") donde se guarda una foto nueva del servicio."""
+    ahora = utcnow() - UTC_OFFSET  # hora de Atlacomulco
+    area = _nombre_carpeta(s.ing_area or (s.vehiculo.area if s.vehiculo else ""), "SIN AREA")
+    inventario = _nombre_carpeta(
+        s.ing_no_inventario or (s.vehiculo.no_inventario if s.vehiculo else ""), "SIN INVENTARIO"
+    )
+    folio = _nombre_carpeta(s.folio, f"SERVICIO-{s.id}")
+    archivo = f"{folio}_{tipo}_{ahora:%H-%M-%S}.{ext}"
+    relativa = f"{area}/{inventario}/{ahora:%Y-%m-%d}/{archivo}"
+    # Si se reemplaza la misma foto en el mismo segundo, no pisa la anterior
+    n = 2
+    while os.path.exists(_ruta_absoluta(relativa)):
+        relativa = f"{area}/{inventario}/{ahora:%Y-%m-%d}/{folio}_{tipo}_{ahora:%H-%M-%S}-{n}.{ext}"
+        n += 1
+    return relativa
+
+
 def _borrar_archivo(relativa):
+    ruta = _ruta_absoluta(relativa)
     try:
-        os.remove(_ruta_absoluta(relativa))
+        os.remove(ruta)
     except OSError:
-        pass  # si ya no existe, no pasa nada
+        return  # si ya no existe, no pasa nada
+    # Quita las carpetas que quedaron vacías (día, inventario, área), sin salir de uploads/
+    raiz = os.path.abspath(current_app.config["UPLOAD_FOLDER"])
+    carpeta = os.path.dirname(os.path.abspath(ruta))
+    while carpeta != raiz and carpeta.startswith(raiz):
+        try:
+            os.rmdir(carpeta)  # solo funciona si está vacía
+        except OSError:
+            break
+        carpeta = os.path.dirname(carpeta)
 
 
 def borrar_archivos_de(solicitud):
@@ -87,7 +128,7 @@ def subir(solicitud_id, tipo):
     if not mimetype:
         return jsonify({"msg": "El archivo debe ser una imagen JPG, PNG o WEBP"}), 400
 
-    relativa = f"solicitudes/{s.id}/{tipo}-{uuid.uuid4().hex}.{ext}"
+    relativa = _ruta_nueva(s, tipo, ext)
     destino = _ruta_absoluta(relativa)
     os.makedirs(os.path.dirname(destino), exist_ok=True)
     with open(destino, "wb") as fh:
