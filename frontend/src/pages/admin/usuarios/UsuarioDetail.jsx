@@ -6,7 +6,7 @@ import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../../config/menus";
 import UsuarioModal from "../../../components/usuarios/UsuarioModal";
 import { usuariosApi } from "../../../api/usuarios";
 import {
-  Users, ArrowLeft, Mail, User as UserIcon, Shield, Package, Wrench,
+  Users, ArrowLeft, Mail, User as UserIcon, Shield, Package, Wrench, Building2,
   Calendar, CheckCircle2, XCircle, Loader2, Pencil,
 } from "lucide-react";
 
@@ -16,6 +16,7 @@ const ROLE_CONFIG = {
   // Rol retirado; solo para mostrar cuentas antiguas
   almacen:  { label: "Almacén (sin acceso)", color: "bg-slate-100 text-slate-500", icon: <Package size={16} /> },
   mecanico: { label: "Mecánico",      color: "bg-emerald-100 text-emerald-700", icon: <Wrench size={16} /> },
+  area:     { label: "Área",          color: "bg-sky-100 text-sky-700",         icon: <Building2 size={16} /> },
 };
 
 export default function UsuarioDetail() {
@@ -120,6 +121,7 @@ export default function UsuarioDetail() {
               {cfg.icon}
               {usuario.rol_nombre || cfg.label}
             </span>
+            {usuario.area && <p className="mt-2 text-sm font-medium text-slate-600">{usuario.area}</p>}
           </div>
         </div>
 
@@ -136,7 +138,7 @@ export default function UsuarioDetail() {
             </div>
             <ul className="divide-y divide-slate-100">
               <InfoRow icon={<UserIcon size={16} />} label="Usuario" value={usuario.username} />
-              <InfoRow icon={<Mail size={16} />} label="Email" value={usuario.email} />
+              <InfoRow icon={<Mail size={16} />} label="Email" value={usuario.email || "Sin correo"} />
               <InfoRow icon={cfg.icon} label="Rol" value={usuario.rol_nombre || cfg.label} />
               <InfoRow
                 icon={usuario.activo ? <CheckCircle2 size={16} /> : <XCircle size={16} />}

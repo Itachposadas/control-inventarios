@@ -15,14 +15,14 @@ const GUIA_MECANICO = [
     icon: <ClipboardPlus size={20} />,
     titulo: "1. Registrar el ingreso a taller",
     pasos: [
-      "Entra a Vehículos, busca la unidad y ábrela.",
-      "Pulsa “Registrar ingreso a taller”. Los datos del vehículo se llenan solos desde el catálogo (no se pueden modificar; si alguno está mal, avisa al administrador).",
+      "Las áreas piden servicio desde la página de inicio. Entra a Solicitudes: las que llevan más tiempo esperando aparecen primero.",
+      "Cuando llegue la unidad, pulsa “Atender” en su solicitud. Los datos del vehículo se llenan solos desde el catálogo (no se pueden modificar; si alguno está mal, avisa al administrador).",
       "Revisa la fecha de ingreso y la hoja (ej. hoja 1 de 1).",
       "En “Accesorios y herramientas” marca SI o NO en los 40 conceptos (incluidos los birlos); sin eso no se puede registrar.",
       "Escribe las observaciones (ej. “No trae faros delanteros”).",
       "Pulsa “Registrar ingreso”. El vehículo queda en mantenimiento y el sistema te lleva a Evidencia fotográfica para tomar la foto de llegada.",
     ],
-    nota: "También puedes empezar desde Inicio → “Llegó un vehículo”. Al abrir cualquier reparación, el recuadro “¿Qué sigue?” te dice qué hacer y tiene el botón para hacerlo.",
+    nota: "También puedes entrar desde Inicio → “Solicitudes”. Si una solicitud no procede, pulsa “Descartar” y escribe el motivo. Al abrir cualquier reparación, el recuadro “¿Qué sigue?” te dice qué hacer y tiene el botón para hacerlo.",
   },
   {
     icon: <Stethoscope size={20} />,
@@ -80,9 +80,32 @@ const GUIA_MECANICO = [
     icon: <History size={20} />,
     titulo: "Consultar historial",
     pasos: [
-      "Vehículos → abre una unidad → “Historial de servicios” muestra todas sus entradas al taller.",
       "En Historial ves los servicios que ya terminaste.",
+      "En Solicitudes → Atendidas ves con qué ingreso a taller se atendió cada solicitud.",
     ],
+  },
+];
+
+const GUIA_AREA = [
+  {
+    icon: <ClipboardPlus size={20} />,
+    titulo: "1. Hacer una solicitud",
+    pasos: [
+      "Al entrar ya estás en “Nueva solicitud”. Solo aparecen los vehículos de tu área.",
+      "Elige el vehículo. Si dice “En el taller” o “Ya solicitado”, espera a que el taller lo atienda.",
+      "Agrega los materiales: cantidad, unidad de medida, concepto y precio unitario. El total se calcula solo.",
+      "Con “Agregar material” sumas más conceptos. Pulsa “Enviar solicitud”.",
+    ],
+    nota: "La fecha, la hora y el área se registran solas. Al enviar recibes un folio (ej. PET-2026-0001).",
+  },
+  {
+    icon: <History size={20} />,
+    titulo: "2. Llevar la unidad",
+    pasos: [
+      "Lleva la unidad al taller y menciona el folio.",
+      "El mecánico atiende tu solicitud al recibir la unidad.",
+    ],
+    nota: "Solo ves los vehículos de tu área. La cuenta es de toda el área: no compartas la contraseña fuera de ella.",
   },
 ];
 
@@ -158,7 +181,7 @@ const PREGUNTAS = [
 export default function Ayuda() {
   const { role } = useAuth();
   const { menu, secondaryMenu } = menusForRole(role);
-  const guia = role === ROLES.ADMIN ? GUIA_ADMIN : GUIA_MECANICO;
+  const guia = role === ROLES.ADMIN ? GUIA_ADMIN : role === ROLES.AREA ? GUIA_AREA : GUIA_MECANICO;
 
   return (
     <DashboardLayout menu={menu} secondaryMenu={secondaryMenu} title="Ayuda" subtitle="Guía rápida del sistema">

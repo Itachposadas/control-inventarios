@@ -3,14 +3,13 @@
 //  - /mecanico/reparaciones  (las suyas)
 //  - /mecanico/historial     (las que ya terminó)
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import SolicitudesTable from "../../components/solicitudes/SolicitudesTable";
-import { inputClass, Boton, Alerta } from "../../components/ui";
+import { inputClass, Alerta } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { ESTADOS, PRIORIDADES } from "../../config/solicitudes";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 
 const BASE = "/mecanico/reparaciones";
 const FILTROS_INICIALES = { q: "", estado: "", prioridad: "" };
@@ -20,8 +19,6 @@ export default function SolicitudesList({
   subtitulo = "Ingresos a taller y su seguimiento",
   estadoFijo = "",   // ej. "cerradas" para el historial del mecánico
 }) {
-  const navigate = useNavigate();
-  const puedeCrear = !estadoFijo;
 
   const [filters, setFilters] = useState(FILTROS_INICIALES);
   const [items, setItems] = useState([]);
@@ -86,11 +83,6 @@ export default function SolicitudesList({
             ))}
           </select>
 
-          {puedeCrear && (
-            <Boton onClick={() => navigate(`${BASE}/nueva`)} icono={<Plus size={16} />} className="shrink-0">
-              Nuevo ingreso a taller
-            </Boton>
-          )}
         </div>
       </div>
 

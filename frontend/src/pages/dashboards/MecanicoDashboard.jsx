@@ -10,7 +10,7 @@ import { solicitudesApi } from "../../api/solicitudes";
 import { pasoSiguiente } from "../../config/solicitudes";
 import { useAuth } from "../../context/AuthContext";
 import {
-  ClipboardPlus, Camera, Hammer, Loader2, CarFront, ChevronRight, CheckCircle2,
+  Inbox, Camera, Hammer, Loader2, CarFront, ChevronRight, CheckCircle2,
 } from "lucide-react";
 
 import { Alerta } from "../../components/ui";
@@ -18,10 +18,10 @@ const ACTIVAS = ["recibida", "diagnostico", "reparacion"];
 
 const ACCIONES = [
   {
-    to: "/mecanico/reparaciones/nueva",
-    icon: <ClipboardPlus size={28} />,
-    titulo: "Llegó un vehículo",
-    texto: "Registrar ingreso a taller",
+    to: "/mecanico/solicitudes-areas",
+    icon: <Inbox size={28} />,
+    titulo: "Solicitudes",
+    texto: "Atender lo que piden las áreas",
     principal: true,
   },
   {
@@ -104,7 +104,7 @@ export default function MecanicoDashboard() {
         <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
           <CheckCircle2 size={40} className="mx-auto text-emerald-600" />
           <p className="mt-3 text-base font-medium text-slate-700">No tienes vehículos pendientes</p>
-          <p className="mt-1 text-sm text-slate-500">Cuando llegue uno, toca “Llegó un vehículo”.</p>
+          <p className="mt-1 text-sm text-slate-500">Cuando llegue una unidad, atiende su solicitud en “Solicitudes”.</p>
         </div>
       ) : (
         <ul className="stagger grid grid-cols-1 lg:grid-cols-2 gap-3">

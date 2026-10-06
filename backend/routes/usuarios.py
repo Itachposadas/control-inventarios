@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
 from auth_utils import role_required
 from extensions import db
-from models import Usuario, Rol, Solicitud, SolicitudEvento, Prestamo, ROLES
+from models import Usuario, Rol, Solicitud, SolicitudEvento, Prestamo, PeticionServicio, Vehiculo, ROLES
 
 usuarios_bp = Blueprint("usuarios", __name__, url_prefix="/api/usuarios")
 
@@ -24,6 +24,19 @@ def _resolver_rol(data, role_actual="mecanico"):
     if role not in ROLES:
         raise ValueError("Rol inválido")
     return role, None
+
+
+def _resolver_area(role, data, area_actual=None):
+    """Área de una cuenta de área (debe existir en el catálogo). Las demás cuentas no llevan área."""
+    if role != "area":
+        return None
+    area = (data.get("area") if "area" in data else area_actual) or ""
+    area = area.strip()
+    if not area:
+        raise ValueError("Elige el área de la cuenta")
+    if not Vehiculo.query.filter(Vehiculo.area == area).first():
+        raise ValueError("Esa área no tiene vehículos registrados")
+    return area
 
 
 # ─── Listar usuarios ───
@@ -73,31 +86,36 @@ def crear_usuario():
     data = request.get_json() or {}
 
     username = (data.get("username") or "").strip()
-    email = (data.get("email") or "").strip().lower()
+    email = (data.get("email") or "").strip().lower() or None
     password = data.get("password") or ""
     nombre_completo = (data.get("nombre_completo") or "").strip()
 
     # Validaciones
-    if not username or not email or not password:
-        return jsonify({"msg": "Usuario, email y contraseña son obligatorios"}), 400
+    if not username or not password:
+        return jsonify({"msg": "Usuario y contraseña son obligatorios"}), 400
     if len(password) < 6:
         return jsonify({"msg": "La contraseña debe tener al menos 6 caracteres"}), 400
     try:
         role, rol_id = _resolver_rol(data)
+        area = _resolver_area(role, data)
     except ValueError as e:
         return jsonify({"msg": str(e)}), 400
+    # El correo solo es opcional en las cuentas de área
+    if not email and role != "area":
+        return jsonify({"msg": "El email es obligatorio"}), 400
 
     # Duplicados
-    if Usuario.query.filter(
-        (Usuario.username == username) | (Usuario.email == email)
-    ).first():
-        return jsonify({"msg": "Usuario o email ya registrado"}), 409
+    if Usuario.query.filter(Usuario.username == username).first():
+        return jsonify({"msg": "Ese nombre de usuario ya existe"}), 409
+    if email and Usuario.query.filter(Usuario.email == email).first():
+        return jsonify({"msg": "Ese email ya existe"}), 409
 
     user = Usuario(
         username=username,
         email=email,
         role=role,
         rol_id=rol_id,
+        area=area,
         nombre_completo=nombre_completo or None,
         activo=True,
     )
@@ -127,20 +145,21 @@ def editar_usuario(user_id):
             user.username = nuevo
 
     if "email" in data:
-        nuevo = (data["email"] or "").strip().lower()
-        if nuevo and nuevo != user.email:
-            if Usuario.query.filter(Usuario.email == nuevo).first():
+        nuevo = (data["email"] or "").strip().lower() or None
+        if nuevo != user.email:
+            if nuevo and Usuario.query.filter(Usuario.email == nuevo).first():
                 return jsonify({"msg": "Ese email ya existe"}), 409
-            user.email = nuevo
+            user.email = nuevo  # vacío solo se acepta si termina siendo cuenta de área (ver abajo)
 
     if "nombre_completo" in data:
         user.nombre_completo = (data["nombre_completo"] or "").strip() or None
 
     es_uno_mismo = user.id == int(get_jwt_identity())
 
-    if "role" in data or "rol_id" in data:
+    if "role" in data or "rol_id" in data or "area" in data:
         try:
             role, rol_id = _resolver_rol(data, user.role)
+            area = _resolver_area(role, data, user.area)
         except ValueError as e:
             return jsonify({"msg": str(e)}), 400
         # Evita que el admin se quite su propio rol y pierda el acceso
@@ -148,11 +167,16 @@ def editar_usuario(user_id):
             return jsonify({"msg": "No puedes quitarte el rol de administrador"}), 400
         user.role = role
         user.rol_id = rol_id
+        user.area = area
 
     if "activo" in data:
         if es_uno_mismo and not data["activo"]:
             return jsonify({"msg": "No puedes desactivar tu propia cuenta"}), 400
         user.activo = bool(data["activo"])
+
+    if not user.email and user.role != "area":
+        db.session.rollback()
+        return jsonify({"msg": "El email es obligatorio"}), 400
 
     # Cambiar contraseña (opcional)
     if data.get("password"):
@@ -185,6 +209,9 @@ def eliminar_usuario(user_id):
         ).first()
         or SolicitudEvento.query.filter_by(usuario_id=user.id).first()
         or Prestamo.query.filter_by(registrado_por_id=user.id).first()
+        or PeticionServicio.query.filter(
+            (PeticionServicio.creado_por_id == user.id) | (PeticionServicio.atendida_por_id == user.id)
+        ).first()
     )
     if tiene_historial:
         return jsonify({

@@ -7,7 +7,7 @@ import UsuarioModal from "../../../components/usuarios/UsuarioModal";
 import ConfirmModal from "../../../components/ConfirmModal";
 import { usuariosApi } from "../../../api/usuarios";
 import {
-  Users, Plus, Search, X, Eye, Pencil, Trash2, Shield, Package, Wrench,
+  Users, Plus, Search, X, Eye, Pencil, Trash2, Shield, Package, Wrench, Building2,
   Loader2,
 } from "lucide-react";
 
@@ -17,6 +17,7 @@ const ROLE_CONFIG = {
   // Rol retirado; solo para mostrar cuentas antiguas
   almacen:  { label: "Almacén (sin acceso)", color: "bg-slate-100 text-slate-500", icon: <Package size={14} /> },
   mecanico: { label: "Mecánico",      color: "bg-emerald-100 text-emerald-700", icon: <Wrench size={14} /> },
+  area:     { label: "Área",          color: "bg-sky-100 text-sky-700",         icon: <Building2 size={14} /> },
 };
 
 export default function UsuariosList() {
@@ -129,6 +130,7 @@ useEffect(() => {
               <option value="">Todos los roles</option>
               <option value="admin">Administrador</option>
               <option value="mecanico">Mecánico</option>
+              <option value="area">Área</option>
             </select>
           </div>
 
@@ -222,13 +224,14 @@ useEffect(() => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-slate-600">{u.email}</td>
+                      <td className="px-5 py-3 text-slate-600">{u.email || <span className="text-slate-400">Sin correo</span>}</td>
                       <td className="px-5 py-3">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1
                                           rounded-full text-xs font-medium ${cfg.color}`}>
                           {cfg.icon}
                           {u.rol_nombre || cfg.label}
                         </span>
+                        {u.area && <p className="mt-1 text-xs text-slate-500">{u.area}</p>}
                       </td>
                       <td className="px-5 py-3">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium

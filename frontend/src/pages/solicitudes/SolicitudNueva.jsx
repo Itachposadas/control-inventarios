@@ -1,7 +1,8 @@
 // src/pages/solicitudes/SolicitudNueva.jsx
 // FORMATO DE INGRESO A TALLER (Municipio de Atlacomulco). Solo lo llena el mecánico.
 //  1. Encabezado: fecha de ingreso y "Hoja no. __ de __"
-//  2. Datos del vehículo/maquinaria (del catálogo, solo lectura)
+//  2. Datos del vehículo/maquinaria: los de la solicitud del área (?peticion=ID),
+//     tomados del catálogo (solo lectura)
 //  3. Accesorios y herramientas: SI / NO por concepto
 //  4. Observaciones
 // Las fotos se suben después en "Evidencia fotográfica".
@@ -12,10 +13,11 @@ import DatosVehiculo, { datosDesdeVehiculo } from "../../components/solicitudes/
 import Checklist from "../../components/solicitudes/Checklist";
 import { Section, Field, TextArea, inputClass, Boton } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
-import { vehiculosApi } from "../../api/vehiculos";
+import { peticionesApi } from "../../api/peticiones";
+import TablaMateriales from "../../components/peticiones/TablaMateriales";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { CHECKLIST_ITEMS, conceptosSinMarcar } from "../../config/solicitudes";
-import { ArrowLeft, Search, CarFront, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, CarFront, Loader2, Inbox } from "lucide-react";
 
 // Fecha local de hoy en formato AAAA-MM-DD (para el <input type="date">)
 function hoyISO() {
@@ -28,13 +30,12 @@ export default function SolicitudNueva() {
   const [searchParams] = useSearchParams();
   const accesoriosRef = useRef(null);
 
-  // Selección de vehículo
-  const [busqueda, setBusqueda] = useState("");
-  const [area, setArea] = useState("");
-  const [areas, setAreas] = useState([]);
-  const [resultados, setResultados] = useState([]);
-  const [buscando, setBuscando] = useState(false);
-  const [vehiculo, setVehiculo] = useState(null);
+  // Solicitud del área que se atiende con este ingreso (?peticion=ID).
+  // El vehículo es el de la solicitud: el mecánico ya no lo busca.
+  const [peticion, setPeticion] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [errorPeticion, setErrorPeticion] = useState("");
+  const vehiculo = peticion?.vehiculo || null;
 
   // Formato
   const [form, setForm] = useState({
@@ -50,45 +51,22 @@ export default function SolicitudNueva() {
 
   const set = (campo, valor) => setForm((f) => ({ ...f, [campo]: valor }));
 
-  const elegirVehiculo = (v) => {
-    setVehiculo(v);
-    setResultados([]);
-    setBusqueda("");
-  };
-
-  // Vehículo preseleccionado: /nueva?vehiculo=12 (desde el detalle del vehículo)
   useEffect(() => {
-    const id = searchParams.get("vehiculo");
-    if (id) vehiculosApi.obtener(id).then(elegirVehiculo).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    vehiculosApi.areas().then(setAreas).catch(() => {});
-  }, []);
-
-  // Búsqueda de vehículos: por texto (2+ letras) y/o por área.
-  // Con un área elegida se muestran todas sus unidades aunque no se escriba nada.
-  const hayBusqueda = busqueda.trim().length >= 2 || Boolean(area);
-  useEffect(() => {
-    if (!hayBusqueda) {
-      setResultados([]);
+    const id = searchParams.get("peticion");
+    if (!id) {
+      setErrorPeticion("El ingreso a taller se registra desde una solicitud.");
+      setCargando(false);
       return;
     }
-    let cancel = false;
-    setBuscando(true);
-    const timer = setTimeout(() => {
-      vehiculosApi
-        .listar({ q: busqueda.trim(), area })
-        .then((data) => !cancel && setResultados(data.slice(0, 50)))
-        .catch(() => !cancel && setResultados([]))
-        .finally(() => !cancel && setBuscando(false));
-    }, 250);
-    return () => {
-      cancel = true;
-      clearTimeout(timer);
-    };
-  }, [busqueda, area, hayBusqueda]);
+    peticionesApi
+      .obtener(id)
+      .then((p) => {
+        if (p.estado !== "pendiente") setErrorPeticion(`La solicitud ${p.folio} ya fue atendida.`);
+        else setPeticion(p);
+      })
+      .catch(() => setErrorPeticion("No se encontró la solicitud."))
+      .finally(() => setCargando(false));
+  }, [searchParams]);
 
   const sinMarcar = conceptosSinMarcar(form.checklist);
   const marcados = CHECKLIST_ITEMS.length - sinMarcar.length;
@@ -102,7 +80,7 @@ export default function SolicitudNueva() {
     const hojaNo = Number(form.hoja_no);
     const hojaTotal = Number(form.hoja_total);
     if (!hojaNo || !hojaTotal || hojaNo > hojaTotal) return setError("Revisa la hoja (ej. hoja 1 de 1)");
-    if (!vehiculo) return setError("Selecciona el vehículo o maquinaria que ingresa al taller");
+    if (!vehiculo) return setError("No hay solicitud que atender");
 
     if (sinMarcar.length) {
       setResaltarFaltantes(true);
@@ -115,12 +93,12 @@ export default function SolicitudNueva() {
     setSaving(true);
     try {
       const creada = await solicitudesApi.crear({
-        vehiculo_id: vehiculo.id,
         fecha_ingreso: form.fecha_ingreso,
         hoja_no: hojaNo,
         hoja_total: hojaTotal,
         checklist: form.checklist,
         observaciones_ingreso: form.observaciones_ingreso,
+        peticion_id: peticion.id,
       });
       // Siguiente paso natural: tomar la foto de llegada
       navigate(`/mecanico/evidencia?servicio=${creada.id}`, { replace: true });
@@ -146,7 +124,36 @@ export default function SolicitudNueva() {
         Volver
       </button>
 
+      {cargando ? (
+        <div className="flex items-center justify-center py-20 text-slate-500">
+          <Loader2 size={28} className="animate-spin" />
+        </div>
+      ) : errorPeticion ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+          <Inbox size={44} className="mx-auto text-slate-300" />
+          <p className="mt-4 text-sm font-medium text-slate-700">{errorPeticion}</p>
+          <p className="mt-1 text-xs text-slate-500">Elige en Solicitudes la unidad que llegó y pulsa “Atender”.</p>
+          <Boton className="mt-5" onClick={() => navigate("/mecanico/solicitudes-areas", { replace: true })}>
+            Ir a Solicitudes
+          </Boton>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="space-y-5 pb-24">
+        {peticion && (
+          <div className="flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <Inbox size={18} className="shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <p>
+                Atiende la solicitud <span className="font-mono font-semibold">{peticion.folio}</span> del área{" "}
+                <span className="font-semibold">{peticion.area}</span>. Materiales solicitados:
+              </p>
+              <div className="mt-2 bg-white text-slate-700">
+                <TablaMateriales materiales={peticion.materiales} total={peticion.total} />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ═════ ENCABEZADO ═════ */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
           <div className="h-1.5 bg-institucional" />
@@ -202,109 +209,19 @@ export default function SolicitudNueva() {
         </section>
 
         {/* ═════ DATOS DEL VEHÍCULO/MAQUINARIA ═════ */}
-        <Section title="DATOS DEL VEHÍCULO/MAQUINARIA" subtitle="Búscalo en el catálogo; sus datos se llenan solos (solo lectura)">
-          {vehiculo ? (
-            <div className="space-y-5">
-              <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="w-11 h-11 rounded-xl bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
-                  <CarFront size={22} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-800 truncate">
-                    {vehiculo.numeroEconomico || vehiculo.unidad || vehiculo.noInventario}
-                  </p>
-                  <p className="text-xs text-slate-500 truncate">{vehiculo.unidad || vehiculo.descripcion}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setVehiculo(null)}
-                  className="text-sm font-medium text-institucional hover:underline shrink-0"
-                >
-                  Cambiar
-                </button>
+        <Section title="DATOS DEL VEHÍCULO/MAQUINARIA" subtitle="Los de la solicitud del área, tomados del catálogo (solo lectura)">
+          <div className="space-y-5">
+            <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="w-11 h-11 rounded-xl bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
+                <CarFront size={22} />
               </div>
-              <DatosVehiculo datos={datosDesdeVehiculo(vehiculo)} />
-            </div>
-          ) : (
-            <div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative sm:w-64 shrink-0">
-                  <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                  <select
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    aria-label="Área"
-                    className={`${inputClass} pl-9 cursor-pointer ${area ? "border-institucional/50 font-medium" : ""}`}
-                  >
-                    <option value="">Todas las áreas</option>
-                    {areas.map((a) => (
-                      <option key={a} value={a}>{a}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="relative flex-1">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder="Escribe placas, No. económico, marca, área (ej. BOMBEROS)..."
-                    className={`${inputClass} pl-9`}
-                    autoFocus
-                  />
-                  {buscando && (
-                    <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 animate-spin" />
-                  )}
-                </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-slate-800 truncate">{vehiculo.nombre}</p>
+                <p className="text-xs text-slate-500 truncate">{vehiculo.unidad || vehiculo.descripcion}</p>
               </div>
-              {!hayBusqueda && (
-                <p className="mt-2 text-xs text-slate-500">
-                  Elige el área de donde viene el vehículo para ver todas sus unidades, o escribe para buscarlo.
-                </p>
-              )}
-              {hayBusqueda && !buscando && resultados.length > 0 && (
-                <p className="mt-2 text-xs text-slate-500">
-                  {resultados.length === 50 ? "Más de 50" : resultados.length}{" "}
-                  {resultados.length === 1 ? "unidad encontrada" : "unidades encontradas"}
-                  {area && ` en ${area}`} · toca la que llegó
-                </p>
-              )}
-              {resultados.length > 0 && (
-                <ul className="mt-2 max-h-96 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 animate-pop origin-top">
-                  {resultados.map((v) => {
-                    const deBaja = v.estado === "baja";
-                    return (
-                      <li key={v.id}>
-                        <button
-                          type="button"
-                          disabled={deBaja}
-                          onClick={() => elegirVehiculo(v)}
-                          className="w-full text-left px-4 py-3 hover:bg-slate-50 transition
-                                     disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <p className="text-sm font-semibold text-slate-800">
-                            {v.numeroEconomico || v.unidad || v.noInventario}
-                            {deBaja && <span className="ml-2 text-xs font-medium text-red-600">(de baja)</span>}
-                            {v.estado === "mantenimiento" && (
-                              <span className="ml-2 text-xs font-medium text-amber-700">(ya está en taller)</span>
-                            )}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {[v.area, v.placas, v.marca, v.modelo, v.color, v.noInventario].filter(Boolean).join(" · ")}
-                          </p>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              {hayBusqueda && !buscando && resultados.length === 0 && (
-                <p className="mt-2 text-sm text-slate-500">
-                  No se encontró{area && busqueda.trim() ? ` en ${area}; prueba con “Todas las áreas”` : ""}.
-                  Si es un vehículo nuevo, primero el administrador debe darlo de alta en Vehículos.
-                </p>
-              )}
             </div>
-          )}
+            <DatosVehiculo datos={datosDesdeVehiculo(vehiculo)} />
+          </div>
         </Section>
 
         {/* ═════ ACCESORIOS Y HERRAMIENTAS ═════ */}
@@ -321,7 +238,6 @@ export default function SolicitudNueva() {
               </span>
             }
           >
-            {!vehiculo && <PrimeroElVehiculo />}
             {/* Atenuado y sin poder tocarse hasta que haya vehículo */}
             <div className={vehiculo ? "" : "opacity-50 pointer-events-none select-none"} aria-disabled={!vehiculo}>
               <Checklist
@@ -336,7 +252,6 @@ export default function SolicitudNueva() {
 
         {/* ═════ OBSERVACIONES ═════ */}
         <Section title="OBSERVACIONES">
-          {!vehiculo && <PrimeroElVehiculo />}
           <TextArea
             value={form.observaciones_ingreso}
             onChange={(v) => set("observaciones_ingreso", v)}
@@ -353,9 +268,7 @@ export default function SolicitudNueva() {
               <p className="text-sm text-red-600 mr-auto">{error}</p>
             ) : (
               <p className="hidden sm:block text-sm text-slate-500 mr-auto">
-                {!vehiculo
-                  ? "Primero selecciona el vehículo que ingresa al taller"
-                  : sinMarcar.length
+                {sinMarcar.length
                   ? `Faltan ${sinMarcar.length} conceptos por marcar`
                   : "Accesorios y herramientas completos"}
               </p>
@@ -369,16 +282,7 @@ export default function SolicitudNueva() {
           </div>
         </div>
       </form>
+      )}
     </DashboardLayout>
-  );
-}
-
-// Aviso mientras no se ha elegido el vehículo: el formato se llena sobre una unidad concreta
-function PrimeroElVehiculo() {
-  return (
-    <p className="mb-4 flex items-center gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-      <CarFront size={16} className="shrink-0" />
-      Primero selecciona arriba el vehículo que ingresa al taller.
-    </p>
   );
 }

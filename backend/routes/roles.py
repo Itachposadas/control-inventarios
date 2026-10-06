@@ -2,7 +2,7 @@
 from flask import Blueprint, request, jsonify
 from auth_utils import role_required
 from extensions import db
-from models import Rol, ROLES
+from models import Rol, ROLES_TALLER
 
 roles_bp = Blueprint("roles", __name__, url_prefix="/api/roles")
 
@@ -32,7 +32,7 @@ def crear_rol():
         return jsonify({"msg": "El nombre del rol es obligatorio"}), 400
     if len(nombre) > 60:
         return jsonify({"msg": "El nombre del rol es demasiado largo (máximo 60)"}), 400
-    if base not in ROLES:
+    if base not in ROLES_TALLER:
         return jsonify({"msg": "Elige los permisos del rol"}), 400
     if nombre.lower() in NOMBRES_RESERVADOS or Rol.query.filter(
         db.func.lower(Rol.nombre) == nombre.lower()

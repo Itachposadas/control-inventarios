@@ -33,6 +33,9 @@ def login():
     if user.role not in ROLES:
         return jsonify({"msg": "Tu rol ya no tiene acceso al sistema"}), 403
 
+    if user.role == "area" and not user.area:
+        return jsonify({"msg": "Tu cuenta no tiene un área asignada. Avisa al administrador."}), 403
+
     user.ultimo_acceso = utcnow()
     db.session.commit()
 
@@ -41,14 +44,14 @@ def login():
 
 
 @auth_bp.route("/me", methods=["GET"])
-@role_required()
+@role_required(*ROLES)
 def me():
     return jsonify(get_current_user().to_dict()), 200
 
 
 # ─── Cambiar mi propia contraseña ───
 @auth_bp.route("/password", methods=["PUT"])
-@role_required()
+@role_required(*ROLES)
 def cambiar_password():
     user = get_current_user()
     data = request.get_json() or {}

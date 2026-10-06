@@ -1,11 +1,11 @@
 // src/pages/Login.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { HOME_BY_ROLE } from "../config/roles";
 import { useSystemHealth } from "../hooks/useSystemHealth";
 import {
-  Eye, EyeOff, User, Lock, ArrowRight, Loader2, AlertCircle, ArrowBigUp,
+  Eye, EyeOff, User, Lock, ArrowRight, ArrowLeft, Loader2, AlertCircle, ArrowBigUp,
 } from "lucide-react";
 
 const SAVED_KEY = "saved_account";
@@ -136,6 +136,15 @@ export default function Login() {
           </div>
 
           <div className="flex-1 flex flex-col lg:justify-center">
+            <Link
+              to="/"
+              className="self-start mb-3 inline-flex items-center gap-1.5 text-sm font-medium
+                         text-slate-600 hover:text-institucional transition"
+            >
+              <ArrowLeft size={16} />
+              Volver al inicio
+            </Link>
+
             {/* ─── Tarjeta ─── */}
             <div
               className="animate-fade-up bg-white rounded-2xl border border-slate-200/80

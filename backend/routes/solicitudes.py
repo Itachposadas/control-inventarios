@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models import (
-    Solicitud, SolicitudEvento, Vehiculo, Usuario,
+    Solicitud, SolicitudEvento, Vehiculo, Usuario, PeticionServicio,
     ESTADOS_SOLICITUD, TIPOS_SOLICITUD, PRIORIDADES, utcnow,
 )
 from auth_utils import role_required, get_current_user
@@ -243,9 +243,15 @@ def crear():
     user = get_current_user()
     data = request.get_json() or {}
 
-    vehiculo = db.session.get(Vehiculo, _to_int(data.get("vehiculo_id")))
-    if not vehiculo:
-        return jsonify({"msg": "Selecciona un vehículo"}), 400
+    # El ingreso siempre atiende una solicitud de un área (página de inicio);
+    # el vehículo es el de esa solicitud.
+    peticion = db.session.get(PeticionServicio, _to_int(data.get("peticion_id")))
+    if not peticion:
+        return jsonify({"msg": "El ingreso a taller se registra desde una solicitud"}), 400
+    if peticion.estado != "pendiente":
+        return jsonify({"msg": "Esta solicitud ya fue atendida"}), 409
+
+    vehiculo = peticion.vehiculo
     if vehiculo.estado == "baja":
         return jsonify({"msg": "El vehículo está dado de baja"}), 400
 
@@ -285,6 +291,11 @@ def crear():
     db.session.flush()  # obtiene el id para armar el folio
     s.folio = f"SOL-{s.fecha_ingreso.year}-{s.id:04d}"
     _registrar(s, user, "Registró el ingreso a taller")
+    peticion.estado = "atendida"
+    peticion.solicitud = s
+    peticion.atendida_por_id = user.id
+    peticion.atendida_at = utcnow()
+    _registrar(s, user, f"Atiende la solicitud {peticion.folio} del área {vehiculo.area or '—'}")
     db.session.commit()
 
     return jsonify(s.to_dict(detalle=True)), 201

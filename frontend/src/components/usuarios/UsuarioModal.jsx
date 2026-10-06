@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Eye, EyeOff, Plus } from "lucide-react";
 import { rolesApi } from "../../api/roles";
+import { vehiculosApi } from "../../api/vehiculos";
 import { Modal, Boton, Alerta, Field, inputClass } from "../ui";
 
 // Roles base: definen los permisos. Los roles creados heredan de uno de ellos.
@@ -9,6 +10,9 @@ const ROLES = [
   { value: "admin",    label: "Administrador" },
   { value: "mecanico", label: "Mecánico" },
 ];
+
+// Cuenta de un área: no hereda a roles creados, lleva el área que representa
+const ROL_AREA = { value: "area", label: "Área (hace solicitudes)" };
 
 // Valor del <select>: "admin" / "mecanico" o "rol:<id>" para un rol creado
 const valorRol = (u) => (u?.rol_id ? `rol:${u.rol_id}` : u?.role || "mecanico");
@@ -22,9 +26,11 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
     nombre_completo: "",
     password: "",
     role: "mecanico",
+    area: "",
     activo: true,
   });
   const [roles, setRoles] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [nuevoRol, setNuevoRol] = useState(false);
   const [rolNombre, setRolNombre] = useState("");
   const [rolBase, setRolBase] = useState("mecanico");
@@ -41,6 +47,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
         nombre_completo: usuario?.nombre_completo || "",
         password: "",
         role: valorRol(usuario),
+        area: usuario?.area || "",
         activo: usuario?.activo ?? true,
       });
       setError("");
@@ -50,10 +57,13 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
       setRolNombre("");
       setRolBase("mecanico");
       rolesApi.listar().then(setRoles).catch(() => setRoles([]));
+      vehiculosApi.areas().then(setAreas).catch(() => setAreas([]));
     }
   }, [open, usuario]);
 
   if (!open) return null;
+
+  const emailOpcional = !nuevoRol && form.role === ROL_AREA.value;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -69,13 +79,17 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
 
     // Validaciones frontend
     if (!form.username.trim()) return setError("El usuario es obligatorio");
-    if (!form.email.trim()) return setError("El email es obligatorio");
+    const esArea = !nuevoRol && form.role === ROL_AREA.value;
+    if (!form.email.trim() && !esArea) return setError("El email es obligatorio");
     if (!editando && !form.password) return setError("La contraseña es obligatoria");
     if (form.password && form.password.length < 6) {
       return setError("La contraseña debe tener al menos 6 caracteres");
     }
     if (nuevoRol && !rolNombre.trim()) {
       return setError("Escribe el nombre del nuevo rol");
+    }
+    if (!nuevoRol && form.role === ROL_AREA.value && !form.area) {
+      return setError("Elige el área de la cuenta");
     }
 
     setSaving(true);
@@ -97,6 +111,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
         nombre_completo: form.nombre_completo.trim(),
         role: rolId ? undefined : rolSel,
         rol_id: rolId,
+        area: rolSel === ROL_AREA.value ? form.area : "",
         activo: form.activo,
       };
       // Solo incluir password si se escribió
@@ -143,14 +158,23 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               className={inputClass}
             />
           </Field>
-          <Field label="Email" required>
+          {/* Las cuentas de área pueden no tener correo */}
+          <Field
+            label={
+              <>
+                Email
+                {emailOpcional && <span className="text-xs font-normal text-slate-500 ml-1">(opcional)</span>}
+              </>
+            }
+            required={!emailOpcional}
+          >
             <input
               name="email"
               type="email"
               value={form.email}
               onChange={handleChange}
-              required
-              placeholder="juan@demo.com"
+              required={!emailOpcional}
+              placeholder={emailOpcional ? "Sin correo" : "juan@demo.com"}
               className={inputClass}
             />
           </Field>
@@ -244,6 +268,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
                   {r.label}
                 </option>
               ))}
+              <option value={ROL_AREA.value}>{ROL_AREA.label}</option>
               {roles.map((r) => (
                 <option key={r.id} value={`rol:${r.id}`}>
                   {r.nombre} (permisos de {ROLES.find((b) => b.value === r.base)?.label})
@@ -252,6 +277,26 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
             </select>
           )}
         </div>
+
+        {/* Área que representa la cuenta (solo rol Área) */}
+        {!nuevoRol && form.role === ROL_AREA.value && (
+          <Field label="Área" required>
+            <select
+              name="area"
+              value={form.area}
+              onChange={handleChange}
+              className={`${inputClass} cursor-pointer`}
+            >
+              <option value="">Elige el área…</option>
+              {areas.map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">
+              Esta cuenta solo verá los vehículos y las solicitudes de esta área.
+            </p>
+          </Field>
+        )}
 
         {/* Activo (solo al editar) */}
         {editando && (

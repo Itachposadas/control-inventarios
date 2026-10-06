@@ -12,7 +12,7 @@ ESTADOS = ("activo", "mantenimiento", "baja")
 
 # ─── Rutas específicas PRIMERO (importante el orden) ───
 @vehiculos_bp.route("/areas", methods=["GET"])
-@role_required()
+@role_required("admin")
 def list_areas():
     """Devuelve todas las áreas únicas para llenar el <select>."""
     rows = db.session.query(Vehiculo.area).distinct().order_by(Vehiculo.area).all()
@@ -22,7 +22,7 @@ def list_areas():
 # ─── Listado general ───
 @vehiculos_bp.route("", methods=["GET"])
 @vehiculos_bp.route("/", methods=["GET"])
-@role_required()
+@role_required("admin")
 def list_vehiculos():
     q = (request.args.get("q") or "").strip()
     area = (request.args.get("area") or "").strip()
@@ -67,7 +67,7 @@ def list_vehiculos():
 
 # ─── Detalle por ID ───
 @vehiculos_bp.route("/<int:vehiculo_id>", methods=["GET"])
-@role_required()
+@role_required("admin")
 def get_vehiculo(vehiculo_id):
     v = db.session.get(Vehiculo, vehiculo_id)
     if not v:
@@ -77,7 +77,7 @@ def get_vehiculo(vehiculo_id):
 
 # ─── Historial por ID ───
 @vehiculos_bp.route("/<int:vehiculo_id>/historial", methods=["GET"])
-@role_required()
+@role_required("admin")
 def get_historial(vehiculo_id):
     """Solicitudes del vehículo en el formato que usa HistorialTimeline."""
     v = db.session.get(Vehiculo, vehiculo_id)

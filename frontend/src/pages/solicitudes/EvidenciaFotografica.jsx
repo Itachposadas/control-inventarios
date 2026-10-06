@@ -122,10 +122,10 @@ export default function EvidenciaFotografica() {
               <CarFront size={36} className="mx-auto text-slate-300" />
               <p className="mt-3 text-sm text-slate-600">No tienes vehículos en mantenimiento</p>
               <button
-                onClick={() => navigate("/mecanico/reparaciones/nueva")}
+                onClick={() => navigate("/mecanico/solicitudes-areas")}
                 className="mt-3 text-sm font-medium text-institucional hover:underline"
               >
-                Registrar un ingreso a taller
+                Ver solicitudes
               </button>
             </div>
           ) : (

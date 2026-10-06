@@ -24,8 +24,10 @@ def buscar():
         return jsonify({"vehiculos": [], "solicitudes": []}), 200
 
     like = f"%{q}%"
+    user = get_current_user()
 
-    vehiculos = (
+    # El catálogo de vehículos es solo del admin
+    vehiculos = [] if user.role != "admin" else (
         Vehiculo.query
         .filter(db.or_(
             Vehiculo.no_inventario.like(like),

@@ -5,12 +5,13 @@ import { ROLES } from "./config/roles";
 import RoleRoute from "./components/RoleRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 
+import Inicio from "./pages/Inicio";
 import Login from "./pages/Login";
 
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import MecanicoDashboard from "./pages/dashboards/MecanicoDashboard";
 
-// Módulo de vehículos (admin lo administra, mecánico lo consulta)
+// Módulo de vehículos (solo admin)
 import VehiculosList from "./pages/admin/vehiculos/VehiculosList";
 import VehiculoDetail from "./pages/admin/vehiculos/VehiculoDetail";
 
@@ -28,20 +29,26 @@ import EvidenciaFotografica from "./pages/solicitudes/EvidenciaFotografica";
 import OrdenesForaneas from "./pages/foraneas/OrdenesForaneas";
 import OrdenForanea from "./pages/foraneas/OrdenForanea";
 
+// Solicitudes que mandan las áreas desde la página de inicio
+import PeticionesAreas from "./pages/peticiones/PeticionesAreas";
+
 // Préstamo de herramientas (solo mecánico)
 import PrestamoHerramientas from "./pages/herramientas/PrestamoHerramientas";
 
 // Reportes (solo admin)
 import Reportes from "./pages/reportes/Reportes";
 
-// Mi cuenta y ayuda (ambos roles)
+// Cuenta de un área: solo hace solicitudes
+import NuevaSolicitud from "./pages/area/NuevaSolicitud";
+
+// Mi cuenta y ayuda (todos los roles)
 import MiCuenta from "./pages/cuenta/MiCuenta";
 import Ayuda from "./pages/ayuda/Ayuda";
 
 // Placeholder para subrutas no implementadas aún
 import EnConstruccion from "./pages/admin/EnConstruccion";
 
-const { ADMIN, MECANICO } = ROLES;
+const { ADMIN, MECANICO, AREA } = ROLES;
 
 function PublicRoute({ children }) {
   const { user, loading, homePath } = useAuth();
@@ -66,6 +73,8 @@ export default function App() {
         <ProtegerPantallas>
         <Routes>
           {/* ══════════ PÚBLICAS ══════════ */}
+          {/* Inicio: explica cómo pedir servicio; cada área entra con su cuenta */}
+          <Route path="/" element={<Inicio />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
 
           {/* ══════════ ADMIN ══════════ */}
@@ -90,14 +99,15 @@ export default function App() {
           <Route path="/admin/foraneo" element={solo([ADMIN], <OrdenesForaneas />)} />
           <Route path="/admin/foraneo/:id" element={solo([ADMIN], <OrdenForanea />)} />
 
+          <Route path="/admin/solicitudes-areas" element={solo([ADMIN], <PeticionesAreas />)} />
+
           <Route path="/admin/*" element={solo([ADMIN], <EnConstruccion />)} />
 
           {/* ══════════ MECÁNICO ══════════ */}
           <Route path="/mecanico" element={solo([MECANICO], <MecanicoDashboard />)} />
 
-          {/* Catálogo de vehículos en modo consulta + historial */}
-          <Route path="/mecanico/vehiculos" element={solo([MECANICO], <VehiculosList />)} />
-          <Route path="/mecanico/vehiculos/:id" element={solo([MECANICO], <VehiculoDetail />)} />
+          {/* El mecánico ya no tiene catálogo de vehículos: trabaja desde Solicitudes */}
+          <Route path="/mecanico/vehiculos/*" element={<Navigate to="/mecanico/solicitudes-areas" replace />} />
 
           <Route
             path="/mecanico/reparaciones"
@@ -105,11 +115,13 @@ export default function App() {
               <SolicitudesList titulo="Mis reparaciones" subtitulo="Vehículos que tienes asignados" />
             ))}
           />
+          {/* El ingreso a taller solo se abre desde una solicitud: /nueva?peticion=ID */}
           <Route path="/mecanico/reparaciones/nueva" element={solo([MECANICO], <SolicitudNueva />)} />
           <Route path="/mecanico/reparaciones/:id" element={solo([MECANICO], <SolicitudDetail />)} />
           <Route path="/mecanico/evidencia" element={solo([MECANICO], <EvidenciaFotografica />)} />
           <Route path="/mecanico/foraneo" element={solo([MECANICO], <OrdenesForaneas />)} />
           <Route path="/mecanico/foraneo/:id" element={solo([MECANICO], <OrdenForanea />)} />
+          <Route path="/mecanico/solicitudes-areas" element={solo([MECANICO], <PeticionesAreas />)} />
           <Route path="/mecanico/herramientas" element={solo([MECANICO], <PrestamoHerramientas />)} />
           <Route
             path="/mecanico/historial"
@@ -121,9 +133,14 @@ export default function App() {
           <Route path="/mecanico/ayuda" element={solo([MECANICO], <Ayuda />)} />
           <Route path="/mecanico/*" element={<Navigate to="/mecanico" replace />} />
 
+          {/* ══════════ ÁREA ══════════ */}
+          <Route path="/area" element={solo([AREA], <NuevaSolicitud />)} />
+          <Route path="/area/mi-cuenta" element={solo([AREA], <MiCuenta />)} />
+          <Route path="/area/ayuda" element={solo([AREA], <Ayuda />)} />
+          <Route path="/area/*" element={<Navigate to="/area" replace />} />
+
           {/* ══════════ REDIRECCIONES ══════════ */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </ProtegerPantallas>
       </BrowserRouter>
