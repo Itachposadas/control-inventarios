@@ -16,8 +16,7 @@ import ConfirmModal from "../../../components/ConfirmModal";
 import { vehiculosApi } from "../../../api/vehiculos";
 import {
   Car, ArrowLeft, CarFront, Hash, Tag, KeyRound, Wrench as WrenchIcon,
-  CircleDot, Calendar, Loader2, Pencil, Trash2, ClipboardPlus, Palette,
-} from "lucide-react";
+  CircleDot, Calendar, Loader2, Pencil, Trash2, ClipboardPlus, } from "lucide-react";
 
 export default function VehiculoDetail() {
   const { id } = useParams();
@@ -131,7 +130,6 @@ export default function VehiculoDetail() {
     { label: "Serie (VIN)",     value: vehiculo.serie || "—",             icon: <KeyRound size={14} />, mono: true },
     { label: "No. Motor",       value: vehiculo.noMotor || "—",           icon: <WrenchIcon size={14} />, mono: true },
     { label: "Placas",          value: vehiculo.placas || "S/P",          icon: <CircleDot size={14} />, mono: true },
-    { label: "Color",           value: vehiculo.color || "—",             icon: <Palette size={14} /> },
   ];
 
   return (

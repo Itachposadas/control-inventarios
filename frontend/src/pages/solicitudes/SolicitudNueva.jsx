@@ -321,21 +321,28 @@ export default function SolicitudNueva() {
               </span>
             }
           >
-            <Checklist
-              value={form.checklist}
-              onChange={(v) => set("checklist", v)}
-              resaltarFaltantes={resaltarFaltantes}
-            />
+            {!vehiculo && <PrimeroElVehiculo />}
+            {/* Atenuado y sin poder tocarse hasta que haya vehículo */}
+            <div className={vehiculo ? "" : "opacity-50 pointer-events-none select-none"} aria-disabled={!vehiculo}>
+              <Checklist
+                value={form.checklist}
+                onChange={(v) => set("checklist", v)}
+                resaltarFaltantes={resaltarFaltantes}
+                disabled={!vehiculo}
+              />
+            </div>
           </Section>
         </div>
 
         {/* ═════ OBSERVACIONES ═════ */}
         <Section title="OBSERVACIONES">
+          {!vehiculo && <PrimeroElVehiculo />}
           <TextArea
             value={form.observaciones_ingreso}
             onChange={(v) => set("observaciones_ingreso", v)}
             placeholder="Ej. No trae faros delanteros"
             rows={4}
+            disabled={!vehiculo}
           />
         </Section>
 
@@ -346,7 +353,9 @@ export default function SolicitudNueva() {
               <p className="text-sm text-red-600 mr-auto">{error}</p>
             ) : (
               <p className="hidden sm:block text-sm text-slate-500 mr-auto">
-                {sinMarcar.length
+                {!vehiculo
+                  ? "Primero selecciona el vehículo que ingresa al taller"
+                  : sinMarcar.length
                   ? `Faltan ${sinMarcar.length} conceptos por marcar`
                   : "Accesorios y herramientas completos"}
               </p>
@@ -360,7 +369,7 @@ export default function SolicitudNueva() {
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || !vehiculo}
               className="px-5 py-2 text-sm font-semibold rounded-lg bg-institucional hover:bg-institucional-dark
                          text-white disabled:bg-slate-300 disabled:cursor-not-allowed transition"
             >
@@ -370,5 +379,15 @@ export default function SolicitudNueva() {
         </div>
       </form>
     </DashboardLayout>
+  );
+}
+
+// Aviso mientras no se ha elegido el vehículo: el formato se llena sobre una unidad concreta
+function PrimeroElVehiculo() {
+  return (
+    <p className="mb-4 flex items-center gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+      <CarFront size={16} className="shrink-0" />
+      Primero selecciona arriba el vehículo que ingresa al taller.
+    </p>
   );
 }
