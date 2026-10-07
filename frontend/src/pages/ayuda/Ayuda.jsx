@@ -93,7 +93,7 @@ const GUIA_AREA = [
     pasos: [
       "Al entrar ya estás en “Nueva solicitud”. Solo aparecen los vehículos de tu área.",
       "Elige el vehículo. Si dice “En el taller” o “Ya solicitado”, espera a que el taller lo atienda.",
-      "Agrega los materiales: cantidad, unidad de medida, concepto y precio unitario. El total se calcula solo.",
+      "Agrega los materiales: cantidad, unidad de medida y concepto. El precio lo captura el administrador.",
       "Con “Agregar material” sumas más conceptos. Pulsa “Enviar solicitud”.",
     ],
     nota: "La fecha, la hora y el área se registran solas. Al enviar recibes un folio (ej. PET-2026-0001).",
@@ -110,6 +110,16 @@ const GUIA_AREA = [
 ];
 
 const GUIA_ADMIN = [
+  {
+    icon: <ClipboardPlus size={20} />,
+    titulo: "Precios de las solicitudes",
+    pasos: [
+      "Entra a Solicitudes. Cada solicitud muestra los materiales que pidió el área (cantidad, unidad y concepto).",
+      "Pulsa “Capturar precios”, escribe el precio unitario de cada material y pulsa “Guardar precios”.",
+      "El total de cada material y el de la solicitud se calculan solos. Puedes corregirlos con “Editar precios”.",
+    ],
+    nota: "Las áreas no ven precios ni totales: solo indican qué materiales necesitan.",
+  },
   {
     icon: <DollarSign size={20} />,
     titulo: "Capturar costo y entregar",

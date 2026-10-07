@@ -218,12 +218,8 @@ const UNIDADES = ["Pieza", "Juego", "Litro", "Galón", "Kilogramo", "Metro", "Ca
 
 let siguienteId = 1;
 const materialVacio = () => ({
-  id: siguienteId++, cantidad: "1", unidad_medida: "Pieza", concepto: "", precio_unitario: "",
+  id: siguienteId++, cantidad: "1", unidad_medida: "Pieza", concepto: "",
 });
-
-const totalDe = (m) => (Number(m.cantidad) || 0) * (Number(m.precio_unitario) || 0);
-
-const pesos = (n) => n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
 function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
   const ahora = useReloj();
@@ -236,8 +232,6 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
   const quitar = (id) => setMateriales((lista) => lista.filter((m) => m.id !== id));
   const agregar = () => setMateriales((lista) => [...lista, materialVacio()]);
 
-  const totalGeneral = materiales.reduce((s, m) => s + totalDe(m), 0);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -246,15 +240,15 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
       if (!(Number(m.cantidad) > 0)) return setError(`${n}la cantidad debe ser mayor a 0`);
       if (!m.unidad_medida.trim()) return setError(`${n}indica la unidad de medida`);
       if (!m.concepto.trim()) return setError(`${n}escribe el concepto`);
-      if (m.precio_unitario === "" || Number(m.precio_unitario) < 0) return setError(`${n}captura el precio unitario`);
     }
 
     setEnviando(true);
     try {
       const r = await areaApi.enviar({
         vehiculo_id: vehiculo.id,
-        materiales: materiales.map(({ cantidad, unidad_medida, concepto, precio_unitario }) => ({
-          cantidad, unidad_medida, concepto, precio_unitario,
+        // El precio unitario y el total los captura después el administrador
+        materiales: materiales.map(({ cantidad, unidad_medida, concepto }) => ({
+          cantidad, unidad_medida, concepto,
         })),
       });
       onEnviada(r);
@@ -298,8 +292,6 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
         <span>Cantidad</span>
         <span>Unidad de medida</span>
         <span>Concepto</span>
-        <span>Precio unitario</span>
-        <span className="text-right">Total</span>
         <span />
       </div>
 
@@ -344,25 +336,6 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
                 autoFocus={i > 0 && i === materiales.length - 1}
               />
             </Celda>
-            <Celda etiqueta="Precio unitario">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 pointer-events-none">$</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  inputMode="decimal"
-                  value={m.precio_unitario}
-                  onChange={(e) => cambiar(m.id, "precio_unitario", e.target.value)}
-                  placeholder="0.00"
-                  aria-label={`Precio unitario del material ${i + 1}`}
-                  className={`${inputClass} pl-7`}
-                />
-              </div>
-            </Celda>
-            <Celda etiqueta="Total">
-              <p className="py-2 md:text-right text-sm font-semibold text-slate-800 tabular-nums">{pesos(totalDe(m))}</p>
-            </Celda>
             <div className="col-span-2 md:col-span-1 flex justify-end">
               <button
                 type="button"
@@ -385,8 +358,7 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
           Agregar material
         </Boton>
         <p className="text-sm text-slate-600 sm:text-right">
-          {materiales.length} {materiales.length === 1 ? "material" : "materiales"} ·{" "}
-          <span className="font-semibold text-slate-800">Total {pesos(totalGeneral)}</span>
+          {materiales.length} {materiales.length === 1 ? "material" : "materiales"}
         </p>
       </div>
 
@@ -408,7 +380,7 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
 }
 
 // Columnas de la tabla de materiales en escritorio
-const COLUMNAS = "md:grid md:grid-cols-[6rem_9rem_1fr_9rem_8rem_2.5rem]";
+const COLUMNAS = "md:grid md:grid-cols-[7rem_11rem_1fr_2.5rem]";
 
 // Fecha y hora actuales; se actualiza cada 30 s mientras el formulario está abierto
 function useReloj() {

@@ -76,18 +76,15 @@ def _materiales(lista):
         concepto = _texto(m.get("concepto"), 255)
         unidad = _texto(m.get("unidad_medida"), 30)
         cantidad = _numero(m.get("cantidad"))
-        precio = _numero(m.get("precio_unitario"))
         if not concepto:
             return None, f"Material {n}: escribe el concepto"
         if not unidad:
             return None, f"Material {n}: indica la unidad de medida"
         if cantidad is None or not 0 < cantidad <= 99999:
             return None, f"Material {n}: la cantidad debe ser mayor a 0"
-        if precio is None or not 0 <= precio <= 9999999:
-            return None, f"Material {n}: el precio unitario no es válido"
         materiales.append(PeticionMaterial(
             concepto=concepto, unidad_medida=unidad,
-            cantidad=round(cantidad, 2), precio_unitario=round(precio, 2),
+            cantidad=round(cantidad, 2),  # el precio unitario lo captura el admin
         ))
     return materiales, None
 
@@ -111,8 +108,9 @@ def _para_area(p):
         "fecha": d["fecha"],
         "area": d["area"],
         "vehiculo": {k: v.get(k) for k in ("id", "nombre", "marca", "modelo", "placas", "noInventario")},
-        "materiales": d["materiales"],
-        "total": d["total"],
+        "materiales": [
+            {k: m[k] for k in ("id", "cantidad", "unidad_medida", "concepto")} for m in d["materiales"]
+        ],
         "creado_por": d["creado_por"],
         "motivo_descarte": d["motivo_descarte"],
         "atendida_at": d["atendida_at"],
@@ -184,6 +182,35 @@ def obtener(peticion_id):
     p = db.session.get(PeticionServicio, peticion_id)
     if not p:
         return jsonify({"msg": "Solicitud no encontrada"}), 404
+    return jsonify(p.to_dict()), 200
+
+
+@peticiones_bp.route("/<int:peticion_id>/precios", methods=["PUT"])
+@role_required("admin")
+def capturar_precios(peticion_id):
+    """El admin captura el precio unitario de cada material: {"precios": {id_material: precio}}."""
+    p = db.session.get(PeticionServicio, peticion_id)
+    if not p:
+        return jsonify({"msg": "Solicitud no encontrada"}), 404
+
+    precios = (request.get_json() or {}).get("precios")
+    if not isinstance(precios, dict):
+        return jsonify({"msg": "Datos inválidos"}), 400
+
+    materiales = {str(m.id): m for m in p.materiales}
+    for clave, valor in precios.items():
+        m = materiales.get(str(clave))
+        if not m:
+            return jsonify({"msg": "Ese material no es de esta solicitud"}), 400
+        if valor in ("", None):
+            m.precio_unitario = None
+            continue
+        precio = _numero(valor)
+        if precio is None or not 0 <= precio <= 9999999:
+            return jsonify({"msg": f"Precio inválido para «{m.concepto}»"}), 400
+        m.precio_unitario = round(precio, 2)
+
+    db.session.commit()
     return jsonify(p.to_dict()), 200
 
 

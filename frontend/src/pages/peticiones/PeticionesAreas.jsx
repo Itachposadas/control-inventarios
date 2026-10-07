@@ -1,7 +1,8 @@
 // src/pages/peticiones/PeticionesAreas.jsx
 // "Solicitudes": lo que piden las áreas desde la página de inicio.
 // Mecánico: cuando llega la unidad la atiende (registra el ingreso a taller,
-// que queda ligado a la solicitud) o la descarta con un motivo. Admin: consulta.
+// que queda ligado a la solicitud) o la descarta con un motivo.
+// Admin: consulta y captura el precio unitario de los materiales.
 // Las pendientes se ordenan por tiempo de espera: las más antiguas son prioridad.
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +14,7 @@ import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import { SOLICITUDES_BASE } from "../../config/solicitudes";
 import TablaMateriales from "../../components/peticiones/TablaMateriales";
-import { Loader2, Inbox, CarFront, ClipboardPlus, XCircle, Building2, Clock } from "lucide-react";
+import { Loader2, Inbox, CarFront, ClipboardPlus, XCircle, Building2, Clock, DollarSign } from "lucide-react";
 
 const PESTANAS = [
   { valor: "pendiente", label: "Pendientes" },
@@ -63,12 +64,14 @@ export default function PeticionesAreas() {
   const { role } = useAuth();
   const { menu, secondaryMenu } = menusForRole(role);
   const esMecanico = role === ROLES.MECANICO;
+  const esAdmin = role === ROLES.ADMIN;
 
   const [estado, setEstado] = useState("pendiente");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [descartando, setDescartando] = useState(null);
+  const [preciando, setPreciando] = useState(null);
 
   // Filtros (las pendientes llegan del backend de la más antigua a la más reciente)
   const [prioridad, setPrioridad] = useState("");
@@ -294,11 +297,33 @@ export default function PeticionesAreas() {
                     {p.atendida_por && ` · ${p.atendida_por}`}
                   </p>
                 )}
+                {/* El precio unitario solo lo captura el admin */}
+                {esAdmin && p.estado !== "descartada" && (
+                  <Boton
+                    tamano="sm"
+                    variante={p.precios_completos ? "secundario" : "primario"}
+                    icono={<DollarSign size={14} />}
+                    onClick={() => setPreciando(p)}
+                  >
+                    {p.precios_completos ? "Editar precios" : "Capturar precios"}
+                  </Boton>
+                )}
               </div>
             </li>
             );
           })}
         </ul>
+      )}
+
+      {preciando && (
+        <CapturarPrecios
+          peticion={preciando}
+          onClose={() => setPreciando(null)}
+          onListo={(actualizada) => {
+            setPreciando(null);
+            setItems((lista) => lista.map((x) => (x.id === actualizada.id ? actualizada : x)));
+          }}
+        />
       )}
 
       {descartando && (
@@ -333,6 +358,88 @@ function Chip({ activo, onClick, children }) {
 
 function Cuenta({ children }) {
   return <span className="ml-0.5 px-1.5 rounded-full bg-slate-100 text-slate-600 tabular-nums">{children}</span>;
+}
+
+const pesos = (n) => Number(n || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+
+// Ventana del admin: precio unitario de cada material; el total se calcula solo
+function CapturarPrecios({ peticion, onClose, onListo }) {
+  const [precios, setPrecios] = useState(() =>
+    Object.fromEntries(peticion.materiales.map((m) => [m.id, m.precio_unitario ?? ""]))
+  );
+  const [error, setError] = useState("");
+  const [guardando, setGuardando] = useState(false);
+
+  const totalDe = (m) => (precios[m.id] === "" ? null : Number(m.cantidad) * Number(precios[m.id]));
+  const totales = peticion.materiales.map(totalDe).filter((t) => t != null && !Number.isNaN(t));
+  const totalGeneral = totales.reduce((s, t) => s + t, 0);
+
+  const guardar = async () => {
+    setError("");
+    const malo = peticion.materiales.find((m) => precios[m.id] !== "" && !(Number(precios[m.id]) >= 0));
+    if (malo) return setError(`Revisa el precio de «${malo.concepto}»`);
+    setGuardando(true);
+    try {
+      onListo(await peticionesApi.capturarPrecios(peticion.id, precios));
+    } catch (e) {
+      setError(e.message || "No se pudieron guardar los precios");
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <Modal
+      titulo="Precios de los materiales"
+      subtitulo={`${peticion.folio} · ${peticion.vehiculo?.nombre} · ${peticion.area}`}
+      onClose={onClose}
+      ancho="max-w-2xl"
+    >
+      <div className="p-6 space-y-4">
+        {error && <Alerta>{error}</Alerta>}
+        <ul className="divide-y divide-slate-100 border border-slate-200 rounded-xl">
+          {peticion.materiales.map((m) => {
+            const total = totalDe(m);
+            return (
+              <li key={m.id} className="p-3 grid grid-cols-1 sm:grid-cols-[1fr_9rem_7rem] gap-2 sm:items-center">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-800 break-words">{m.concepto}</p>
+                  <p className="text-xs text-slate-500">
+                    {Number(m.cantidad).toLocaleString("es-MX")} {m.unidad_medida}
+                  </p>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 pointer-events-none">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={precios[m.id]}
+                    onChange={(e) => setPrecios((pr) => ({ ...pr, [m.id]: e.target.value }))}
+                    placeholder="Precio unitario"
+                    aria-label={`Precio unitario de ${m.concepto}`}
+                    className={`${inputClass} pl-7`}
+                  />
+                </div>
+                <p className="text-sm sm:text-right font-semibold text-slate-800 tabular-nums">
+                  {total != null && !Number.isNaN(total) ? pesos(total) : "—"}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-slate-600">
+            Total: <span className="font-bold text-slate-800 tabular-nums">{pesos(totalGeneral)}</span>
+          </p>
+          <div className="flex gap-2">
+            <Boton variante="fantasma" onClick={onClose}>Cancelar</Boton>
+            <Boton onClick={guardar} disabled={guardando}>{guardando ? "Guardando..." : "Guardar precios"}</Boton>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 function Descartar({ peticion, onClose, onListo }) {

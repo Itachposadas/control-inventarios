@@ -523,7 +523,10 @@ class PeticionServicio(db.Model):
                 "nombre": v.numero_economico or v.unidad or v.no_inventario,
             } if v else None,
             "materiales": materiales,
-            "total": round(sum(m["total"] for m in materiales), 2),
+            # Suma de lo que ya tiene precio; None si el admin aún no captura ninguno
+            "total": round(sum(m["total"] for m in materiales if m["total"] is not None), 2)
+            if any(m["total"] is not None for m in materiales) else None,
+            "precios_completos": bool(materiales) and all(m["precio_unitario"] is not None for m in materiales),
             "solicitud": {"id": self.solicitud.id, "folio": self.solicitud.folio} if self.solicitud else None,
             "creado_por": _nombre_usuario(self.creado_por),
             "atendida_por": _nombre_usuario(self.atendida_por),
@@ -533,7 +536,11 @@ class PeticionServicio(db.Model):
 
 
 class PeticionMaterial(db.Model):
-    """Un material solicitado. El total (cantidad × precio unitario) se calcula, no se guarda."""
+    """
+    Un material solicitado. El área captura cantidad, unidad y concepto; el
+    precio unitario lo captura después el admin. El total (cantidad × precio)
+    se calcula, no se guarda.
+    """
     __tablename__ = "peticiones_materiales"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -541,16 +548,16 @@ class PeticionMaterial(db.Model):
     cantidad = db.Column(db.Numeric(10, 2), nullable=False)
     unidad_medida = db.Column(db.String(30), nullable=False)
     concepto = db.Column(db.String(255), nullable=False)
-    precio_unitario = db.Column(db.Numeric(12, 2), nullable=False)
+    precio_unitario = db.Column(db.Numeric(12, 2), nullable=True)  # lo captura el admin
 
     def to_dict(self):
         cantidad = float(self.cantidad)
-        precio = float(self.precio_unitario)
+        precio = float(self.precio_unitario) if self.precio_unitario is not None else None
         return {
             "id": self.id,
             "cantidad": cantidad,
             "unidad_medida": self.unidad_medida,
             "concepto": self.concepto,
             "precio_unitario": precio,
-            "total": round(cantidad * precio, 2),
+            "total": round(cantidad * precio, 2) if precio is not None else None,
         }

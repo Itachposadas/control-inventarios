@@ -1,6 +1,6 @@
 // src/pages/solicitudes/SolicitudNueva.jsx
 // FORMATO DE INGRESO A TALLER (Municipio de Atlacomulco). Solo lo llena el mecánico.
-//  1. Encabezado: fecha de ingreso y "Hoja no. __ de __"
+//  1. Encabezado: fecha de ingreso (automática: el momento en que se atiende) y "Hoja no. __ de __"
 //  2. Datos del vehículo/maquinaria: los de la solicitud del área (?peticion=ID),
 //     tomados del catálogo (solo lectura)
 //  3. Accesorios y herramientas: SI / NO por concepto
@@ -17,17 +17,13 @@ import { peticionesApi } from "../../api/peticiones";
 import TablaMateriales from "../../components/peticiones/TablaMateriales";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { CHECKLIST_ITEMS, conceptosSinMarcar } from "../../config/solicitudes";
-import { ArrowLeft, CarFront, Loader2, Inbox } from "lucide-react";
-
-// Fecha local de hoy en formato AAAA-MM-DD (para el <input type="date">)
-function hoyISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import { ArrowLeft, CarFront, Loader2, Inbox, CalendarCheck } from "lucide-react";
 
 export default function SolicitudNueva() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // Fecha de hoy (solo se muestra: el sistema registra el ingreso al guardar)
+  const fechaHoy = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
   const accesoriosRef = useRef(null);
 
   // Solicitud del área que se atiende con este ingreso (?peticion=ID).
@@ -39,7 +35,6 @@ export default function SolicitudNueva() {
 
   // Formato
   const [form, setForm] = useState({
-    fecha_ingreso: hoyISO(),
     hoja_no: 1,
     hoja_total: 1,
     checklist: {},
@@ -75,8 +70,6 @@ export default function SolicitudNueva() {
     e.preventDefault();
     setError("");
 
-    if (!form.fecha_ingreso) return setError("Captura la fecha de ingreso");
-    if (form.fecha_ingreso > hoyISO()) return setError("La fecha de ingreso no puede ser futura");
     const hojaNo = Number(form.hoja_no);
     const hojaTotal = Number(form.hoja_total);
     if (!hojaNo || !hojaTotal || hojaNo > hojaTotal) return setError("Revisa la hoja (ej. hoja 1 de 1)");
@@ -93,7 +86,6 @@ export default function SolicitudNueva() {
     setSaving(true);
     try {
       const creada = await solicitudesApi.crear({
-        fecha_ingreso: form.fecha_ingreso,
         hoja_no: hojaNo,
         hoja_total: hojaTotal,
         checklist: form.checklist,
@@ -169,15 +161,13 @@ export default function SolicitudNueva() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:w-[26rem] shrink-0">
-              <Field label="Fecha de ingreso" required>
-                <input
-                  type="date"
-                  value={form.fecha_ingreso}
-                  max={hoyISO()}
-                  onChange={(e) => set("fecha_ingreso", e.target.value)}
-                  required
-                  className={inputClass}
-                />
+              {/* La fecha de ingreso la pone el sistema al registrar (no se edita) */}
+              <Field label="Fecha de ingreso">
+                <div className={`${inputClass} bg-slate-50 text-slate-700 flex items-center gap-2 cursor-default`}>
+                  <CalendarCheck size={16} className="text-institucional shrink-0" />
+                  <span className="truncate">{fechaHoy}</span>
+                </div>
+                <p className="mt-1 text-[11px] text-slate-500">Se registra automáticamente al guardar.</p>
               </Field>
               <Field label="Hoja no.">
                 <div className="flex items-center gap-2">

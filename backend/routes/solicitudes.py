@@ -1,5 +1,5 @@
 # backend/routes/solicitudes.py
-from datetime import datetime, timedelta
+from datetime import timedelta
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models import (
@@ -41,24 +41,6 @@ def _texto(valor):
 
 # Hora del centro de México (UTC-6, sin horario de verano desde 2022)
 UTC_OFFSET = timedelta(hours=6)
-
-
-def _fecha_ingreso(texto):
-    """'AAAA-MM-DD' (fecha local) → datetime UTC. Hoy conserva la hora actual."""
-    try:
-        dia = datetime.strptime(str(texto)[:10], "%Y-%m-%d").date()
-    except ValueError:
-        return None, "Fecha de ingreso inválida"
-    ahora = utcnow()
-    hoy = (ahora - UTC_OFFSET).date()
-    if dia > hoy:
-        return None, "La fecha de ingreso no puede ser futura"
-    if dia.year < 2000:
-        return None, "Fecha de ingreso inválida"
-    if dia == hoy:
-        return ahora, None
-    # Otro día: se registra a mediodía (hora local) para que no cambie de fecha
-    return datetime.combine(dia, datetime.min.time()) + timedelta(hours=12) + UTC_OFFSET, None
 
 
 def _to_int(valor):
@@ -259,14 +241,9 @@ def crear():
     if en_taller:
         return jsonify({"msg": f"Este vehículo ya está en el taller ({en_taller.folio})"}), 409
 
-    s = Solicitud(vehiculo=vehiculo, creado_por_id=user.id, estado="recibida")
-
-    # Fecha de ingreso capturada en el formato (por defecto, ahora)
-    if data.get("fecha_ingreso"):
-        fecha, error = _fecha_ingreso(data["fecha_ingreso"])
-        if error:
-            return jsonify({"msg": error}), 400
-        s.fecha_ingreso = fecha
+    # La fecha de ingreso es el momento en que el mecánico atiende la solicitud
+    # (no se recibe del formato ni se puede modificar)
+    s = Solicitud(vehiculo=vehiculo, creado_por_id=user.id, estado="recibida", fecha_ingreso=utcnow())
 
     # Datos del vehículo: se copian del catálogo tal como están al ingresar
     # (quedan como registro histórico; el mecánico solo los ve)

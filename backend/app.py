@@ -50,6 +50,21 @@ def _ampliar_roles(app):
     app.logger.info("Rol 'area' agregado a usuarios.role")
 
 
+def _precio_opcional(app):
+    """El precio unitario de los materiales lo captura el admin después: puede ir vacío."""
+    if db.engine.dialect.name != "mysql":
+        return
+    with db.engine.begin() as conn:
+        nulo = conn.execute(db.text(
+            "SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() "
+            "AND TABLE_NAME = 'peticiones_materiales' AND COLUMN_NAME = 'precio_unitario'"
+        )).scalar()
+        if nulo != "NO":
+            return
+        conn.execute(db.text("ALTER TABLE peticiones_materiales MODIFY COLUMN precio_unitario DECIMAL(12,2) NULL"))
+    app.logger.info("peticiones_materiales.precio_unitario ahora es opcional")
+
+
 def _email_opcional(app):
     """Permite usuarios.email vacío (cuentas de área sin correo). Solo relaja la columna."""
     if db.engine.dialect.name != "mysql":
@@ -126,6 +141,7 @@ def create_app():
             _agregar_columnas_faltantes(app)
             _ampliar_roles(app)
             _email_opcional(app)
+            _precio_opcional(app)
             _cargar_catalogo_herramientas(app)
         except Exception as e:
             app.logger.error("No se pudieron crear las tablas: %s", e)
