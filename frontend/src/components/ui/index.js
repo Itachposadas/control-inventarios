@@ -5,4 +5,5 @@ export { default as Boton } from "./Boton";
 export { default as Alerta } from "./Alerta";
 export { default as Modal } from "./Modal";
 export { default as Insignia } from "./Insignia";
+export { default as MarcaAgua } from "./MarcaAgua";
 export { inputClass, Section, Field, TextArea } from "./Formulario";

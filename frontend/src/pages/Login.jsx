@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { HOME_BY_ROLE } from "../config/roles";
 import { useSystemHealth } from "../hooks/useSystemHealth";
+import { MarcaAgua } from "../components/ui";
 import {
   Eye, EyeOff, User, Lock, ArrowRight, ArrowLeft, Loader2, AlertCircle, ArrowBigUp,
 } from "lucide-react";
@@ -87,6 +88,8 @@ export default function Login() {
               "radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.45) 100%)",
           }}
         />
+        {/* Logotipo municipal en trazo blanco, muy tenue */}
+        <MarcaAgua className="bg-white opacity-[0.07] h-[88%] -left-28 -bottom-12 rotate-[8deg]" />
 
         <div className="relative z-10 w-full flex flex-col justify-center items-end
                         text-right px-14 xl:px-16 py-10">
@@ -108,10 +111,18 @@ export default function Login() {
 
       {/* ══════════ PANEL DEL FORMULARIO ══════════ */}
       <main className="relative flex-1 lg:w-[58%] bg-fondo overflow-y-auto">
-        {/* Franja institucional (solo celular) */}
-        <div className="lg:hidden h-1.5 bg-institucional" />
+        {/* Logotipo municipal como marca de agua, detrás del formulario */}
+        <div aria-hidden className="absolute inset-0 overflow-hidden pointer-events-none">
+          <MarcaAgua
+            className="bg-institucional opacity-[0.06] h-[70%] -right-20 -bottom-10 rotate-[-8deg]
+                       lg:h-[92%] lg:-right-24 lg:-bottom-16"
+          />
+        </div>
 
-        <div className="w-full max-w-md mx-auto min-h-full flex flex-col
+        {/* Franja institucional (solo celular) */}
+        <div className="relative lg:hidden h-1.5 bg-institucional" />
+
+        <div className="relative w-full max-w-md mx-auto min-h-full flex flex-col
                         px-5 sm:px-8 pt-6 pb-6 lg:py-10">
           {/* Logos */}
           <div className="flex items-center justify-between gap-4 mb-6 lg:mb-12">

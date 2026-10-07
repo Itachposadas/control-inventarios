@@ -5,8 +5,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
-  LogIn, LayoutDashboard, KeyRound, ClipboardList, CarFront, ArrowRight, ShieldCheck,
-  FileCheck2, Timer, Ticket, CheckCircle2, Building2, Sparkles,
+  LogIn, LayoutDashboard, KeyRound, ClipboardList, CarFront, ArrowRight, Building2, Sparkles,
 } from "lucide-react";
 
 const PASOS = [
@@ -21,29 +20,6 @@ const PASOS = [
   {
     icono: <CarFront size={22} />,
     titulo: "Lleva la unidad al taller",
-  },
-];
-
-const BENEFICIOS = [
-  {
-    icono: <ShieldCheck size={22} />,
-    titulo: "Seguro por área",
-    texto: "Cada área ve únicamente sus vehículos. Nadie más puede pedir por tus unidades.",
-  },
-  {
-    icono: <FileCheck2 size={22} />,
-    titulo: "Sin papeleo",
-    texto: "La solicitud queda registrada al instante, sin formatos impresos ni firmas.",
-  },
-  {
-    icono: <Timer size={22} />,
-    titulo: "Atención por prioridad",
-    texto: "El taller atiende primero las solicitudes que llevan más tiempo esperando.",
-  },
-  {
-    icono: <Ticket size={22} />,
-    titulo: "Folio de seguimiento",
-    texto: "Cada solicitud recibe un folio único para identificarla en el taller.",
   },
 ];
 
@@ -71,7 +47,6 @@ export default function Inicio() {
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
             <a href="#como-funciona" className="hover:text-institucional transition">Cómo funciona</a>
-            <a href="#beneficios" className="hover:text-institucional transition">Beneficios</a>
           </nav>
 
           <button
@@ -146,14 +121,6 @@ export default function Inicio() {
               </a>
             </div>
 
-            <ul className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-white/80">
-              {["Solo ves tu área", "Fecha y hora automáticas", "Folio de seguimiento"].map((t) => (
-                <li key={t} className="inline-flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-emerald-300" />
-                  {t}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
 
@@ -201,40 +168,6 @@ export default function Inicio() {
               </li>
             ))}
           </ol>
-        </div>
-      </section>
-
-      {/* ══════════ BENEFICIOS ══════════ */}
-      <section id="beneficios" className="scroll-mt-20 py-20 sm:py-24 bg-fondo">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Titulo
-            etiqueta="Beneficios"
-            titulo="Más orden en el parque vehicular"
-            texto="Un solo lugar para pedir, priorizar y atender lo que necesita cada unidad."
-          />
-
-          <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {BENEFICIOS.map((b) => (
-              <div
-                key={b.titulo}
-                className="group relative overflow-hidden rounded-3xl bg-white border border-slate-200/80 p-6
-                           shadow-[0_1px_3px_rgba(15,23,42,0.04)]
-                           hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_rgba(15,23,42,0.25)] transition"
-              >
-                <span
-                  aria-hidden
-                  className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-institucional/5
-                             group-hover:bg-institucional/10 transition"
-                />
-                <span className="relative w-12 h-12 rounded-2xl bg-institucional/10 text-institucional
-                                 flex items-center justify-center group-hover:bg-institucional group-hover:text-white transition">
-                  {b.icono}
-                </span>
-                <h3 className="relative mt-5 text-base font-bold text-slate-800">{b.titulo}</h3>
-                <p className="relative mt-2 text-sm text-slate-500 leading-relaxed">{b.texto}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
