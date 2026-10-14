@@ -8,10 +8,6 @@ export const peticionesApi = {
 
   obtener: (id) => request(`/peticiones/${id}`),
 
-  // Solo admin: { idMaterial: precioUnitario }
-  capturarPrecios: (id, precios) =>
-    request(`/peticiones/${id}/precios`, { method: "PUT", body: { precios } }),
-
   // Mecánico: firma de recibido (primer paso de "Atender")
   recibir: (id, { mecanico_nombre, mecanico_firma }) =>
     request(`/peticiones/${id}/recibir`, { method: "POST", body: { mecanico_nombre, mecanico_firma } }),

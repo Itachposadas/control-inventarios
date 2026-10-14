@@ -75,32 +75,6 @@ def get_vehiculo(vehiculo_id):
     return jsonify(v.to_dict()), 200
 
 
-# ─── Historial por ID ───
-@vehiculos_bp.route("/<int:vehiculo_id>/historial", methods=["GET"])
-@role_required("admin")
-def get_historial(vehiculo_id):
-    """Solicitudes del vehículo en el formato que usa HistorialTimeline."""
-    v = db.session.get(Vehiculo, vehiculo_id)
-    if not v:
-        return jsonify({"msg": "Vehículo no encontrado"}), 404
-
-    items = v.solicitudes.order_by(Solicitud.fecha_ingreso.desc()).all()
-    return jsonify([
-        {
-            "id": s.id,
-            "solicitudId": s.id,
-            "folio": s.folio,
-            "tipo": s.tipo.capitalize(),
-            "estado": "Completado" if s.estado == "entregada" else "En proceso",
-            "descripcion": s.fallas or s.observaciones_ingreso or "Sin diagnóstico",
-            "fecha": s.fecha_ingreso.isoformat(),
-            "mecanico": (s.mecanico.nombre_completo or s.mecanico.username) if s.mecanico else "—",
-            "costo": float(s.costo) if s.costo is not None else 0,
-        }
-        for s in items
-    ]), 200
-
-
 # ─── Crear vehículo ───
 @vehiculos_bp.route("", methods=["POST"])
 @vehiculos_bp.route("/", methods=["POST"])

@@ -9,11 +9,11 @@ import { menusForRole } from "../../../config/menus";
 import { ROLES, VEHICULOS_BASE } from "../../../config/roles";
 import { SOLICITUDES_BASE } from "../../../config/solicitudes";
 import { useAuth } from "../../../context/AuthContext";
-import StatsVehiculo from "../../../components/vehiculos/StatsVehiculo";
-import HistorialTimeline from "../../../components/vehiculos/HistorialTimeline";
+import ExpedienteServicios, { ResumenExpediente } from "../../../components/vehiculos/ExpedienteServicios";
 import VehiculoModal from "../../../components/vehiculos/VehiculoModal";
 import ConfirmModal from "../../../components/ConfirmModal";
 import { vehiculosApi } from "../../../api/vehiculos";
+import { historialApi } from "../../../api/historial";
 import {
   Car, ArrowLeft, CarFront, Hash, Tag, KeyRound, Wrench as WrenchIcon,
   CircleDot, Calendar, Loader2, Pencil, Trash2, } from "lucide-react";
@@ -28,7 +28,7 @@ export default function VehiculoDetail() {
   const basePath = VEHICULOS_BASE[role];
 
   const [vehiculo, setVehiculo] = useState(null);
-  const [historial, setHistorial] = useState([]);
+  const [expediente, setExpediente] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,11 +40,11 @@ export default function VehiculoDetail() {
 
     Promise.all([
       vehiculosApi.obtener(id),
-      vehiculosApi.historial(id).catch(() => []),
+      historialApi.vehiculo(id).catch(() => null),
     ])
       .then(([v, h]) => {
         setVehiculo(v);
-        setHistorial(h);
+        setExpediente(h);
       })
       .catch((e) => {
         console.error("Error cargando vehículo:", e);
@@ -72,13 +72,7 @@ export default function VehiculoDetail() {
     }
   };
 
-  // Stats calculados desde el historial real
-  const stats = {
-    total: historial.length,
-    completados: historial.filter((h) => h.estado === "Completado").length,
-    enProceso: historial.filter((h) => h.estado === "En proceso").length,
-    costoTotal: historial.reduce((s, h) => s + (h.costo || 0), 0),
-  };
+  const servicios = expediente?.servicios || [];
 
   if (loading) {
     return (
@@ -236,7 +230,7 @@ export default function VehiculoDetail() {
 
         {/* Stats + historial */}
         <div className="lg:col-span-2 space-y-5">
-          <StatsVehiculo stats={stats} />
+          {expediente && <ResumenExpediente resumen={expediente.resumen} />}
 
           <div className="bg-white rounded-2xl border border-slate-200
                           shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
@@ -246,20 +240,18 @@ export default function VehiculoDetail() {
                   Historial de servicios
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {esAdmin
-                    ? "Abre un servicio para capturar el costo y registrar la entrega"
-                    : "Abre un servicio para ver su detalle"}
+                  Del más reciente al más antiguo, con sus formatos en PDF
                 </p>
               </div>
               <span className="text-xs font-medium px-2.5 py-1 rounded-full
                                bg-slate-100 text-slate-600">
-                {historial.length} {historial.length === 1 ? "registro" : "registros"}
+                {servicios.length} {servicios.length === 1 ? "servicio" : "servicios"}
               </span>
             </div>
             <div className="p-5">
-              <HistorialTimeline
-                items={historial}
-                onItemClick={(h) => navigate(`${SOLICITUDES_BASE[role]}/${h.solicitudId}`)}
+              <ExpedienteServicios
+                servicios={servicios}
+                onAbrir={(s) => navigate(`${SOLICITUDES_BASE[role]}/${s.id}`)}
               />
             </div>
           </div>

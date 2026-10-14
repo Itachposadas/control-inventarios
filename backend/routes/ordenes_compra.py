@@ -142,7 +142,7 @@ def atender(orden_id):
     o.atendida_por_id = user.id
     o.atendida_at = utcnow()
     s = o.solicitud
-    s.costo = o.totales()[4]  # el costo del servicio es el total de la orden
+    s.costo = o.totales()[3]  # el costo del servicio es el total de la orden
     _registrar(s, user, f"Administración atendió la orden de compra {o.folio}")
     if s.estado == "compra":
         _avanzar(s, user, "reparacion")

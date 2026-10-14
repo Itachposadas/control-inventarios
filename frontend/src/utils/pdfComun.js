@@ -17,11 +17,8 @@ export const fechaLarga = (iso) =>
   iso ? aFecha(iso).toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" }) : "—";
 export const cantidad = (n) => Number(n).toLocaleString("es-MX", { maximumFractionDigits: 2 });
 
-/**
- * Logotipo municipal a la izquierda, logo de Atlacomulco a la derecha, línea
- * guinda, título y folio. Devuelve la "y" donde sigue el contenido.
- */
-export async function encabezado(doc, { titulo, folio = "", subtitulo = "Coordinación de Parque Vehicular · Atlacomulco" }) {
+// Logotipo municipal a la izquierda y logo de Atlacomulco a la derecha
+export async function logos(doc) {
   const ancho = doc.internal.pageSize.getWidth();
   const [municipal, atlacomulco] = await Promise.all([
     cargarSinFondo(LOGOTIPO_MUNICIPAL),
@@ -36,6 +33,14 @@ export async function encabezado(doc, { titulo, folio = "", subtitulo = "Coordin
     const w = altoLogo * atlacomulco.ratio;
     doc.addImage(atlacomulco.dataUrl, "PNG", ancho - MARGEN - w, 10, w, altoLogo);
   }
+}
+
+/**
+ * Logotipos, línea guinda, título y folio. Devuelve la "y" donde sigue el contenido.
+ */
+export async function encabezado(doc, { titulo, folio = "", subtitulo = "Coordinación de Parque Vehicular · Atlacomulco" }) {
+  const ancho = doc.internal.pageSize.getWidth();
+  await logos(doc);
 
   const y = 36;
   doc.setDrawColor(...GUINDA);
@@ -65,31 +70,21 @@ export function pie(doc) {
   for (let i = 1; i <= paginas; i++) {
     doc.setPage(i);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
+    doc.setDrawColor(...GRIS);
+    doc.setLineWidth(0.4);
+    doc.line(MARGEN, alto - 14, ancho - MARGEN, alto - 14);
+    doc.setFontSize(7.5);
     doc.setTextColor(...GRIS);
-    doc.text("Palacio Municipal S/N, Col. Centro, Atlacomulco de Fabela, Estado de México. C.P. 50450", MARGEN, alto - 8);
     doc.text(
-      `Generado: ${new Date().toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}`,
-      ancho - MARGEN, alto - 8, { align: "right" }
+      "Palacio Municipal S/n, Col. Centro, Atlacomulco de Fabela, Estado de México. C. P. 50450, Tel. /Fax: (712)1220333, 7122020200",
+      ancho / 2, alto - 10, { align: "center" }
+    );
+    doc.setFontSize(6.5);
+    doc.text(
+      `Generado: ${new Date().toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}${paginas > 1 ? ` · Página ${i} de ${paginas}` : ""}`,
+      ancho - MARGEN, alto - 5.5, { align: "right" }
     );
   }
-}
-
-// Agrega una hoja si no cabe lo que sigue
-export function saltoSiHaceFalta(doc, y, necesario) {
-  if (y + necesario > doc.internal.pageSize.getHeight() - 18) {
-    doc.addPage();
-    return 20;
-  }
-  return y;
-}
-
-export function tituloSeccion(doc, texto, y) {
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...GUINDA);
-  doc.text(texto, MARGEN, y);
-  doc.setFont("helvetica", "normal");
 }
 
 export function bloqueFirma(doc, { centro, y, anchoFirma, altoFirma, titulo, firma, nombre, leyenda }) {

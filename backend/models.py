@@ -131,6 +131,20 @@ def _iso(dt):
     return dt.isoformat() if dt else None
 
 
+def _ve_costos():
+    """Solo el administrador ve precios y costos (parque vehicular no).
+    Fuera de una petición con sesión (scripts, pruebas) se muestran."""
+    try:
+        from flask_jwt_extended import get_jwt_identity
+        uid = get_jwt_identity()
+    except Exception:
+        return True
+    if uid is None:
+        return True
+    u = db.session.get(Usuario, int(uid))
+    return u is None or u.role == "admin"
+
+
 class Solicitud(db.Model):
     __tablename__ = "solicitudes"
 
@@ -173,6 +187,7 @@ class Solicitud(db.Model):
     # ─── Formato de entrega ───
     acciones = db.Column(db.Text)        # Trabajo realizado
     observaciones = db.Column(db.Text)   # Observaciones de la entrega
+    operador = db.Column(db.String(150)) # Operador de la unidad (quien la maneja en el área)
 
     # ─── Lo captura el admin ───
     costo = db.Column(db.Numeric(12, 2))
@@ -229,7 +244,7 @@ class Solicitud(db.Model):
             "mecanico": self.mecanico.to_dict() if self.mecanico else None,
             "fotos_tipos": sorted(f.tipo for f in self.fotos),
             "orden_compra_folio": self.orden_compra.folio if self.orden_compra else None,
-            "costo": float(self.costo) if self.costo is not None else None,
+            "costo": float(self.costo) if self.costo is not None and _ve_costos() else None,
             "fecha_ingreso": _iso(self.fecha_ingreso),
             "fecha_entrega": _iso(self.fecha_entrega),
             "updated_at": _iso(self.updated_at),
@@ -254,6 +269,7 @@ class Solicitud(db.Model):
                 "fallas": self.fallas,
                 "acciones": self.acciones,
                 "observaciones": self.observaciones,
+                "operador": self.operador,
                 "eventos": [e.to_dict() for e in self.eventos],
                 "fotos": {f.tipo: f.to_dict() for f in self.fotos},
                 "ordenes_foraneas": [o.to_dict(resumen=True) for o in self.ordenes_foraneas],
@@ -283,16 +299,20 @@ class RefaccionServicio(db.Model):
     concepto = db.Column(db.String(255), nullable=False)  # descripción (pieza a comprar)
     precio_unitario = db.Column(db.Numeric(12, 2), nullable=True)
 
+    def importe(self):
+        if self.precio_unitario is None:
+            return None
+        return round(float(self.cantidad) * float(self.precio_unitario), 2)
+
     def to_dict(self):
-        cantidad = float(self.cantidad)
-        precio = float(self.precio_unitario) if self.precio_unitario is not None else None
+        ve = _ve_costos()
         return {
             "id": self.id,
-            "cantidad": cantidad,
+            "cantidad": float(self.cantidad),
             "unidad_medida": self.unidad_medida,
             "concepto": self.concepto,
-            "precio_unitario": precio,
-            "importe": round(cantidad * precio, 2) if precio is not None else None,
+            "precio_unitario": float(self.precio_unitario) if ve and self.precio_unitario is not None else None,
+            "importe": self.importe() if ve else None,
         }
 
 
@@ -338,16 +358,19 @@ class OrdenCompra(db.Model):
     atendida_por = db.relationship("Usuario", foreign_keys=[atendida_por_id])
 
     def totales(self):
-        piezas = [r.to_dict() for r in self.solicitud.piezas]
-        subtotal = round(sum(p["importe"] for p in piezas if p["importe"] is not None), 2)
+        """(subtotal, iva %, iva, total) con los precios capturados."""
+        subtotal = round(sum(r.importe() or 0 for r in self.solicitud.piezas), 2)
         iva_pct = float(self.iva_porcentaje) if self.iva_porcentaje is not None else 0
         iva = round(subtotal * iva_pct / 100, 2)
-        return piezas, subtotal, iva_pct, iva, round(subtotal + iva, 2)
+        return subtotal, iva_pct, iva, round(subtotal + iva, 2)
 
     def to_dict(self):
         s = self.solicitud
         v = s.vehiculo
-        piezas, subtotal, iva_pct, iva, total = self.totales()
+        piezas = [r.to_dict() for r in s.piezas]
+        subtotal, iva_pct, iva, total = self.totales()
+        if not _ve_costos():  # parque vehicular no ve precios
+            subtotal = iva = total = None
         return {
             "id": self.id,
             "folio": self.folio,
@@ -366,7 +389,7 @@ class OrdenCompra(db.Model):
             "autoriza_nombre": self.autoriza_nombre,
             "autoriza_firma": self.autoriza_firma,
             "piezas": piezas,
-            "precios_completos": bool(piezas) and all(p["precio_unitario"] is not None for p in piezas),
+            "precios_completos": bool(s.piezas) and all(r.precio_unitario is not None for r in s.piezas),
             "subtotal": subtotal,
             "iva_porcentaje": iva_pct,
             "iva": iva,
@@ -550,6 +573,9 @@ def _peticion_de(solicitud):
         # Mecánico que firmó de recibido: se propone en la orden de compra
         "mecanico_nombre": p.mecanico_nombre,
         "mecanico_firma": p.mecanico_firma,
+        # Solicitante: firma en "Área" (quien recibe) del formato de entrega
+        "solicitante_nombre": p.solicitante_nombre,
+        "solicitante_firma": p.solicitante_firma,
         "materiales": [
             {k: m[k] for k in ("cantidad", "unidad_medida", "concepto")}
             for m in (x.to_dict() for x in p.materiales)

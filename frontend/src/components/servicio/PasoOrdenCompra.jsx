@@ -221,8 +221,9 @@ function Resumen({ o, esAdmin }) {
             <span className="font-medium text-slate-800">{o.proveedor?.nombre}</span>
           </p>
         )}
-        <TablaRefacciones refacciones={o.piezas} conPrecios={o.estado === "atendida" || esAdmin} />
-        {o.estado === "atendida" && (
+        {/* Precios y totales solo para el admin */}
+        <TablaRefacciones refacciones={o.piezas} conPrecios={esAdmin} />
+        {o.estado === "atendida" && esAdmin && (
           <p className="text-sm text-right text-slate-600">
             Subtotal {formatMoneda(o.subtotal)} · IVA {formatMoneda(o.iva)} ·{" "}
             <span className="font-bold text-slate-800">Total {formatMoneda(o.total)}</span>

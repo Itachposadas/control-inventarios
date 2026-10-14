@@ -2,7 +2,7 @@
 # Peticiones de servicio de las áreas.
 #  - /api/area/...       cuenta del área: vehículos de SU área y enviar
 #                        solicitudes para ellos (nunca ve las de otras áreas).
-#  - /api/peticiones/... bandeja del taller (mecánico la atiende, admin consulta).
+#  - /api/peticiones/... bandeja del taller (parque vehicular la atiende, admin consulta).
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models import PeticionServicio, PeticionMaterial, Vehiculo, Solicitud, utcnow, _iso
@@ -218,35 +218,6 @@ def obtener(peticion_id):
     p = db.session.get(PeticionServicio, peticion_id)
     if not p:
         return jsonify({"msg": "Solicitud no encontrada"}), 404
-    return jsonify(p.to_dict()), 200
-
-
-@peticiones_bp.route("/<int:peticion_id>/precios", methods=["PUT"])
-@role_required("admin")
-def capturar_precios(peticion_id):
-    """El admin captura el precio unitario de cada material: {"precios": {id_material: precio}}."""
-    p = db.session.get(PeticionServicio, peticion_id)
-    if not p:
-        return jsonify({"msg": "Solicitud no encontrada"}), 404
-
-    precios = (request.get_json() or {}).get("precios")
-    if not isinstance(precios, dict):
-        return jsonify({"msg": "Datos inválidos"}), 400
-
-    materiales = {str(m.id): m for m in p.materiales}
-    for clave, valor in precios.items():
-        m = materiales.get(str(clave))
-        if not m:
-            return jsonify({"msg": "Ese material no es de esta solicitud"}), 400
-        if valor in ("", None):
-            m.precio_unitario = None
-            continue
-        precio = _numero(valor)
-        if precio is None or not 0 <= precio <= 9999999:
-            return jsonify({"msg": f"Precio inválido para «{m.concepto}»"}), 400
-        m.precio_unitario = round(precio, 2)
-
-    db.session.commit()
     return jsonify(p.to_dict()), 200
 
 

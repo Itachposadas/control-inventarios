@@ -17,6 +17,7 @@ export const ADMIN_MENU = [
   // Órdenes de compra que manda parque vehicular después del diagnóstico
   { label: "Órdenes de compra", to: "/admin/ordenes-compra", icon: <ShoppingCart size={18} /> },
   { label: "Vehículos", to: "/admin/vehiculos", icon: <Car size={18} /> },
+  { label: "Historial de servicios", to: "/admin/historial", icon: <History size={18} /> },
   { label: "Taller foráneo", to: "/admin/foraneo", icon: <Truck size={18} /> },
   { label: "Usuarios", to: "/admin/usuarios", icon: <Users size={18} /> },
   { label: "Reportes", to: "/admin/reportes", icon: <BarChart3 size={18} /> },
@@ -36,7 +37,7 @@ export const MECANICO_MENU = [
   { label: "Evidencia fotográfica", to: "/mecanico/evidencia", icon: <Camera size={18} /> },
   { label: "Taller foráneo", to: "/mecanico/foraneo", icon: <Truck size={18} /> },
   { label: "Préstamo de herramientas", to: "/mecanico/herramientas", icon: <Hammer size={18} /> },
-  { label: "Historial", to: "/mecanico/historial", icon: <History size={18} /> },
+  { label: "Historial de servicios", to: "/mecanico/historial", icon: <History size={18} /> },
 ];
 
 export const MECANICO_SECONDARY_MENU = [

@@ -1,9 +1,10 @@
 // src/components/servicio/PasoEntrega.jsx
 // Último paso: "Formato de entrega de vehículo y/o maquinaria reparada".
 // Los datos de la unidad y las fechas salen solos; el mecánico escribe el
-// trabajo realizado y las observaciones. Al guardarlo el vehículo queda entregado.
+// operador, el trabajo realizado y las observaciones. Al guardarlo el vehículo
+// queda entregado. En el PDF firman mecánico, área (el solicitante) y autorizó.
 import { useState } from "react";
-import { Section, Field, TextArea, Boton, Alerta } from "../ui";
+import { Section, Field, TextArea, Boton, Alerta, inputClass } from "../ui";
 import ConfirmModal from "../ConfirmModal";
 import { solicitudesApi } from "../../api/solicitudes";
 import { descargarEntregaPdf } from "../../utils/entregaPdf";
@@ -13,6 +14,7 @@ import { CheckCircle2, FileDown } from "lucide-react";
 export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }) {
   const [trabajo, setTrabajo] = useState(s.acciones || "");
   const [observaciones, setObservaciones] = useState(s.observaciones || "");
+  const [operador, setOperador] = useState(s.operador || "");
   const [error, setError] = useState("");
   const [confirmar, setConfirmar] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -28,7 +30,7 @@ export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }
   const entregar = async () => {
     setGuardando(true);
     try {
-      onEntregada(await solicitudesApi.entrega(s.id, { acciones: trabajo, observaciones }));
+      onEntregada(await solicitudesApi.entrega(s.id, { acciones: trabajo, observaciones, operador }));
     } catch (e) {
       setError(e.message || "No se pudo registrar la entrega");
     } finally {
@@ -43,12 +45,14 @@ export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }
     ["No. inventario", ing.no_inventario],
     ["Vehículo/Maquinaria", ing.unidad || nombre],
     ["No. serie", ing.serie],
+    ["Color", ing.color],
+    ["Marca", ing.marca],
+    ["Fecha de recepción", formatFecha(s.fecha_ingreso)],
     ["Fecha de entrega", entregada ? formatFecha(s.fecha_entrega) : "Al guardar este formato"],
     ["Área", ing.area],
     ["Modelo", ing.modelo],
     ["Placas", ing.placas],
-    ["Marca", ing.marca],
-    ["Fecha de recepción", formatFecha(s.fecha_ingreso)],
+    ...(entregada ? [["Operador", s.operador]] : []),
   ];
 
   return (
@@ -73,6 +77,16 @@ export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }
 
         {editable ? (
           <>
+            <Field label="Operador">
+              <input
+                value={operador}
+                onChange={(e) => setOperador(e.target.value)}
+                maxLength={150}
+                autoComplete="off"
+                placeholder="Quien maneja la unidad en el área"
+                className={inputClass}
+              />
+            </Field>
             <Field label="Trabajo realizado" required>
               <TextArea
                 value={trabajo}

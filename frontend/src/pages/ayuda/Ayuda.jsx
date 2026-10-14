@@ -67,10 +67,10 @@ const GUIA_MECANICO = [
     titulo: "6. Formato de entrega",
     pasos: [
       "En el servicio, el formato de entrega ya trae los datos de la unidad y las fechas de recepción y entrega.",
-      "Describe el trabajo realizado y escribe tus observaciones.",
+      "Escribe el operador de la unidad (opcional), describe el trabajo realizado y escribe tus observaciones.",
       "Pulsa “Guardar y entregar vehículo” y confirma. El vehículo queda entregado y activo.",
     ],
-    nota: "Con “Ver formato de entrega” descargas el PDF. Si hay que corregir algo, pídele al administrador que regrese el servicio.",
+    nota: "Con “Ver formato de entrega” descargas el PDF para imprimir, con las firmas del mecánico, del área (el solicitante) y de quien autorizó. Si hay que corregir algo, pídele al administrador que regrese el servicio.",
   },
   {
     icon: <Truck size={20} />,
@@ -97,10 +97,11 @@ const GUIA_MECANICO = [
   },
   {
     icon: <History size={20} />,
-    titulo: "Consultar historial",
+    titulo: "Historial de servicios",
     pasos: [
-      "En Historial ves los servicios que ya terminaste.",
-      "En Solicitudes → Atendidas ves con qué servicio se atendió cada solicitud.",
+      "En Historial de servicios aparecen solo las unidades que ya han tenido servicio. Búscalas por placas, inventario o vehículo, o filtra por área.",
+      "Elige una unidad para ver su expediente: cada servicio con sus fechas, diagnóstico, trabajo realizado y refacciones.",
+      "Descarga sus formatos (solicitud, orden de compra y entrega) o pulsa “Ver servicio” para abrirlo.",
     ],
   },
 ];
@@ -154,13 +155,13 @@ const GUIA_ADMIN = [
   },
   {
     icon: <ClipboardPlus size={20} />,
-    titulo: "Precios de las solicitudes",
+    titulo: "Consultar las solicitudes",
     pasos: [
-      "Entra a Solicitudes. Cada solicitud muestra los materiales que pidió el área (cantidad, unidad y concepto).",
-      "Pulsa “Capturar precios”, escribe el precio unitario de cada material y pulsa “Guardar precios”.",
-      "El total de cada material y el de la solicitud se calculan solos. Puedes corregirlos con “Editar precios”.",
+      "En Solicitudes ves lo que piden las áreas: pendientes, atendidas y descartadas, con quién la pidió y los materiales.",
+      "Las pendientes se ordenan por tiempo de espera; las que llevan más días aparecen como prioridad alta.",
+      "Con “Formato” descargas la solicitud en PDF con las firmas, y en las atendidas puedes abrir su servicio.",
     ],
-    nota: "Las áreas no ven precios ni totales: solo indican qué materiales necesitan.",
+    nota: "Es solo de consulta: los precios se capturan en la orden de compra.",
   },
   {
     icon: <DollarSign size={20} />,
@@ -186,6 +187,16 @@ const GUIA_ADMIN = [
       "Un vehículo con historial no se puede eliminar: cámbialo a estado “Baja”.",
       "El historial de cada unidad muestra todos sus servicios; haz clic en uno para ver el detalle.",
     ],
+  },
+  {
+    icon: <History size={20} />,
+    titulo: "Historial de servicios",
+    pasos: [
+      "Muestra solo las unidades que han tenido servicio, con cuántos servicios llevan, el último y el gasto total.",
+      "Busca por placas o inventario, filtra por área u ordena por más recientes, más servicios o mayor gasto.",
+      "Al elegir una unidad ves su expediente completo y puedes descargar los formatos de cada servicio.",
+    ],
+    nota: "Parque vehicular también ve el historial, pero sin gastos ni costos.",
   },
   {
     icon: <Truck size={20} />,

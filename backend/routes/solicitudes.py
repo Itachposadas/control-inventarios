@@ -378,7 +378,7 @@ def enviar_orden_compra(solicitud_id):
 @solicitudes_bp.route("/<int:solicitud_id>/entrega", methods=["POST"])
 @role_required("mecanico")
 def entrega(solicitud_id):
-    """{acciones (trabajo realizado), observaciones}. Con esto queda entregado."""
+    """{acciones (trabajo realizado), observaciones, operador}. Con esto queda entregado."""
     user, s, error = _servicio_del_mecanico(solicitud_id, "reparacion")
     if error:
         return error
@@ -393,6 +393,7 @@ def entrega(solicitud_id):
         return jsonify({"msg": "Describe el trabajo realizado"}), 400
     s.acciones = trabajo
     s.observaciones = _texto(data.get("observaciones"))
+    s.operador = (_texto(data.get("operador")) or "")[:150] or None
     s.fecha_entrega = utcnow()
     _avanzar(s, user, "entregada")
     _registrar(s, user, "Llenó el formato de entrega del vehículo")

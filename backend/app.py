@@ -16,6 +16,7 @@ from routes.roles import roles_bp
 from routes.herramientas import herramientas_bp
 from routes.peticiones import area_bp, peticiones_bp
 from routes.ordenes_compra import ordenes_compra_bp
+from routes.historial import historial_bp
 
 # Columnas agregadas a tablas que ya existían. create_all() no las añade,
 # así que se agregan al arrancar si faltan (solo agrega, nunca borra datos).
@@ -34,6 +35,7 @@ COLUMNAS_NUEVAS = [
     ("peticiones_servicio", "recibida_at", "DATETIME NULL"),
     ("solicitudes", "acciones_a_realizar", "TEXT NULL"),
     ("solicitudes", "ingreso_at", "DATETIME NULL"),
+    ("solicitudes", "operador", "VARCHAR(150) NULL"),
     ("ordenes_compra", "autoriza_nombre", "VARCHAR(120) NULL"),
     ("ordenes_compra", "autoriza_firma", "MEDIUMTEXT NULL"),
 ]
@@ -174,6 +176,7 @@ def create_app():
     app.register_blueprint(area_bp)
     app.register_blueprint(peticiones_bp)
     app.register_blueprint(ordenes_compra_bp)
+    app.register_blueprint(historial_bp)
 
     # Crea las tablas que falten al arrancar (no modifica las que ya existen),
     # así un módulo nuevo no deja al sistema sin funcionar.

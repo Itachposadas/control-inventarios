@@ -5,7 +5,7 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import {
-  GUINDA, TINTA, GRIS, MARGEN, pesos, aFecha, encabezado, pie, bloqueFirma,
+  GUINDA, TINTA, GRIS, MARGEN, aFecha, encabezado, pie, bloqueFirma,
 } from "./pdfComun";
 
 /** @param {object} p  solicitud tal como la regresa /api/peticiones */
@@ -48,24 +48,17 @@ export async function descargarSolicitudPdf(p) {
   autoTable(doc, {
     startY: y + 3,
     margin: { left: MARGEN, right: MARGEN },
-    head: [["Cant.", "Unidad", "Concepto", "P. unitario", "Total"]],
+    head: [["Cant.", "Unidad", "Concepto"]],
     body: (p.materiales || []).map((m) => [
       Number(m.cantidad).toLocaleString("es-MX", { maximumFractionDigits: 2 }),
       m.unidad_medida,
       m.concepto,
-      m.precio_unitario != null ? pesos(m.precio_unitario) : "—",
-      m.total != null ? pesos(m.total) : "—",
     ]),
-    foot: [[
-      { content: "Total", colSpan: 4, styles: { halign: "right" } },
-      { content: p.total != null ? pesos(p.total) : "—", styles: { halign: "right" } },
-    ]],
     styles: { fontSize: 9, cellPadding: 2.2, textColor: TINTA, lineColor: [226, 232, 240], lineWidth: 0.1 },
     headStyles: { fillColor: GUINDA, textColor: 255, fontStyle: "bold" },
-    footStyles: { fillColor: [248, 250, 252], textColor: TINTA, fontStyle: "bold" },
-    columnStyles: { 0: { ...derecha, cellWidth: 16 }, 1: { cellWidth: 24 }, 3: { ...derecha, cellWidth: 28 }, 4: { ...derecha, cellWidth: 28 } },
+    columnStyles: { 0: { ...derecha, cellWidth: 16 }, 1: { cellWidth: 28 } },
     didParseCell: (data) => {
-      if (data.section === "head" && [0, 3, 4].includes(data.column.index)) data.cell.styles.halign = "right";
+      if (data.section === "head" && data.column.index === 0) data.cell.styles.halign = "right";
     },
   });
   y = doc.lastAutoTable.finalY + 20;

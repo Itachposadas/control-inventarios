@@ -35,6 +35,9 @@ import PeticionesAreas from "./pages/peticiones/PeticionesAreas";
 // Órdenes de compra: las manda el mecánico, las atiende administración (admin)
 import OrdenesCompra from "./pages/ordenes/OrdenesCompra";
 
+// Historial de servicios por vehículo (admin y parque vehicular)
+import HistorialServicios from "./pages/historial/HistorialServicios";
+
 // Préstamo de herramientas (solo mecánico)
 import PrestamoHerramientas from "./pages/herramientas/PrestamoHerramientas";
 
@@ -99,6 +102,7 @@ export default function App() {
 
           <Route path="/admin/solicitudes-areas" element={solo([ADMIN], <PeticionesAreas />)} />
           <Route path="/admin/ordenes-compra" element={solo([ADMIN], <OrdenesCompra />)} />
+          <Route path="/admin/historial" element={solo([ADMIN], <HistorialServicios />)} />
 
           <Route path="/admin/*" element={solo([ADMIN], <EnConstruccion />)} />
 
@@ -124,12 +128,7 @@ export default function App() {
           <Route path="/mecanico/foraneo/:id" element={solo([MECANICO], <OrdenForanea />)} />
           <Route path="/mecanico/solicitudes-areas" element={solo([MECANICO], <PeticionesAreas />)} />
           <Route path="/mecanico/herramientas" element={solo([MECANICO], <PrestamoHerramientas />)} />
-          <Route
-            path="/mecanico/historial"
-            element={solo([MECANICO], (
-              <SolicitudesList titulo="Historial" subtitulo="Servicios que ya terminaste" estadoFijo="cerradas" />
-            ))}
-          />
+          <Route path="/mecanico/historial" element={solo([MECANICO], <HistorialServicios />)} />
           <Route path="/mecanico/mi-cuenta" element={solo([MECANICO], <MiCuenta />)} />
           <Route path="/mecanico/ayuda" element={solo([MECANICO], <Ayuda />)} />
           <Route path="/mecanico/*" element={<Navigate to="/mecanico" replace />} />

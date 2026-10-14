@@ -9,7 +9,6 @@ export const vehiculosApi = {
 
   areas: () => request("/vehiculos/areas"),
 
-  historial: (id) => request(`/vehiculos/${id}/historial`),
 
   crear: (payload) => request("/vehiculos", { method: "POST", body: payload }),
 
