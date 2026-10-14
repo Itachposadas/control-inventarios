@@ -1,6 +1,8 @@
 // src/pages/solicitudes/EvidenciaFotografica.jsx
-// Apartado del mecánico: elige uno de sus vehículos en mantenimiento y sube
-// sus 3 fotos (llegada, reparación, final). ?servicio=ID lo preselecciona.
+// Apartado del mecánico: elige uno de sus servicios en Reparación (ya con la
+// orden de compra atendida) y sube sus 3 fotos (llegada, reparación, final).
+// ?servicio=ID lo preselecciona. Con las 3 fotos aparece el botón para ir al
+// formato de entrega.
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -10,26 +12,23 @@ import { EstadoBadge } from "../../components/solicitudes/Badges";
 import { solicitudesApi } from "../../api/solicitudes";
 import { useAuth } from "../../context/AuthContext";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
-import { Camera, CarFront, ChevronRight, ExternalLink, Loader2 } from "lucide-react";
+import { Camera, CarFront, ChevronRight, ExternalLink, Loader2, CheckCircle2, FileCheck2 } from "lucide-react";
 
-import { Alerta } from "../../components/ui";
-const EN_TALLER = ["recibida", "diagnostico", "reparacion"];
+import { Alerta, Boton } from "../../components/ui";
 
 function nombreVehiculo(v) {
   return v?.numeroEconomico || v?.unidad || v?.noInventario || "Vehículo";
 }
 
-// Qué foto toca según el paso del servicio
+// Qué foto falta para poder llenar el formato de entrega
 function siguientePaso(s) {
   const tiene = new Set(Object.keys(s.fotos || {}));
-  if (!tiene.has("llegada")) return "Toma la foto de llegada para poder pasar a Diagnóstico.";
-  if (s.estado === "recibida") return "Foto de llegada lista. Ya puedes pasar el servicio a Diagnóstico.";
-  if (s.estado === "diagnostico") return "Cuando empieces la reparación, toma la foto del cambio de pieza.";
-  const faltan = ["reparacion", "final"].filter((t) => !tiene.has(t));
+  const nombres = { llegada: "llegada", reparacion: "reparación", final: "final" };
+  const faltan = Object.keys(nombres).filter((t) => !tiene.has(t));
   if (faltan.length) {
-    return `Falta la foto de ${faltan.map((t) => (t === "reparacion" ? "reparación" : "final")).join(" y ")} para poder completar.`;
+    return `Falta la foto de ${faltan.map((t) => nombres[t]).join(", ")} para poder llenar el formato de entrega.`;
   }
-  return "Las 3 fotos están listas. Ya puedes marcar el servicio como Completado.";
+  return "Las 3 fotos están listas. Ya puedes llenar el formato de entrega en el servicio.";
 }
 
 export default function EvidenciaFotografica() {
@@ -45,10 +44,10 @@ export default function EvidenciaFotografica() {
   const [error, setError] = useState("");
   const panelRef = useRef(null);
 
-  // Mis vehículos en mantenimiento
+  // Mis servicios en Reparación
   useEffect(() => {
     solicitudesApi
-      .listar({ estado: "en_taller" })
+      .listar({ estado: "reparacion" })
       .then((data) => {
         setLista(data);
         // En escritorio se abre el primero si no hay uno elegido
@@ -91,25 +90,27 @@ export default function EvidenciaFotografica() {
   };
 
   const puedeSubir = Boolean(
-    detalle && detalle.mecanico?.id === user?.id && EN_TALLER.includes(detalle.estado)
+    detalle && detalle.mecanico?.id === user?.id && detalle.estado === "reparacion"
   );
+  const fotosCompletas = Boolean(detalle) && FOTOS.every((f) => detalle.fotos?.[f.tipo]);
+  const irAEntrega = () => navigate(`/mecanico/reparaciones/${detalle.id}?paso=entrega`);
 
   return (
     <DashboardLayout
       menu={MECANICO_MENU}
       secondaryMenu={MECANICO_SECONDARY_MENU}
       title="Evidencia fotográfica"
-      subtitle="Fotos de tus vehículos en mantenimiento"
+      subtitle="Fotos de tus vehículos en reparación"
     >
       {error && (
         <Alerta className="mb-4">{error}</Alerta>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-        {/* ─── Vehículos en mantenimiento ─── */}
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-5 items-start ${puedeSubir && fotosCompletas ? "pb-24" : ""}`}>
+        {/* ─── Vehículos en reparación ─── */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="text-sm font-semibold text-slate-800">Vehículos en mantenimiento</h3>
+            <h3 className="text-sm font-semibold text-slate-800">Vehículos en reparación</h3>
             <p className="text-xs text-slate-500 mt-0.5">Elige uno para subir sus fotos</p>
           </div>
 
@@ -120,12 +121,15 @@ export default function EvidenciaFotografica() {
           ) : lista.length === 0 ? (
             <div className="px-5 py-10 text-center">
               <CarFront size={36} className="mx-auto text-slate-300" />
-              <p className="mt-3 text-sm text-slate-600">No tienes vehículos en mantenimiento</p>
+              <p className="mt-3 text-sm text-slate-600">No tienes vehículos en reparación</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Un servicio llega aquí cuando administración atiende su orden de compra (o si no necesitó refacciones).
+              </p>
               <button
-                onClick={() => navigate("/mecanico/solicitudes-areas")}
+                onClick={() => navigate("/mecanico/reparaciones")}
                 className="mt-3 text-sm font-medium text-institucional hover:underline"
               >
-                Ver solicitudes
+                Ver mis servicios
               </button>
             </div>
           ) : (
@@ -205,7 +209,9 @@ export default function EvidenciaFotografica() {
                 </div>
               </section>
 
-              {puedeSubir ? (
+              {puedeSubir && fotosCompletas ? (
+                <ListoParaEntrega onIr={irAEntrega} />
+              ) : puedeSubir ? (
                 <p className="flex items-start gap-2 text-sm bg-blue-50 border border-blue-100 text-blue-800 px-4 py-3 rounded-xl">
                   <Camera size={17} className="shrink-0 mt-0.5" />
                   {siguientePaso(detalle)}
@@ -225,6 +231,38 @@ export default function EvidenciaFotografica() {
           )}
         </div>
       </div>
+
+      {/* Con las 3 fotos, el siguiente paso siempre a la vista (también al final de la página en celular) */}
+      {puedeSubir && fotosCompletas && (
+        <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-20 bg-white/95 backdrop-blur border-t border-slate-200">
+          <div className="px-4 sm:px-6 py-3 flex items-center justify-end gap-3">
+            <p className="hidden sm:flex items-center gap-2 text-sm font-medium text-emerald-700 mr-auto">
+              <CheckCircle2 size={18} />
+              Las 3 fotos están listas
+            </p>
+            <Boton tamano="lg" onClick={irAEntrega} icono={<FileCheck2 size={20} />} className="w-full sm:w-auto">
+              Ir al formato de entrega
+            </Boton>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
+  );
+}
+
+function ListoParaEntrega({ onIr }) {
+  return (
+    <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4 animate-fade-in">
+      <span className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+        <CheckCircle2 size={26} />
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-base font-semibold text-slate-800">¡Listo! Ya están las 3 fotos.</p>
+        <p className="text-sm text-slate-600">Ahora llena el formato de entrega para entregar el vehículo.</p>
+      </div>
+      <Boton tamano="lg" onClick={onIr} icono={<FileCheck2 size={20} />} className="shrink-0">
+        Ir al formato de entrega
+      </Boton>
+    </div>
   );
 }

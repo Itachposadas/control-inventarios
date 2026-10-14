@@ -8,9 +8,9 @@ import { Camera, ImagePlus, Loader2, RefreshCw, Trash2, X, CheckCircle2, CircleD
 
 import { Boton } from "../ui";
 export const FOTOS = [
-  { tipo: "llegada",    titulo: "Llegada",    ayuda: "Cómo llegó el vehículo",         requisito: "Obligatoria para pasar a Diagnóstico" },
-  { tipo: "reparacion", titulo: "Reparación", ayuda: "Durante el cambio de la pieza", requisito: "Obligatoria para completar" },
-  { tipo: "final",      titulo: "Final",      ayuda: "El vehículo ya terminado",       requisito: "Obligatoria para completar" },
+  { tipo: "llegada",    titulo: "Llegada",    ayuda: "Cómo llegó el vehículo",         requisito: "Obligatoria para la entrega" },
+  { tipo: "reparacion", titulo: "Reparación", ayuda: "Durante el cambio de la pieza", requisito: "Obligatoria para la entrega" },
+  { tipo: "final",      titulo: "Final",      ayuda: "El vehículo ya terminado",       requisito: "Obligatoria para la entrega" },
 ];
 
 // Descarga la foto con el token de sesión y la convierte en URL local
@@ -173,7 +173,7 @@ function RanuraFoto({ def, solicitudId, foto, puedeSubir, onActualizada, onAmpli
         </p>
       )}
 
-      {/* Acciones (solo el mecánico asignado, mientras no esté completada) */}
+      {/* Acciones (solo el mecánico asignado, en el paso de Reparación) */}
       {puedeSubir && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           <input ref={camaraRef} type="file" accept="image/*" capture="environment" hidden onChange={handleArchivo} />

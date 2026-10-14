@@ -1,15 +1,23 @@
 // src/pages/solicitudes/SolicitudDetail.jsx
-// Detalle de una solicitud: formato de ingreso, diagnóstico, trabajo realizado,
-// taller foráneo, costo (admin) y avance de estado.
+// Servicio del taller, paso por paso:
+//   1. Diagnóstico (fallas, acciones a realizar, refacciones a utilizar)
+//   2. Formato de ingreso a taller
+//   3. Orden de compra (solo si hay refacciones; la atiende administración)
+//   4. Evidencia fotográfica
+//   5. Formato de entrega (con esto queda entregado)
+// El admin reasigna el mecánico, corrige el costo y puede regresar un paso.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ConfirmModal from "../../components/ConfirmModal";
 import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
 import FotosEvidencia from "../../components/solicitudes/FotosEvidencia";
 import { EstadoBadge, PrioridadBadge } from "../../components/solicitudes/Badges";
-import { Section, Field, TextArea, inputClass, Boton, Alerta } from "../../components/ui";
+import PasoDiagnostico from "../../components/servicio/PasoDiagnostico";
+import PasoOrdenCompra from "../../components/servicio/PasoOrdenCompra";
+import PasoEntrega from "../../components/servicio/PasoEntrega";
+import { Section, Field, inputClass, Boton, Alerta } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
 import { usuariosApi } from "../../api/usuarios";
 import { useAuth } from "../../context/AuthContext";
@@ -17,46 +25,44 @@ import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
   ESTADOS, TIPOS, PRIORIDADES, TIPO_LABEL, SOLICITUDES_BASE,
-  FORANEO_BASE, TALLERES_FORANEOS, formatFecha, formatMoneda, pasoSiguiente,
+  FORANEO_BASE, TALLERES_FORANEOS, formatFecha, pasoSiguiente,
 } from "../../config/solicitudes";
 import { fechaCorta } from "../../config/reportes";
 import {
-  ArrowLeft, ArrowRight, Undo2, Check, Loader2, CarFront, Trash2, Save, Camera, Truck, Plus,
-  PencilLine, CheckCircle2,
+  ArrowLeft, Undo2, Check, Loader2, CarFront, Trash2, Save, Camera, Truck, Plus,
+  Stethoscope, ClipboardList, ShoppingCart, FileCheck2,
 } from "lucide-react";
 
+const FOTOS_REQUERIDAS = ["llegada", "reparacion", "final"];
 const NOMBRE_FOTO = { llegada: "de llegada", reparacion: "de la reparación", final: "final" };
 
 function formDesdeSolicitud(s) {
   return {
     tipo: s.tipo,
     prioridad: s.prioridad,
-    checklist: { ...s.checklist },
-    observaciones_ingreso: s.observaciones_ingreso || "",
-    fallas: s.fallas || "",
-    acciones: s.acciones || "",
-    observaciones: s.observaciones || "",
     costo: s.costo ?? "",
     mecanico_id: s.mecanico?.id ?? "",
   };
 }
 
-// Qué necesita cada paso para poder avanzar (se muestra como ayuda)
-const AYUDA_PASO = {
-  recibida: "Sube la foto de llegada en Evidencia fotográfica, revisa el vehículo y pasa a Diagnóstico.",
-  diagnostico: "Captura el diagnóstico de fallas presentadas para pasar a Reparación.",
-  reparacion: "Captura las acciones realizadas y sube las fotos de reparación y final (en Evidencia fotográfica) para marcarla como Completada.",
-  completada: "El administrador captura el costo y la marca como Entregada.",
-  entregada: "Servicio entregado.",
-};
+// Mismo criterio que el backend para "regresar un paso"
+function pasoAnterior(s) {
+  if (s.estado === "reparacion") return s.orden_compra ? "compra" : "ingreso";
+  if (s.estado === "compra") return "ingreso";
+  if (s.estado === "ingreso") return "diagnostico";
+  if (s.estado === "entregada") return "reparacion";
+  return null;
+}
 
 export default function SolicitudDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, role } = useAuth();
   const { menu, secondaryMenu } = menusForRole(role);
   const basePath = SOLICITUDES_BASE[role];
   const esAdmin = role === ROLES.ADMIN;
+  const esMecanico = role === ROLES.MECANICO;
 
   const [s, setS] = useState(null);
   const [form, setForm] = useState(null);
@@ -68,10 +74,7 @@ export default function SolicitudDetail() {
   const [saving, setSaving] = useState(false);
   const [nota, setNota] = useState("");
   const [deleteModal, setDeleteModal] = useState({ open: false, loading: false });
-  const [confirmarFin, setConfirmarFin] = useState(false);
-  // Secciones a las que lleva el botón "Escribir aquí" de "¿Qué sigue?"
-  const fallasRef = useRef(null);
-  const accionesRef = useRef(null);
+  const refs = { diagnostico: useRef(null), orden: useRef(null), entrega: useRef(null) };
 
   const cargar = (data) => {
     setS(data);
@@ -83,9 +86,22 @@ export default function SolicitudDetail() {
     solicitudesApi
       .obtener(id)
       .then(cargar)
-      .catch((e) => setLoadError(e.message || "No se pudo cargar la solicitud"))
+      .catch((e) => setLoadError(e.message || "No se pudo cargar el servicio"))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Viene de Evidencia fotográfica con las 3 fotos: abre el formato de entrega
+  const irAEntrega = searchParams.get("paso") === "entrega";
+  useEffect(() => {
+    if (!irAEntrega || !s) return;
+    const t = setTimeout(() => {
+      const el = refs.entrega.current;
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      el?.querySelector("textarea")?.focus({ preventScroll: true });
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [irAEntrega, s?.id]);
 
   useEffect(() => {
     if (esAdmin) {
@@ -100,15 +116,15 @@ export default function SolicitudDetail() {
 
   if (loading || loadError || !s || !form) {
     return (
-      <DashboardLayout menu={menu} secondaryMenu={secondaryMenu} title="Solicitud">
+      <DashboardLayout menu={menu} secondaryMenu={secondaryMenu} title="Servicio">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-slate-500">
             <Loader2 size={28} className="animate-spin" />
-            <span className="ml-3 text-sm">Cargando solicitud...</span>
+            <span className="ml-3 text-sm">Cargando servicio...</span>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-            <p className="text-sm font-medium text-slate-700">{loadError || "Solicitud no encontrada"}</p>
+            <p className="text-sm font-medium text-slate-700">{loadError || "Servicio no encontrado"}</p>
             <button onClick={() => navigate(basePath)} className="mt-4 text-sm font-medium text-institucional hover:underline">
               Volver a la lista
             </button>
@@ -118,45 +134,49 @@ export default function SolicitudDetail() {
     );
   }
 
-  // ─── Permisos ───
-  // Mecánico: llena el formato y el trabajo (solo las suyas, hasta completarlas).
-  // Admin: no llena nada del formato; solo captura costo, reasigna y entrega.
+  // ─── Permisos y paso actual ───
   const esSuya = s.mecanico?.id === user?.id;
-  const cerrada = ["completada", "entregada"].includes(s.estado);
-  const puedeLlenar = role === ROLES.MECANICO && esSuya && !cerrada;
+  const entregada = s.estado === "entregada";
+  const puedeLlenar = esMecanico && esSuya && !entregada;
   const puedeEditar = puedeLlenar || esAdmin;
-
   const idx = ESTADOS.findIndex((e) => e.value === s.estado);
-  const siguiente = ESTADOS[idx + 1];
-  const anterior = ESTADOS[idx - 1];
-  const puedeAvanzar = esAdmin
-    ? siguiente?.value === "entregada"
-    : puedeLlenar && siguiente && siguiente.value !== "entregada";
-  const puedeRegresar = esAdmin && anterior;
+  const despuesDe = (estado) => idx > ESTADOS.findIndex((e) => e.value === estado);
+  const anterior = esAdmin ? pasoAnterior(s) : null;
+  const paso = pasoSiguiente(s);
+  const fotosCompletas = FOTOS_REQUERIDAS.every((t) => s.fotos?.[t]);
+  const sinCompra = s.refacciones.length === 0 && !s.orden_compra;
+  const nombreVehiculo = s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario;
 
-  // Regresa a la pantalla anterior (lista o historial del vehículo)
   const volver = () => {
     if (window.history.state?.idx > 0) navigate(-1);
     else navigate(esAdmin ? `/admin/vehiculos/${s.vehiculo?.id}` : basePath);
   };
 
-  const set = (campo) => (valor) => setForm((f) => ({ ...f, [campo]: valor }));
-
-  const guardar = async () => {
-    const payload = esAdmin
-      ? { costo: form.costo, mecanico_id: form.mecanico_id }
-      : (({ costo, mecanico_id, ...resto }) => resto)(form);
-    const actualizada = await solicitudesApi.editar(s.id, payload);
-    cargar(actualizada);
-    return actualizada;
+  const irAlPaso = () => {
+    if (paso.accion === "ingreso") return navigate(`/mecanico/reparaciones/${s.id}/ingreso`);
+    if (paso.accion === "foto") return navigate(`/mecanico/evidencia?servicio=${s.id}`);
+    const destino = { diagnostico: refs.diagnostico, orden: refs.orden, entrega: refs.entrega }[paso.accion];
+    destino?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+  const ETIQUETA_ACCION = {
+    diagnostico: { texto: "Hacer diagnóstico", icono: <Stethoscope size={20} /> },
+    ingreso: { texto: "Llenar formato de ingreso", icono: <ClipboardList size={20} /> },
+    orden: { texto: "Llenar orden de compra", icono: <ShoppingCart size={20} /> },
+    foto: { texto: `Tomar foto ${NOMBRE_FOTO[paso.foto] || ""}`, icono: <Camera size={20} /> },
+    entrega: { texto: "Llenar formato de entrega", icono: <FileCheck2 size={20} /> },
+  };
+
+  const set = (campo) => (valor) => setForm((f) => ({ ...f, [campo]: valor }));
 
   const handleGuardar = async () => {
     setError("");
     setAviso("");
     setSaving(true);
     try {
-      await guardar();
+      const payload = esAdmin
+        ? { costo: form.costo, mecanico_id: form.mecanico_id }
+        : { tipo: form.tipo, prioridad: form.prioridad };
+      cargar(await solicitudesApi.editar(s.id, payload));
       setAviso("Cambios guardados");
     } catch (e) {
       setError(e.message || "Error al guardar");
@@ -165,17 +185,15 @@ export default function SolicitudDetail() {
     }
   };
 
-  const handleEstado = async (estado) => {
+  const regresar = async () => {
     setError("");
     setAviso("");
     setSaving(true);
     try {
-      if (dirty && puedeEditar) await guardar(); // primero guarda lo capturado
-      const actualizada = await solicitudesApi.cambiarEstado(s.id, estado, nota);
-      cargar(actualizada);
+      cargar(await solicitudesApi.cambiarEstado(s.id, anterior, nota));
       setNota("");
     } catch (e) {
-      setError(e.message || "Error al cambiar el estado");
+      setError(e.message || "No se pudo regresar el paso");
     } finally {
       setSaving(false);
     }
@@ -192,59 +210,44 @@ export default function SolicitudDetail() {
     }
   };
 
-  const bloqueado = !puedeLlenar;
-  const esMecanico = role === ROLES.MECANICO;
-  const nombreVehiculo = s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario;
-  const paso = pasoSiguiente(s, form);
-
-  // Terminar la reparación no se puede deshacer (solo el admin la regresa): se pide confirmación
-  const avanzar = () =>
-    !esAdmin && siguiente?.value === "completada" ? setConfirmarFin(true) : handleEstado(siguiente.value);
-  const etiquetaAvance = !esAdmin && siguiente?.value === "completada"
-    ? "Terminar reparación"
-    : `${dirty ? "Guardar y pasar a " : "Pasar a "}${siguiente?.label}`;
-
-  const irAEscribir = (campo) => {
-    const el = (campo === "fallas" ? fallasRef : accionesRef).current;
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(() => el?.querySelector("textarea")?.focus({ preventScroll: true }), 400);
+  // Al terminar un paso: se actualiza y, si toca el formato de ingreso, se abre
+  const pasoGuardado = (actualizada) => {
+    cargar(actualizada);
+    setAviso("");
+    if (actualizada.estado === "ingreso") navigate(`/mecanico/reparaciones/${actualizada.id}/ingreso`);
+    else window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <DashboardLayout
       menu={menu}
       secondaryMenu={secondaryMenu}
-      title={esMecanico ? `Reparación: ${nombreVehiculo}` : `Solicitud ${s.folio}`}
-      subtitle={`${TIPO_LABEL[s.tipo]} · Ingresó ${formatFecha(s.fecha_ingreso)}${
-        s.hoja_no ? ` · Hoja ${s.hoja_no} de ${s.hoja_total}` : ""
-      }`}
+      title={esMecanico ? `Servicio: ${nombreVehiculo}` : `Servicio ${s.folio}`}
+      subtitle={`${TIPO_LABEL[s.tipo]} · Recibido ${formatFecha(s.fecha_ingreso)}`}
     >
       <button
         onClick={volver}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium
-                   text-slate-600 hover:text-institucional transition"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-institucional transition"
       >
         <ArrowLeft size={16} />
         Volver
       </button>
 
       {/* Encabezado */}
-      <div className="bg-white rounded-2xl border border-slate-200
-                      shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-5 mb-5">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-5 mb-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-institucional/10 flex items-center justify-center text-institucional shrink-0">
             <CarFront size={28} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-slate-800">
-                {s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario}
-              </h2>
+              <h2 className="text-lg font-bold text-slate-800">{nombreVehiculo}</h2>
               <EstadoBadge estado={s.estado} />
               <PrioridadBadge prioridad={s.prioridad} />
             </div>
             <p className="mt-1 text-sm text-slate-500">
               <span className="font-mono">{s.folio}</span>
+              {s.peticion && <> · Solicitud <span className="font-mono">{s.peticion.folio}</span></>}
               {" · "}Mecánico: <span className="font-medium text-slate-700">
                 {s.mecanico?.nombre_completo || s.mecanico?.username || "Sin asignar"}
               </span>
@@ -263,141 +266,130 @@ export default function SolicitudDetail() {
         </div>
       </div>
 
+      {/* ¿Qué sigue? (mecánico) */}
       {esMecanico && esSuya && (
         <div
           className={`rounded-2xl border-2 p-5 mb-5 flex flex-col sm:flex-row sm:items-center gap-4 ${
-            cerrada ? "border-emerald-200 bg-emerald-50" : "border-institucional/30 bg-institucional/[0.04]"
+            entregada ? "border-emerald-200 bg-emerald-50" : "border-institucional/30 bg-institucional/[0.04]"
           }`}
         >
           <div className="flex-1 min-w-0">
-            <p className={`text-xs font-bold uppercase tracking-wide ${cerrada ? "text-emerald-700" : "text-institucional"}`}>
-              {cerrada ? "Listo" : "¿Qué sigue?"}
+            <p className={`text-xs font-bold uppercase tracking-wide ${entregada ? "text-emerald-700" : "text-institucional"}`}>
+              {entregada ? "Listo" : "¿Qué sigue?"}
             </p>
             <p className="mt-1 text-lg font-semibold text-slate-800 leading-snug">{paso.texto}</p>
           </div>
-          {puedeLlenar && paso.accion === "foto" && (
-            <Boton
-              tamano="lg"
-              onClick={() => navigate(`/mecanico/evidencia?servicio=${s.id}`)}
-              icono={<Camera size={20} />}
-              className="shrink-0"
-            >
-              Tomar foto {NOMBRE_FOTO[paso.foto]}
-            </Boton>
-          )}
-          {puedeLlenar && paso.accion === "escribir" && (
-            <Boton
-              tamano="lg"
-              onClick={() => irAEscribir(paso.campo)}
-              icono={<PencilLine size={20} />}
-              className="shrink-0"
-            >
-              Escribir aquí
-            </Boton>
-          )}
-          {puedeLlenar && paso.accion === "avanzar" && puedeAvanzar && (
-            <Boton
-              tamano="lg"
-              onClick={avanzar}
-              disabled={saving}
-              icono={siguiente.value === "completada" ? <CheckCircle2 size={20} /> : <ArrowRight size={20} />}
-              className="shrink-0"
-            >
-              {saving ? "Guardando..." : etiquetaAvance}
+          {puedeLlenar && paso.accion && (
+            <Boton tamano="lg" onClick={irAlPaso} icono={ETIQUETA_ACCION[paso.accion].icono} className="shrink-0">
+              {ETIQUETA_ACCION[paso.accion].texto}
             </Boton>
           )}
         </div>
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 pb-24">
-        {/* ═════ Columna principal ═════ */}
+        {/* ═════ Columna principal: los pasos en orden ═════ */}
         <div className="xl:col-span-2 space-y-5">
-          <Section title="Datos del vehículo/maquinaria" subtitle="Registrados al ingresar al taller">
+          <Section title="Datos del vehículo/maquinaria" subtitle="Tomados del catálogo al recibir la unidad">
             <DatosVehiculo datos={s.ingreso} nota={puedeLlenar} />
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Tipo de servicio">
-                <select value={form.tipo} onChange={(e) => set("tipo")(e.target.value)} disabled={bloqueado} className={inputClass}>
+                <select value={form.tipo} onChange={(e) => set("tipo")(e.target.value)} disabled={!puedeLlenar} className={inputClass}>
                   {TIPOS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
               </Field>
               <Field label="Prioridad">
-                <select value={form.prioridad} onChange={(e) => set("prioridad")(e.target.value)} disabled={bloqueado} className={inputClass}>
+                <select value={form.prioridad} onChange={(e) => set("prioridad")(e.target.value)} disabled={!puedeLlenar} className={inputClass}>
                   {PRIORIDADES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                 </select>
               </Field>
             </div>
           </Section>
 
-          <FotosEvidencia
-            solicitud={s}
-            puedeSubir={false}
-            accion={puedeLlenar && (
-              <Boton
-                tamano="sm"
-                onClick={() => navigate(`/mecanico/evidencia?servicio=${s.id}`)}
-                icono={<Camera size={14} />}
-                className="shrink-0"
-              >
-                Subir fotos
-              </Boton>
-            )}
-          />
-
-          <Section title="Accesorios y herramientas" subtitle="SI / NO según llegó el vehículo">
-            <Checklist
-              value={form.checklist}
-              onChange={set("checklist")}
-              disabled={bloqueado}
-            />
-            <div className="mt-5">
-              <Field label="Observaciones">
-                <TextArea
-                  value={form.observaciones_ingreso}
-                  onChange={set("observaciones_ingreso")}
-                  disabled={bloqueado}
-                  placeholder="Ej. No tenía defensa delantera"
-                  rows={3}
-                />
-              </Field>
-            </div>
-          </Section>
-
-          <div ref={fallasRef} className="scroll-mt-24">
-          <Section title="Diagnóstico de fallas presentadas">
-            <TextArea
-              value={form.fallas}
-              onChange={set("fallas")}
-              disabled={bloqueado}
-              placeholder="Describe las fallas que presenta el vehículo..."
-            />
-          </Section>
+          {/* 1. Diagnóstico */}
+          <div ref={refs.diagnostico} className="scroll-mt-24">
+            <PasoDiagnostico s={s} editable={puedeLlenar && s.estado === "diagnostico"} onGuardado={pasoGuardado} />
           </div>
 
-          <Section title="Trabajo realizado">
-            <div className="space-y-4">
-              <div ref={accionesRef} className="scroll-mt-24">
-                <Field label="Acciones realizadas">
-                  <TextArea
-                    value={form.acciones}
-                    onChange={set("acciones")}
-                    disabled={bloqueado}
-                    placeholder="Ej. Se cambió batería, se ajustaron frenos..."
-                  />
-                </Field>
-              </div>
-              <Field label="Observaciones">
-                <TextArea
-                  value={form.observaciones}
-                  onChange={set("observaciones")}
-                  disabled={bloqueado}
-                  placeholder="Detalles de lo que se trabajó, recomendaciones..."
-                  rows={3}
-                />
-              </Field>
-            </div>
+          {/* 2. Formato de ingreso */}
+          <Section
+            title="2. Formato de ingreso a taller"
+            subtitle="Accesorios y herramientas con los que llegó la unidad"
+            actions={puedeLlenar && s.estado === "ingreso" && (
+              <Boton tamano="sm" icono={<ClipboardList size={14} />} onClick={() => navigate(`/mecanico/reparaciones/${s.id}/ingreso`)}>
+                Llenar formato
+              </Boton>
+            )}
+          >
+            {s.ingreso_at ? (
+              <>
+                <p className="mb-4 text-xs text-slate-500">
+                  Registrado {formatFecha(s.ingreso_at, true)}
+                  {s.hoja_no ? ` · Hoja ${s.hoja_no} de ${s.hoja_total}` : ""}
+                </p>
+                <Checklist value={s.checklist} onChange={() => {}} disabled />
+                <div className="mt-5">
+                  <p className="text-xs font-medium text-slate-500">Observaciones</p>
+                  <p className="mt-1 text-sm text-slate-800 whitespace-pre-line">{s.observaciones_ingreso || "—"}</p>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-slate-500">
+                {s.estado === "diagnostico" ? "Se llena después del diagnóstico." : "Pendiente de llenar."}
+              </p>
+            )}
           </Section>
 
-          {/* Órdenes de reparación en taller foráneo generadas desde este ingreso */}
+          {/* 3. Orden de compra */}
+          {despuesDe("ingreso") && (
+            sinCompra ? (
+              <Section title="3. Orden de compra">
+                <p className="text-sm text-slate-500">No se requiere: el diagnóstico no tiene refacciones a utilizar.</p>
+              </Section>
+            ) : (
+              <div ref={refs.orden} className="scroll-mt-24">
+                <PasoOrdenCompra
+                  s={s}
+                  editable={puedeLlenar && s.estado === "compra"}
+                  esAdmin={esAdmin}
+                  nombreInicial=""
+                  onEnviada={(a) => { cargar(a); setAviso("Orden de compra enviada a administración"); }}
+                />
+              </div>
+            )
+          )}
+
+          {/* 4. Evidencia fotográfica */}
+          {(despuesDe("compra") || Object.keys(s.fotos || {}).length > 0) && (
+            <FotosEvidencia
+              solicitud={s}
+              puedeSubir={false}
+              accion={puedeLlenar && s.estado === "reparacion" && (
+                <Boton
+                  tamano="sm"
+                  onClick={() => navigate(`/mecanico/evidencia?servicio=${s.id}`)}
+                  icono={<Camera size={14} />}
+                  className="shrink-0"
+                >
+                  Subir fotos
+                </Boton>
+              )}
+            />
+          )}
+
+          {/* 5. Formato de entrega */}
+          {despuesDe("compra") && (
+            <div ref={refs.entrega} className="scroll-mt-24">
+              <PasoEntrega
+                s={s}
+                editable={puedeLlenar && s.estado === "reparacion"}
+                fotosCompletas={fotosCompletas}
+                onEntregada={(a) => { cargar(a); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              />
+            </div>
+          )}
+
+          {/* Taller foráneo */}
           {(puedeLlenar || s.ordenes_foraneas.length > 0) && (
             <Section
               title="Taller foráneo"
@@ -449,73 +441,52 @@ export default function SolicitudDetail() {
 
         {/* ═════ Columna lateral ═════ */}
         <div className="space-y-5">
-          {/* Avance */}
           <Section title="Avance">
             <ol className="space-y-2.5">
               {ESTADOS.map((e, i) => {
-                const hecho = i < idx;
-                const actual = i === idx;
+                const hecho = i < idx || (entregada && i === idx);
+                const actual = i === idx && !entregada;
+                const noAplica = e.value === "compra" && sinCompra && i < idx;
                 return (
                   <li key={e.value} className="flex items-center gap-3">
                     <span
                       className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-300
-                        ${hecho ? "bg-emerald-700 text-white"
+                        ${noAplica ? "bg-slate-100 text-slate-400"
+                          : hecho ? "bg-emerald-700 text-white"
                           : actual ? "bg-institucional text-white"
                           : "bg-slate-100 text-slate-500"}`}
                     >
-                      {hecho ? <Check size={13} strokeWidth={3} /> : i + 1}
+                      {hecho && !noAplica ? <Check size={13} strokeWidth={3} /> : i + 1}
                     </span>
                     <span className={`text-sm ${actual ? "font-semibold text-slate-800" : hecho ? "text-slate-600" : "text-slate-500"}`}>
                       {e.label}
+                      {noAplica && <span className="text-xs text-slate-400"> · no se requirió</span>}
                     </span>
                   </li>
                 );
               })}
             </ol>
+            <p className="mt-4 text-xs text-slate-500">{paso.texto}</p>
 
-            <p className="mt-4 text-xs text-slate-500">
-              {esAdmin && !cerrada
-                ? "El mecánico registra el avance. Podrás capturar el costo y entregarlo cuando esté Completada."
-                : esMecanico
-                ? paso.texto
-                : AYUDA_PASO[s.estado]}
-            </p>
-
-            {(puedeAvanzar || puedeRegresar) && (
+            {anterior && (
               <div className="mt-4 space-y-2">
                 <input
                   value={nota}
                   onChange={(e) => setNota(e.target.value)}
-                  placeholder={siguiente?.value === "entregada" ? "Nota (ej. quién recibió)" : "Nota opcional"}
+                  placeholder="Motivo (opcional)"
                   className={inputClass}
                 />
-                {puedeAvanzar && (
-                  <Boton onClick={avanzar} disabled={saving} className="w-full">
-                    {etiquetaAvance}
-                    <ArrowRight size={15} />
-                  </Boton>
-                )}
-                {puedeRegresar && (
-                  <Boton
-                    variante="fantasma"
-                    onClick={() => handleEstado(anterior.value)}
-                    disabled={saving}
-                    icono={<Undo2 size={15} />}
-                    className="w-full"
-                  >
-                    Regresar a {anterior.label}
-                  </Boton>
-                )}
+                <Boton variante="fantasma" onClick={regresar} disabled={saving} icono={<Undo2 size={15} />} className="w-full">
+                  Regresar a {ESTADOS.find((e) => e.value === anterior)?.label}
+                </Boton>
               </div>
             )}
           </Section>
 
-          {/* Administración (el mecánico no la necesita) */}
           {esAdmin && (
-          <Section title="Administración" subtitle={esAdmin ? "Solo el administrador puede modificar esto" : undefined}>
-            <div className="space-y-4">
-              <Field label="Mecánico asignado">
-                {esAdmin ? (
+            <Section title="Administración" subtitle="Solo el administrador puede modificar esto">
+              <div className="space-y-4">
+                <Field label="Mecánico asignado">
                   <select
                     value={form.mecanico_id}
                     onChange={(e) => set("mecanico_id")(Number(e.target.value))}
@@ -529,12 +500,8 @@ export default function SolicitudDetail() {
                       <option key={m.id} value={m.id}>{m.nombre_completo || m.username}</option>
                     ))}
                   </select>
-                ) : (
-                  <p className="text-sm text-slate-700">{s.mecanico?.nombre_completo || s.mecanico?.username || "—"}</p>
-                )}
-              </Field>
-              <Field label="Costo">
-                {esAdmin ? (
+                </Field>
+                <Field label="Costo">
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">$</span>
                     <input
@@ -547,21 +514,18 @@ export default function SolicitudDetail() {
                       className={`${inputClass} pl-7`}
                     />
                   </div>
-                ) : (
-                  <p className="text-sm text-slate-700">{formatMoneda(s.costo)}</p>
-                )}
-              </Field>
-              {s.fecha_entrega && (
-                <Field label="Fecha de entrega">
-                  <p className="text-sm text-slate-700">{formatFecha(s.fecha_entrega, true)}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">Se llena solo con el total de la orden de compra.</p>
                 </Field>
-              )}
-            </div>
-          </Section>
+                {s.fecha_entrega && (
+                  <Field label="Fecha de entrega">
+                    <p className="text-sm text-slate-700">{formatFecha(s.fecha_entrega, true)}</p>
+                  </Field>
+                )}
+              </div>
+            </Section>
           )}
 
-          {/* Bitácora */}
-          <Section title="Bitácora" subtitle="Movimientos de esta solicitud">
+          <Section title="Bitácora" subtitle="Movimientos de este servicio">
             <ul className="space-y-3">
               {[...s.eventos].reverse().map((e) => (
                 <li key={e.id} className="text-sm">
@@ -578,7 +542,7 @@ export default function SolicitudDetail() {
         </div>
       </div>
 
-      {/* Barra para guardar */}
+      {/* Barra para guardar (tipo/prioridad del mecánico; costo/mecánico del admin) */}
       {puedeEditar && (dirty || error || aviso) && (
         <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-20 bg-white/95 backdrop-blur border-t border-slate-200">
           <div className="px-4 sm:px-6 py-3 flex items-center justify-end gap-3">
@@ -598,35 +562,16 @@ export default function SolicitudDetail() {
           </div>
         </div>
       )}
-      {/* Errores cuando no hay barra de guardado (ej. mecánico con la solicitud cerrada) */}
-      {!puedeEditar && error && (
-        <Alerta className="fixed bottom-4 right-4 z-20">{error}</Alerta>
-      )}
-
-      <ConfirmModal
-        open={confirmarFin}
-        tono="confirmar"
-        onClose={() => setConfirmarFin(false)}
-        onConfirm={async () => {
-          setConfirmarFin(false);
-          await handleEstado("completada");
-        }}
-        title="¿Terminaste la reparación?"
-        confirmLabel="Sí, ya terminé"
-        loadingLabel="Guardando..."
-      >
-        Después ya no podrás cambiar nada de este servicio. Si te equivocas, tendrás que pedirle al
-        administrador que lo regrese.
-      </ConfirmModal>
+      {!puedeEditar && error && <Alerta className="fixed bottom-4 right-4 z-20">{error}</Alerta>}
 
       <ConfirmModal
         open={deleteModal.open}
         onClose={() => setDeleteModal({ open: false, loading: false })}
         onConfirm={handleDelete}
         loading={deleteModal.loading}
-        title="¿Eliminar solicitud?"
+        title="¿Eliminar servicio?"
       >
-        Vas a eliminar la solicitud <strong className="text-slate-700">{s.folio}</strong> con todo su
+        Vas a eliminar el servicio <strong className="text-slate-700">{s.folio}</strong> con todo su
         historial. Esta acción no se puede deshacer.
       </ConfirmModal>
     </DashboardLayout>

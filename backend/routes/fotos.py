@@ -100,12 +100,8 @@ def _obtener(solicitud_id, tipo):
 
 
 def _puede_subir(user, s):
-    # Solo el mecánico asignado, mientras el servicio no esté completado
-    return (
-        user.role == "mecanico"
-        and s.mecanico_id == user.id
-        and s.estado not in ("completada", "entregada")
-    )
+    # Solo el mecánico asignado, en el paso de Reparación (después de la orden de compra)
+    return user.role == "mecanico" and s.mecanico_id == user.id and s.estado == "reparacion"
 
 
 # ─── Subir o reemplazar ───

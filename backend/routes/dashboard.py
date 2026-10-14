@@ -4,7 +4,7 @@ from collections import Counter
 from flask import Blueprint, jsonify
 from sqlalchemy import func
 from extensions import db
-from models import Vehiculo, Solicitud, SolicitudEvento
+from models import Vehiculo, Solicitud, SolicitudEvento, OrdenCompra
 from auth_utils import role_required
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
@@ -85,7 +85,7 @@ def stats():
     # ─── Solicitudes ───
     solicitudes_abiertas = Solicitud.query.filter(Solicitud.estado != "entregada").count()
     en_reparacion = Solicitud.query.filter(Solicitud.estado == "reparacion").count()
-    por_entregar = Solicitud.query.filter(Solicitud.estado == "completada").count()
+    ordenes_por_atender = OrdenCompra.query.filter(OrdenCompra.estado == "enviada").count()
 
     # ─── Actividad reciente (bitácora de solicitudes) ───
     eventos = (
@@ -103,7 +103,7 @@ def stats():
             "baja": baja,
             "solicitudes_abiertas": solicitudes_abiertas,
             "en_reparacion": en_reparacion,
-            "por_entregar": por_entregar,
+            "ordenes_por_atender": ordenes_por_atender,
         },
         "actividad": [
             {**e.to_dict(), "folio": e.solicitud.folio, "solicitud_id": e.solicitud_id}

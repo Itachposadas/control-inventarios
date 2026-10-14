@@ -12,8 +12,11 @@ import { areaApi } from "../../api/area";
 import { AREA_MENU, AREA_SECONDARY_MENU } from "../../config/menus";
 import { Boton, Alerta, Field, inputClass } from "../../components/ui";
 import PanelFirma from "../../components/peticiones/PanelFirma";
+import EditorMateriales, {
+  materialVacio, validarMateriales, paraEnviar,
+} from "../../components/peticiones/EditorMateriales";
 import {
-  Search, Loader2, CarFront, ChevronRight, ArrowLeft, CheckCircle2, Send, AlertCircle, Plus, Trash2,
+  Search, Loader2, CarFront, ChevronRight, ArrowLeft, CheckCircle2, Send, AlertCircle,
 } from "lucide-react";
 
 const PASOS = ["Vehículo", "Materiales"];
@@ -216,14 +219,6 @@ function ElegirVehiculo({ area, onElegir }) {
 
 /* ───── Paso 2: materiales solicitados ───── */
 
-// Sugerencias para "Unidad de medida" (se puede escribir otra)
-const UNIDADES = ["Pieza", "Juego", "Litro", "Galón", "Kilogramo", "Metro", "Caja", "Paquete", "Servicio"];
-
-let siguienteId = 1;
-const materialVacio = () => ({
-  id: siguienteId++, cantidad: "1", unidad_medida: "Pieza", concepto: "",
-});
-
 function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
   const ahora = useReloj();
   const [materiales, setMateriales] = useState(() => [materialVacio()]);
@@ -233,20 +228,11 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const cambiar = (id, campo, valor) =>
-    setMateriales((lista) => lista.map((m) => (m.id === id ? { ...m, [campo]: valor } : m)));
-  const quitar = (id) => setMateriales((lista) => lista.filter((m) => m.id !== id));
-  const agregar = () => setMateriales((lista) => [...lista, materialVacio()]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    for (const [i, m] of materiales.entries()) {
-      const n = materiales.length > 1 ? `Material ${i + 1}: ` : "";
-      if (!(Number(m.cantidad) > 0)) return setError(`${n}la cantidad debe ser mayor a 0`);
-      if (!m.unidad_medida.trim()) return setError(`${n}indica la unidad de medida`);
-      if (!m.concepto.trim()) return setError(`${n}escribe el concepto`);
-    }
+    const errorMateriales = validarMateriales(materiales);
+    if (errorMateriales) return setError(errorMateriales);
     if (solicitante.trim().length < 3) return setError("Escribe el nombre completo de quien solicita");
     if (!firma) {
       setFaltaFirma(true);
@@ -258,9 +244,7 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
       const r = await areaApi.enviar({
         vehiculo_id: vehiculo.id,
         // El precio unitario y el total los captura después el administrador
-        materiales: materiales.map(({ cantidad, unidad_medida, concepto }) => ({
-          cantidad, unidad_medida, concepto,
-        })),
+        materiales: paraEnviar(materiales),
         solicitante_nombre: solicitante.trim(),
         solicitante_firma: firma,
       });
@@ -295,84 +279,8 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
         <Alerta icono={<AlertCircle size={16} />} className="mt-4">{error}</Alerta>
       )}
 
-      <datalist id="unidades-medida">
-        {UNIDADES.map((u) => <option key={u} value={u} />)}
-      </datalist>
-
-      {/* Encabezados de la tabla (escritorio) */}
-      <div className={`hidden ${COLUMNAS} gap-2 mt-6 px-1
-                      text-[11px] font-semibold uppercase tracking-wide text-slate-500`}>
-        <span>Cantidad</span>
-        <span>Unidad de medida</span>
-        <span>Concepto</span>
-        <span />
-      </div>
-
-      <ul className="mt-3 md:mt-2 space-y-3 md:space-y-2">
-        {materiales.map((m, i) => (
-          <li
-            key={m.id}
-            className={`grid grid-cols-2 ${COLUMNAS} gap-2 md:items-center
-                       p-3 md:p-1 rounded-xl border border-slate-200 md:border-0 animate-fade-in`}
-          >
-            <p className="col-span-2 md:hidden text-xs font-semibold text-slate-500">Material {i + 1}</p>
-            <Celda etiqueta="Cantidad">
-              <input
-                type="number"
-                min="0.01"
-                step="any"
-                inputMode="decimal"
-                value={m.cantidad}
-                onChange={(e) => cambiar(m.id, "cantidad", e.target.value)}
-                aria-label={`Cantidad del material ${i + 1}`}
-                className={`${inputClass} text-center`}
-              />
-            </Celda>
-            <Celda etiqueta="Unidad de medida">
-              <input
-                list="unidades-medida"
-                value={m.unidad_medida}
-                onChange={(e) => cambiar(m.id, "unidad_medida", e.target.value)}
-                maxLength={30}
-                aria-label={`Unidad de medida del material ${i + 1}`}
-                className={inputClass}
-              />
-            </Celda>
-            <Celda etiqueta="Concepto" className="col-span-2 md:col-span-1">
-              <input
-                value={m.concepto}
-                onChange={(e) => cambiar(m.id, "concepto", e.target.value)}
-                maxLength={255}
-                placeholder="Ej. Aceite de motor 15W-40"
-                aria-label={`Concepto del material ${i + 1}`}
-                className={inputClass}
-                autoFocus={i > 0 && i === materiales.length - 1}
-              />
-            </Celda>
-            <div className="col-span-2 md:col-span-1 flex justify-end">
-              <button
-                type="button"
-                onClick={() => quitar(m.id)}
-                disabled={materiales.length === 1}
-                aria-label={`Quitar material ${i + 1}`}
-                title="Quitar"
-                className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition
-                           disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-500 disabled:cursor-not-allowed"
-              >
-                <Trash2 size={17} />
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100 pt-4">
-        <Boton variante="contorno" onClick={agregar} icono={<Plus size={16} />} className="self-start">
-          Agregar material
-        </Boton>
-        <p className="text-sm text-slate-600 sm:text-right">
-          {materiales.length} {materiales.length === 1 ? "material" : "materiales"}
-        </p>
+      <div className="mt-6">
+        <EditorMateriales materiales={materiales} onChange={setMateriales} />
       </div>
 
       {/* Responsable de la solicitud */}
@@ -420,9 +328,6 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
   );
 }
 
-// Columnas de la tabla de materiales en escritorio
-const COLUMNAS = "md:grid md:grid-cols-[7rem_11rem_1fr_2.5rem]";
-
 // Fecha y hora actuales; se actualiza cada 30 s mientras el formulario está abierto
 function useReloj() {
   const [ahora, setAhora] = useState(() => new Date());
@@ -440,16 +345,6 @@ function DatoGeneral({ etiqueta, valor, detalle }) {
       <dd className="mt-0.5 text-sm font-semibold text-slate-800 truncate">{valor || "—"}</dd>
       {detalle && <dd className="text-[11px] text-slate-500 truncate">{detalle}</dd>}
     </div>
-  );
-}
-
-// En celular cada campo lleva su etiqueta; en escritorio la da el encabezado de la tabla
-function Celda({ etiqueta, className = "", children }) {
-  return (
-    <label className={`block min-w-0 ${className}`}>
-      <span className="md:hidden block text-xs font-medium text-slate-600 mb-1">{etiqueta}</span>
-      {children}
-    </label>
   );
 }
 

@@ -15,6 +15,7 @@ from routes.foraneas import foraneas_bp
 from routes.roles import roles_bp
 from routes.herramientas import herramientas_bp
 from routes.peticiones import area_bp, peticiones_bp
+from routes.ordenes_compra import ordenes_compra_bp
 
 # Columnas agregadas a tablas que ya existían. create_all() no las añade,
 # así que se agregan al arrancar si faltan (solo agrega, nunca borra datos).
@@ -31,6 +32,10 @@ COLUMNAS_NUEVAS = [
     ("peticiones_servicio", "mecanico_nombre", "VARCHAR(120) NULL"),
     ("peticiones_servicio", "mecanico_firma", "MEDIUMTEXT NULL"),
     ("peticiones_servicio", "recibida_at", "DATETIME NULL"),
+    ("solicitudes", "acciones_a_realizar", "TEXT NULL"),
+    ("solicitudes", "ingreso_at", "DATETIME NULL"),
+    ("ordenes_compra", "autoriza_nombre", "VARCHAR(120) NULL"),
+    ("ordenes_compra", "autoriza_firma", "MEDIUMTEXT NULL"),
 ]
 
 # Valores que debe aceptar la columna usuarios.role (ENUM de MySQL)
@@ -53,6 +58,38 @@ def _ampliar_roles(app):
             f"ALTER TABLE usuarios MODIFY COLUMN role ENUM({valores}) NOT NULL DEFAULT 'mecanico'"
         ))
     app.logger.info("Rol 'area' agregado a usuarios.role")
+
+
+# Pasos del servicio. Antes: recibida → diagnostico → reparacion → completada → entregada
+ESTADOS_SERVICIO = ("diagnostico", "ingreso", "compra", "reparacion", "entregada")
+
+
+def _migrar_estados_servicio(app):
+    """Pasa solicitudes.estado a los pasos nuevos (solo una vez).
+    recibida → diagnostico (ya tenían el formato de ingreso; les falta el diagnóstico)
+    completada → reparacion (les falta el formato de entrega)."""
+    if db.engine.dialect.name != "mysql":
+        return
+    with db.engine.begin() as conn:
+        tipo = conn.execute(db.text(
+            "SELECT COLUMN_TYPE FROM information_schema.COLUMNS "
+            "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'solicitudes' AND COLUMN_NAME = 'estado'"
+        )).scalar() or ""
+        if "'ingreso'" in tipo and "'completada'" not in tipo:
+            return
+        todos = ",".join(f"'{e}'" for e in ("recibida", "completada", *ESTADOS_SERVICIO))
+        conn.execute(db.text(f"ALTER TABLE solicitudes MODIFY COLUMN estado ENUM({todos}) NOT NULL"))
+        conn.execute(db.text("UPDATE solicitudes SET estado = 'diagnostico' WHERE estado = 'recibida'"))
+        conn.execute(db.text("UPDATE solicitudes SET estado = 'reparacion' WHERE estado = 'completada'"))
+        # Los servicios anteriores ya llenaron el formato de ingreso al abrirse
+        conn.execute(db.text(
+            "UPDATE solicitudes SET ingreso_at = fecha_ingreso WHERE ingreso_at IS NULL AND checklist IS NOT NULL"
+        ))
+        nuevos = ",".join(f"'{e}'" for e in ESTADOS_SERVICIO)
+        conn.execute(db.text(
+            f"ALTER TABLE solicitudes MODIFY COLUMN estado ENUM({nuevos}) NOT NULL DEFAULT 'diagnostico'"
+        ))
+    app.logger.info("solicitudes.estado migrado a los pasos nuevos")
 
 
 def _precio_opcional(app):
@@ -136,6 +173,7 @@ def create_app():
     app.register_blueprint(herramientas_bp)
     app.register_blueprint(area_bp)
     app.register_blueprint(peticiones_bp)
+    app.register_blueprint(ordenes_compra_bp)
 
     # Crea las tablas que falten al arrancar (no modifica las que ya existen),
     # así un módulo nuevo no deja al sistema sin funcionar.
@@ -144,6 +182,7 @@ def create_app():
         try:
             db.create_all()
             _agregar_columnas_faltantes(app)
+            _migrar_estados_servicio(app)
             _ampliar_roles(app)
             _email_opcional(app)
             _precio_opcional(app)

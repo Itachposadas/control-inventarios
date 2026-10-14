@@ -10,7 +10,7 @@ from routes.solicitudes import EN_TALLER
 
 reportes_bp = Blueprint("reportes", __name__, url_prefix="/api/reportes")
 
-TERMINADOS = ("completada", "entregada")
+TERMINADOS = ("entregada",)
 TOP = 10
 
 # Las fechas se guardan en UTC; los periodos se cuentan en hora del centro de México
@@ -48,7 +48,9 @@ def _nombre(v):
 
 
 def _fecha_completada(s):
-    """Última vez que el servicio pasó a Completada (según la bitácora)."""
+    """Cuándo terminó el servicio: la entrega (antes, el paso "Completada" de la bitácora)."""
+    if s.fecha_entrega:
+        return s.fecha_entrega
     fechas = [e.created_at for e in s.eventos if e.accion == "Avanzó a Completada"]
     return max(fechas) if fechas else None
 

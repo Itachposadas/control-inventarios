@@ -16,7 +16,7 @@ const ROLE_CONFIG = {
   admin:    { label: "Administrador", color: "bg-institucional/10 text-institucional", icon: <Shield size={14} /> },
   // Rol retirado; solo para mostrar cuentas antiguas
   almacen:  { label: "Almacén (sin acceso)", color: "bg-slate-100 text-slate-500", icon: <Package size={14} /> },
-  mecanico: { label: "Mecánico",      color: "bg-emerald-100 text-emerald-700", icon: <Wrench size={14} /> },
+  mecanico: { label: "Parque vehicular", color: "bg-emerald-100 text-emerald-700", icon: <Wrench size={14} /> },
   area:     { label: "Área",          color: "bg-sky-100 text-sky-700",         icon: <Building2 size={14} /> },
 };
 
@@ -129,7 +129,7 @@ useEffect(() => {
             >
               <option value="">Todos los roles</option>
               <option value="admin">Administrador</option>
-              <option value="mecanico">Mecánico</option>
+              <option value="mecanico">Parque vehicular</option>
               <option value="area">Área</option>
             </select>
           </div>

@@ -8,19 +8,20 @@ import DonutCard from "../../components/dashboard/DonutCard";
 import DataTable from "../../components/dashboard/DataTable";
 import ActivityFeed from "../../components/dashboard/ActivityFeed";
 import QuickActions from "../../components/dashboard/QuickActions";
-import SolicitudesTable from "../../components/solicitudes/SolicitudesTable";
+import { useNavigate } from "react-router-dom";
 import { dashboardApi } from "../../api/dashboard";
-import { solicitudesApi } from "../../api/solicitudes";
+import { ordenesCompraApi } from "../../api/ordenesCompra";
 import { formatFecha } from "../../config/solicitudes";
 import {
-  ClipboardList, Wrench, CarFront, Loader2,
+  ClipboardList, Wrench, CarFront, Loader2, ShoppingCart, ChevronRight,
 } from "lucide-react";
 import { COLORS } from "../../config/colors";
 
 import { Alerta } from "../../components/ui";
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [porEntregar, setPorEntregar] = useState([]);
+  const [porAtender, setPorAtender] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -34,11 +35,11 @@ export default function AdminDashboard() {
       })
       .finally(() => setLoading(false));
 
-    // Servicios que el mecánico ya terminó: el admin captura costo y entrega
-    solicitudesApi
-      .listar({ estado: "completada" })
-      .then(setPorEntregar)
-      .catch(() => setPorEntregar([]));
+    // Órdenes de compra que mandó parque vehicular y falta atender
+    ordenesCompraApi
+      .listar({ estado: "enviada" })
+      .then(setPorAtender)
+      .catch(() => setPorAtender([]));
   }, []);
 
   // Valores por defecto mientras carga
@@ -59,7 +60,7 @@ export default function AdminDashboard() {
     user: e.usuario,
     action: `${e.accion} · ${e.folio}`,
     time: formatFecha(e.fecha, true),
-    dot: /Entregada|Completada/.test(e.accion)
+    dot: /Entregada|Completada|entrega/.test(e.accion)
       ? "bg-emerald-500"
       : e.accion.startsWith("Registró")
       ? "bg-institucional"
@@ -90,11 +91,11 @@ export default function AdminDashboard() {
               accent={COLORS.institucional}
               icon={<ClipboardList size={20} />}
               status={
-                kpis.por_entregar > 0
-                  ? `${kpis.por_entregar} listas para entregar`
+                kpis.ordenes_por_atender > 0
+                  ? `${kpis.ordenes_por_atender} ${kpis.ordenes_por_atender === 1 ? "orden de compra" : "órdenes de compra"} por atender`
                   : `${kpis.en_reparacion} en reparación`
               }
-              statusType={kpis.por_entregar > 0 ? "success" : "info"}
+              statusType={kpis.ordenes_por_atender > 0 ? "warning" : "info"}
             />
             <KpiCard
               label="Vehículos en mantenimiento"
@@ -118,18 +119,38 @@ export default function AdminDashboard() {
             />
           </div>
 
-          {/* Servicios listos para entregar */}
-          {porEntregar.length > 0 && (
-            <div className="mb-5">
-              <div className="mb-3">
-                <h3 className="text-sm font-semibold text-slate-800">
-                  Servicios listos para entregar
-                </h3>
+          {/* Órdenes de compra por atender */}
+          {porAtender.length > 0 && (
+            <div className="mb-5 bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+              <div className="px-5 py-4 border-b border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-800">Órdenes de compra por atender</h3>
                 <p className="text-xs text-slate-500">
-                  El mecánico ya los terminó. Ábrelos para capturar el costo y registrar la entrega.
+                  Parque vehicular espera el proveedor y los precios para seguir con la reparación.
                 </p>
               </div>
-              <SolicitudesTable items={porEntregar} basePath="/admin/solicitudes" />
+              <ul className="divide-y divide-slate-100">
+                {porAtender.slice(0, 5).map((o) => (
+                  <li key={o.id}>
+                    <button
+                      onClick={() => navigate("/admin/ordenes-compra")}
+                      className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-slate-50 transition"
+                    >
+                      <span className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <ShoppingCart size={17} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold text-slate-800">
+                          <span className="font-mono">{o.folio}</span> · {o.vehiculo?.nombre}
+                        </span>
+                        <span className="block text-xs text-slate-500 truncate">
+                          {o.vehiculo?.area} · {o.piezas.length} {o.piezas.length === 1 ? "refacción" : "refacciones"} · {formatFecha(o.fecha, true)}
+                        </span>
+                      </span>
+                      <ChevronRight size={18} className="text-slate-300 shrink-0" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

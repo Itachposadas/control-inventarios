@@ -6,54 +6,71 @@ import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
-  ClipboardPlus, Stethoscope, Wrench, CheckCircle2, History, Car,
-  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck, Hammer,
+  ClipboardPlus, Stethoscope, CheckCircle2, History, Car, Camera, PenLine, ClipboardList,
+  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck, Hammer, ShoppingCart,
 } from "lucide-react";
 
 const GUIA_MECANICO = [
   {
-    icon: <ClipboardPlus size={20} />,
-    titulo: "1. Registrar el ingreso a taller",
+    icon: <PenLine size={20} />,
+    titulo: "1. Recibir la solicitud",
     pasos: [
-      "Las áreas piden servicio desde la página de inicio. Entra a Solicitudes: las que llevan más tiempo esperando aparecen primero.",
-      "Cuando llegue la unidad, pulsa “Atender” en su solicitud. Escribe tu nombre completo y firma en el recuadro como mecánico responsable, y pulsa “Firmar de recibido”.",
-      "Con las dos firmas ya puedes ver el formato de la solicitud (botón “Formato”, en PDF).",
-      "Pulsa “Continuar con el ingreso” (o “Registrar ingreso” en la solicitud). Los datos del vehículo se llenan solos desde el catálogo (no se pueden modificar; si alguno está mal, avisa al administrador).",
-      "Revisa la fecha de ingreso y la hoja (ej. hoja 1 de 1).",
-      "En “Accesorios y herramientas” marca SI o NO en los 40 conceptos (incluidos los birlos); sin eso no se puede registrar.",
-      "Escribe las observaciones (ej. “No trae faros delanteros”).",
-      "Pulsa “Registrar ingreso”. El vehículo queda en mantenimiento y el sistema te lleva a Evidencia fotográfica para tomar la foto de llegada.",
+      "Las áreas piden servicio desde su cuenta. Entra a Solicitudes: las que llevan más tiempo esperando aparecen primero.",
+      "Cuando llegue la unidad, pulsa “Atender”, escribe tu nombre completo, firma en el recuadro y pulsa “Firmar de recibido”.",
+      "Se abre el servicio de la unidad y ya puedes ver el formato de la solicitud con las dos firmas (botón “Formato”, en PDF).",
+      "Pulsa “Continuar con el diagnóstico”.",
     ],
-    nota: "También puedes entrar desde Inicio → “Solicitudes”. Si una solicitud no procede, pulsa “Descartar” y escribe el motivo. Al abrir cualquier reparación, el recuadro “¿Qué sigue?” te dice qué hacer y tiene el botón para hacerlo.",
+    nota: "Si una solicitud no procede, pulsa “Descartar” y escribe el motivo. En cada servicio, el recuadro “¿Qué sigue?” te dice qué hacer y tiene el botón para hacerlo.",
   },
   {
     icon: <Stethoscope size={20} />,
     titulo: "2. Diagnóstico",
     pasos: [
-      "Abre el servicio y pulsa “Pasar a Diagnóstico”.",
-      "Escribe el diagnóstico de fallas presentadas.",
-      "Pulsa “Guardar y pasar a Reparación”.",
+      "Escribe el diagnóstico de fallas presentadas: tu opinión o el estado actual del vehículo.",
+      "Escribe las acciones a realizar / observaciones: qué trabajo de reparación o ajuste requiere.",
+      "En “Refacciones a utilizar” aparecen los materiales que pidió el solicitante (cantidad, unidad de medida y descripción). Son los que irán en la orden de compra; no se pueden agregar otros.",
+      "Pulsa “Guardar diagnóstico y continuar”.",
     ],
-    nota: "Sin la foto de llegada no podrás pasar a Diagnóstico, y sin el diagnóstico no podrás pasar a Reparación.",
+    nota: "Si el solicitante no pidió materiales, no se hace orden de compra.",
   },
   {
-    icon: <Wrench size={20} />,
-    titulo: "3. Reparación",
+    icon: <ClipboardList size={20} />,
+    titulo: "3. Formato de ingreso a taller",
     pasos: [
-      "Captura las acciones realizadas y las observaciones de lo que se trabajó.",
-      "Mientras cambias la pieza, entra a Evidencia fotográfica, elige el vehículo y toma la foto de reparación.",
-      "Pulsa “Guardar cambios” cuando quieras; no se pierde lo capturado.",
+      "Los datos del vehículo se llenan solos desde el catálogo (si alguno está mal, avisa al administrador).",
+      "Revisa la hoja (ej. hoja 1 de 1) y marca SI o NO en los 40 conceptos de accesorios y herramientas.",
+      "Escribe las observaciones (ej. “No trae faros delanteros”) y pulsa “Registrar ingreso”.",
+    ],
+  },
+  {
+    icon: <ShoppingCart size={20} />,
+    titulo: "4. Orden de compra",
+    pasos: [
+      "En el servicio aparece la orden de compra con las refacciones del diagnóstico.",
+      "Revisa la hoja y el nombre y la firma del mecánico/almacén (se proponen los de quien firmó de recibido).",
+      "En “Autorizó” firma el coordinador de parque vehicular (se propone su última firma) y pulsa “Enviar a administración”.",
+      "Administración captura el proveedor y los precios. Cuando la atiende, el servicio pasa a Reparación.",
+    ],
+    nota: "Con “Ver orden de compra” descargas el formato en PDF.",
+  },
+  {
+    icon: <Camera size={20} />,
+    titulo: "5. Evidencia fotográfica",
+    pasos: [
+      "Ya en Reparación, entra a Evidencia fotográfica y elige el vehículo.",
+      "Toma las 3 fotos: llegada, reparación (mientras cambias la pieza) y final (ya reparado).",
+      "Cuando estén las 3, pulsa “Ir al formato de entrega”: te lleva directo a llenarlo.",
     ],
   },
   {
     icon: <CheckCircle2 size={20} />,
-    titulo: "4. Completar",
+    titulo: "6. Formato de entrega",
     pasos: [
-      "Cuando termines, toma la foto final del vehículo ya reparado (también en Evidencia fotográfica).",
-      "Pulsa “Terminar reparación” y confirma. Sin las 3 fotos (llegada, reparación y final) no se puede terminar.",
-      "El vehículo vuelve a estar activo y el administrador captura el costo y lo entrega.",
+      "En el servicio, el formato de entrega ya trae los datos de la unidad y las fechas de recepción y entrega.",
+      "Describe el trabajo realizado y escribe tus observaciones.",
+      "Pulsa “Guardar y entregar vehículo” y confirma. El vehículo queda entregado y activo.",
     ],
-    nota: "Una vez completada ya no puedes modificarla. Si hay que corregir algo, pídele al administrador que la regrese a Reparación.",
+    nota: "Con “Ver formato de entrega” descargas el PDF. Si hay que corregir algo, pídele al administrador que regrese el servicio.",
   },
   {
     icon: <Truck size={20} />,
@@ -83,7 +100,7 @@ const GUIA_MECANICO = [
     titulo: "Consultar historial",
     pasos: [
       "En Historial ves los servicios que ya terminaste.",
-      "En Solicitudes → Atendidas ves con qué ingreso a taller se atendió cada solicitud.",
+      "En Solicitudes → Atendidas ves con qué servicio se atendió cada solicitud.",
     ],
   },
 ];
@@ -116,7 +133,7 @@ const GUIA_AREA = [
     pasos: [
       "Entra a “Seguimiento”: aparecen las solicitudes de tu área, la más reciente primero.",
       "Escribe el folio (ej. PET-2026-0001), el vehículo o las placas para encontrarla.",
-      "La línea de etapas muestra el avance: Enviada, Recibida en taller, Diagnóstico, Reparación, Terminada y Entregada.",
+      "La línea de etapas muestra el avance: Enviada, Recibida en taller, Diagnóstico, Reparación y Entregada.",
       "Si una solicitud no procedió, se muestra el motivo.",
     ],
     nota: "Con “En curso” y “Concluidas” filtras las solicitudes.",
@@ -124,6 +141,17 @@ const GUIA_AREA = [
 ];
 
 const GUIA_ADMIN = [
+  {
+    icon: <ShoppingCart size={20} />,
+    titulo: "Atender órdenes de compra",
+    pasos: [
+      "Después del diagnóstico y del formato de ingreso, parque vehicular manda la orden de compra (folio OC-AAAA-NNNN). Aparece en la campana, en el Panel de control y en Órdenes de compra → “Por atender”.",
+      "Revisa el vehículo, el diagnóstico y las refacciones, y pulsa “Atender”.",
+      "Escribe los datos del proveedor, el precio unitario de cada refacción, el IVA y los adicionales. El importe, el subtotal y el total se calculan solos.",
+      "Pulsa “Atender orden”. El servicio sigue a Reparación y su costo es el total de la orden. Con “Guardar sin atender” guardas lo capturado para terminar después.",
+    ],
+    nota: "Con “PDF” descargas la orden de compra con el formato del municipio.",
+  },
   {
     icon: <ClipboardPlus size={20} />,
     titulo: "Precios de las solicitudes",
@@ -136,18 +164,17 @@ const GUIA_ADMIN = [
   },
   {
     icon: <DollarSign size={20} />,
-    titulo: "Capturar costo y entregar",
+    titulo: "Costo de un servicio",
     pasos: [
-      "Cuando un mecánico completa un servicio aparece en la campana y en el Panel de control (“Servicios listos para entregar”).",
-      "Ábrelo, revisa las 3 fotos de evidencia, escribe el costo en “Administración” y pulsa “Guardar cambios”.",
-      "Pulsa “Pasar a Entregada”. Puedes anotar quién recibió el vehículo.",
+      "El costo se llena solo con el total de la orden de compra al atenderla.",
+      "Si hace falta, corrígelo en el servicio, en “Administración”, y pulsa “Guardar cambios”.",
     ],
   },
   {
     icon: <Undo2 size={20} />,
     titulo: "Corregir un servicio",
     pasos: [
-      "Si el mecánico debe corregir algo, usa “Regresar a Reparación”. El vehículo vuelve a mantenimiento y el mecánico puede editar de nuevo.",
+      "Si hay que corregir algo, abre el servicio y usa “Regresar a …” para volver al paso anterior (por ejemplo, de Entregada a Reparación, o de Reparación a Orden de compra para corregir precios).",
       "En “Administración” puedes reasignar el servicio a otro mecánico.",
     ],
   },
@@ -193,12 +220,16 @@ const PREGUNTAS = [
     r: "El servidor del sistema está apagado o no hay red. Avisa al administrador.",
   },
   {
-    p: "No me deja pasar a Diagnóstico o a Completada",
-    r: "Faltan fotos de evidencia: la de llegada para Diagnóstico, y las de reparación y final para Completada. Entra a Evidencia fotográfica en el menú, elige el vehículo y súbelas.",
+    p: "No me deja entregar el vehículo",
+    r: "Faltan fotos de evidencia: se necesitan las de llegada, reparación y final. Entra a Evidencia fotográfica en el menú, elige el vehículo y súbelas.",
   },
   {
-    p: "No puedo registrar el ingreso de un vehículo",
-    r: "Si ya está en el taller (tiene un servicio sin completar) o está dado de baja, no se puede registrar otro ingreso.",
+    p: "No aparece mi vehículo en Evidencia fotográfica",
+    r: "Las fotos se toman en Reparación: primero administración debe atender la orden de compra (si el diagnóstico tiene refacciones).",
+  },
+  {
+    p: "No puedo atender una solicitud",
+    r: "Si la unidad ya está en el taller (tiene un servicio sin entregar) o está dada de baja, no se puede abrir otro servicio.",
   },
 ];
 

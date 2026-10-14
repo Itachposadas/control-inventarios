@@ -4,7 +4,7 @@
 import {
   LayoutDashboard, Car, Users, BarChart3,
   UserCog, HelpCircle,
-  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks,
+  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks, ShoppingCart,
 } from "lucide-react";
 import { ROLES } from "./roles";
 
@@ -14,6 +14,8 @@ import { ROLES } from "./roles";
 export const ADMIN_MENU = [
   { label: "Panel de control", to: "/admin", icon: <LayoutDashboard size={18} /> },
   { label: "Solicitudes", to: "/admin/solicitudes-areas", icon: <Inbox size={18} /> },
+  // Órdenes de compra que manda parque vehicular después del diagnóstico
+  { label: "Órdenes de compra", to: "/admin/ordenes-compra", icon: <ShoppingCart size={18} /> },
   { label: "Vehículos", to: "/admin/vehiculos", icon: <Car size={18} /> },
   { label: "Taller foráneo", to: "/admin/foraneo", icon: <Truck size={18} /> },
   { label: "Usuarios", to: "/admin/usuarios", icon: <Users size={18} /> },

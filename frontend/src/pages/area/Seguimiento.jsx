@@ -12,8 +12,9 @@ import { Alerta, Insignia } from "../../components/ui";
 import { Search, Loader2, CarFront, Check, XCircle, AlertCircle } from "lucide-react";
 
 // Etapas que ve el área, de la solicitud a la entrega
-const ETAPAS = ["Enviada", "Recibida en taller", "Diagnóstico", "Reparación", "Terminada", "Entregada"];
-const INDICE_SERVICIO = { recibida: 1, diagnostico: 2, reparacion: 3, completada: 4, entregada: 5 };
+const ETAPAS = ["Enviada", "Recibida en taller", "Diagnóstico", "Reparación", "Entregada"];
+// El área no ve los pasos internos (formato de ingreso, orden de compra): cuentan como reparación
+const INDICE_SERVICIO = { diagnostico: 2, ingreso: 3, compra: 3, reparacion: 3, entregada: 4 };
 
 const FILTROS = [
   { value: "todas", label: "Todas" },
@@ -44,8 +45,7 @@ function situacion(p) {
   const i = etapaDe(p);
   if (i === null) return { texto: "No procedió", tono: "rojo" };
   if (i === 0) return { texto: "En espera", tono: "ambar" };
-  if (i === 4) return { texto: "Lista para entrega", tono: "verde" };
-  if (i === 5) return { texto: "Entregada", tono: "verde" };
+  if (i === 4) return { texto: "Entregada", tono: "verde" };
   return { texto: "En servicio", tono: "azul" };
 }
 
@@ -202,7 +202,7 @@ function Tarjeta({ p }) {
 // Línea de etapas: completadas en verde, la actual en guinda
 function Avance({ etapa }) {
   return (
-    <ol className="mt-5 grid grid-cols-6 gap-1" aria-label={`Etapa actual: ${ETAPAS[etapa]}`}>
+    <ol className="mt-5 grid grid-cols-5 gap-1" aria-label={`Etapa actual: ${ETAPAS[etapa]}`}>
       {ETAPAS.map((nombre, i) => {
         const hecha = i < etapa || (i === etapa && i === ETAPAS.length - 1);
         const actual = i === etapa && !hecha;

@@ -7,7 +7,7 @@ from models import Rol, ROLES_TALLER
 roles_bp = Blueprint("roles", __name__, url_prefix="/api/roles")
 
 # Nombres de los roles base; no se permite crear otro rol con el mismo nombre
-NOMBRES_RESERVADOS = {"administrador", "admin", "mecánico", "mecanico"}
+NOMBRES_RESERVADOS = {"administrador", "admin", "mecánico", "mecanico", "parque vehicular"}
 
 
 # ─── Listar roles personalizados ───

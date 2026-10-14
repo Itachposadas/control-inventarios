@@ -7,11 +7,20 @@ export const solicitudesApi = {
 
   obtener: (id) => request(`/solicitudes/${id}`),
 
-  crear: (payload) => request("/solicitudes", { method: "POST", body: payload }),
+  // ─── Pasos del mecánico (cada uno avanza el servicio) ───
+  // { fallas, acciones_a_realizar, refacciones: [{cantidad, unidad_medida, concepto}] }
+  diagnostico: (id, payload) => request(`/solicitudes/${id}/diagnostico`, { method: "POST", body: payload }),
+  // { hoja_no, hoja_total, checklist, observaciones_ingreso }
+  ingreso: (id, payload) => request(`/solicitudes/${id}/ingreso`, { method: "POST", body: payload }),
+  // { hoja_no, hoja_total, mecanico_nombre, mecanico_firma }
+  enviarOrdenCompra: (id, payload) => request(`/solicitudes/${id}/orden-compra`, { method: "POST", body: payload }),
+  // { acciones (trabajo realizado), observaciones } → queda entregado
+  entrega: (id, payload) => request(`/solicitudes/${id}/entrega`, { method: "POST", body: payload }),
 
   editar: (id, payload) =>
     request(`/solicitudes/${id}`, { method: "PUT", body: payload }),
 
+  // Solo admin: regresar al paso anterior para corregir
   cambiarEstado: (id, estado, nota = "") =>
     request(`/solicitudes/${id}/estado`, { method: "POST", body: { estado, nota } }),
 

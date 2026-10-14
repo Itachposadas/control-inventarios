@@ -7,14 +7,14 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { EstadoBadge } from "../../components/solicitudes/Badges";
 import { solicitudesApi } from "../../api/solicitudes";
-import { pasoSiguiente } from "../../config/solicitudes";
+import { pasoSiguiente, EN_TALLER } from "../../config/solicitudes";
 import { useAuth } from "../../context/AuthContext";
 import {
   Inbox, Camera, Hammer, Loader2, CarFront, ChevronRight, CheckCircle2,
 } from "lucide-react";
 
 import { Alerta } from "../../components/ui";
-const ACTIVAS = ["recibida", "diagnostico", "reparacion"];
+const ACTIVAS = EN_TALLER;
 
 const ACCIONES = [
   {

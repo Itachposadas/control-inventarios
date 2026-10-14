@@ -116,10 +116,13 @@ class Vehiculo(db.Model):
         }
 
 # ════════════════════════════════════════════════════════════
-#  SOLICITUDES DE SERVICIO (ingreso a taller)
+#  SOLICITUDES DE SERVICIO
 # ════════════════════════════════════════════════════════════
-
-ESTADOS_SOLICITUD = ("recibida", "diagnostico", "reparacion", "completada", "entregada")
+# Se abre cuando el mecánico firma de recibido la solicitud del área. Pasos:
+#   diagnostico → ingreso (formato de ingreso a taller) → compra (orden de compra,
+#   solo si hay refacciones) → reparacion (evidencia fotográfica y formato de
+#   entrega) → entregada
+ESTADOS_SOLICITUD = ("diagnostico", "ingreso", "compra", "reparacion", "entregada")
 TIPOS_SOLICITUD = ("preventivo", "correctivo", "emergencia")
 PRIORIDADES = ("alta", "media", "baja")
 
@@ -140,7 +143,7 @@ class Solicitud(db.Model):
 
     tipo = db.Column(db.Enum(*TIPOS_SOLICITUD), default="correctivo", nullable=False)
     prioridad = db.Column(db.Enum(*PRIORIDADES), default="media", nullable=False)
-    estado = db.Column(db.Enum(*ESTADOS_SOLICITUD), default="recibida", nullable=False, index=True)
+    estado = db.Column(db.Enum(*ESTADOS_SOLICITUD), default="diagnostico", nullable=False, index=True)
 
     # ─── Formato de ingreso: datos del vehículo tal como llegó ───
     # Se copian del catálogo al crear y el mecánico puede corregirlos;
@@ -160,11 +163,16 @@ class Solicitud(db.Model):
     observaciones_ingreso = db.Column(db.Text)
     hoja_no = db.Column(db.Integer)            # "Hoja no. __ de __" del formato en papel
     hoja_total = db.Column(db.Integer)
+    ingreso_at = db.Column(db.DateTime)        # cuándo se llenó el formato de ingreso
 
-    # ─── Trabajo del mecánico ───
-    fallas = db.Column(db.Text)          # Diagnóstico de fallas presentadas
-    acciones = db.Column(db.Text)        # Acciones realizadas
-    observaciones = db.Column(db.Text)   # Observaciones / lo que se trabajó
+    # ─── Diagnóstico ───
+    fallas = db.Column(db.Text)               # Diagnóstico de fallas presentadas
+    acciones_a_realizar = db.Column(db.Text)  # Acciones a realizar / observaciones
+    # Las refacciones a utilizar están en RefaccionServicio
+
+    # ─── Formato de entrega ───
+    acciones = db.Column(db.Text)        # Trabajo realizado
+    observaciones = db.Column(db.Text)   # Observaciones de la entrega
 
     # ─── Lo captura el admin ───
     costo = db.Column(db.Numeric(12, 2))
@@ -180,6 +188,14 @@ class Solicitud(db.Model):
     refacciones = db.relationship(
         "SolicitudRefaccion", backref="solicitud",
         cascade="all, delete-orphan", order_by="SolicitudRefaccion.id",
+    )
+    # Refacciones a utilizar (diagnóstico): son las piezas de la orden de compra
+    piezas = db.relationship(
+        "RefaccionServicio", backref="solicitud",
+        cascade="all, delete-orphan", order_by="RefaccionServicio.id",
+    )
+    orden_compra = db.relationship(
+        "OrdenCompra", backref="solicitud", uselist=False, cascade="all, delete-orphan",
     )
     eventos = db.relationship(
         "SolicitudEvento", backref="solicitud",
@@ -212,6 +228,7 @@ class Solicitud(db.Model):
             } if v else None,
             "mecanico": self.mecanico.to_dict() if self.mecanico else None,
             "fotos_tipos": sorted(f.tipo for f in self.fotos),
+            "orden_compra_folio": self.orden_compra.folio if self.orden_compra else None,
             "costo": float(self.costo) if self.costo is not None else None,
             "fecha_ingreso": _iso(self.fecha_ingreso),
             "fecha_entrega": _iso(self.fecha_entrega),
@@ -240,9 +257,142 @@ class Solicitud(db.Model):
                 "eventos": [e.to_dict() for e in self.eventos],
                 "fotos": {f.tipo: f.to_dict() for f in self.fotos},
                 "ordenes_foraneas": [o.to_dict(resumen=True) for o in self.ordenes_foraneas],
+                "acciones_a_realizar": self.acciones_a_realizar,
+                "refacciones": [r.to_dict() for r in self.piezas],
+                "ingreso_at": _iso(self.ingreso_at),
+                "orden_compra": self.orden_compra.to_dict() if self.orden_compra else None,
+                # Lo que pidió el área: base para las refacciones del diagnóstico
+                "peticion": _peticion_de(self),
                 "creado_por": self.creado_por.to_dict() if self.creado_por else None,
             })
         return data
+
+
+class RefaccionServicio(db.Model):
+    """
+    Refacción a utilizar (diagnóstico): cantidad, unidad de medida y descripción
+    de la pieza a comprar. Es la lista de la orden de compra; el precio unitario
+    lo captura administración al atenderla.
+    """
+    __tablename__ = "servicio_refacciones"
+
+    id = db.Column(db.Integer, primary_key=True)
+    solicitud_id = db.Column(db.Integer, db.ForeignKey("solicitudes.id"), nullable=False, index=True)
+    cantidad = db.Column(db.Numeric(10, 2), nullable=False)
+    unidad_medida = db.Column(db.String(30), nullable=False)
+    concepto = db.Column(db.String(255), nullable=False)  # descripción (pieza a comprar)
+    precio_unitario = db.Column(db.Numeric(12, 2), nullable=True)
+
+    def to_dict(self):
+        cantidad = float(self.cantidad)
+        precio = float(self.precio_unitario) if self.precio_unitario is not None else None
+        return {
+            "id": self.id,
+            "cantidad": cantidad,
+            "unidad_medida": self.unidad_medida,
+            "concepto": self.concepto,
+            "precio_unitario": precio,
+            "importe": round(cantidad * precio, 2) if precio is not None else None,
+        }
+
+
+ESTADOS_ORDEN_COMPRA = ("enviada", "atendida")
+
+
+class OrdenCompra(db.Model):
+    """
+    Orden de compra del servicio (formato del municipio). El mecánico la manda
+    con las refacciones del diagnóstico, la hoja y su nombre y firma;
+    administración captura proveedor, precios e IVA y la atiende.
+    """
+    __tablename__ = "ordenes_compra"
+
+    id = db.Column(db.Integer, primary_key=True)
+    folio = db.Column(db.String(20), unique=True, index=True)  # OC-2026-0001 (número de orden)
+    solicitud_id = db.Column(db.Integer, db.ForeignKey("solicitudes.id"), nullable=False, unique=True)
+    estado = db.Column(db.Enum(*ESTADOS_ORDEN_COMPRA), default="enviada", nullable=False, index=True)
+    hoja_no = db.Column(db.Integer, default=1)
+    hoja_total = db.Column(db.Integer, default=1)
+
+    # Mecánico/Almacén: nombre completo y firma
+    mecanico_nombre = db.Column(db.String(120))
+    mecanico_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))
+
+    # Datos del proveedor (administración)
+    proveedor_nombre = db.Column(db.String(200))
+    proveedor_direccion = db.Column(db.String(255))
+    proveedor_telefono = db.Column(db.String(50))
+    iva_porcentaje = db.Column(db.Numeric(5, 2), default=16)
+    adicionales = db.Column(db.Text)
+
+    # Autorizó: coordinador de parque vehicular (firma al atenderla)
+    autoriza_nombre = db.Column(db.String(120))
+    autoriza_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))
+
+    creado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
+    atendida_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)
+    atendida_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=utcnow, index=True)
+
+    creado_por = db.relationship("Usuario", foreign_keys=[creado_por_id])
+    atendida_por = db.relationship("Usuario", foreign_keys=[atendida_por_id])
+
+    def totales(self):
+        piezas = [r.to_dict() for r in self.solicitud.piezas]
+        subtotal = round(sum(p["importe"] for p in piezas if p["importe"] is not None), 2)
+        iva_pct = float(self.iva_porcentaje) if self.iva_porcentaje is not None else 0
+        iva = round(subtotal * iva_pct / 100, 2)
+        return piezas, subtotal, iva_pct, iva, round(subtotal + iva, 2)
+
+    def to_dict(self):
+        s = self.solicitud
+        v = s.vehiculo
+        piezas, subtotal, iva_pct, iva, total = self.totales()
+        return {
+            "id": self.id,
+            "folio": self.folio,
+            "estado": self.estado,
+            "fecha": _iso(self.created_at),
+            "hoja_no": self.hoja_no,
+            "hoja_total": self.hoja_total,
+            "mecanico_nombre": self.mecanico_nombre,
+            "mecanico_firma": self.mecanico_firma,
+            "proveedor": {
+                "nombre": self.proveedor_nombre,
+                "direccion": self.proveedor_direccion,
+                "telefono": self.proveedor_telefono,
+            },
+            "adicionales": self.adicionales,
+            "autoriza_nombre": self.autoriza_nombre,
+            "autoriza_firma": self.autoriza_firma,
+            "piezas": piezas,
+            "precios_completos": bool(piezas) and all(p["precio_unitario"] is not None for p in piezas),
+            "subtotal": subtotal,
+            "iva_porcentaje": iva_pct,
+            "iva": iva,
+            "total": total,
+            "atendida_por": _nombre_usuario(self.atendida_por),
+            "atendida_at": _iso(self.atendida_at),
+            "servicio": {
+                "id": s.id,
+                "folio": s.folio,
+                "estado": s.estado,
+                "fallas": s.fallas,
+                "acciones_a_realizar": s.acciones_a_realizar,
+                "mecanico": _nombre_usuario(s.mecanico),
+            },
+            # Datos de la unidad tal como se registraron en el servicio
+            "vehiculo": {
+                "nombre": (v.numero_economico or v.unidad or v.no_inventario) if v else None,
+                "unidad": s.ing_unidad,
+                "area": s.ing_area,
+                "modelo": s.ing_modelo,
+                "marca": s.ing_marca,
+                "no_inventario": s.ing_no_inventario,
+                "serie": s.ing_serie,
+                "placas": s.ing_placas,
+            },
+        }
 
 
 class SolicitudRefaccion(db.Model):
@@ -388,6 +538,23 @@ class SolicitudEvento(db.Model):
             "usuario": self.usuario.nombre_completo or self.usuario.username if self.usuario else None,
             "fecha": _iso(self.created_at),
         }
+
+
+def _peticion_de(solicitud):
+    p = PeticionServicio.query.filter_by(solicitud_id=solicitud.id).first()
+    if not p:
+        return None
+    return {
+        "id": p.id,
+        "folio": p.folio,
+        # Mecánico que firmó de recibido: se propone en la orden de compra
+        "mecanico_nombre": p.mecanico_nombre,
+        "mecanico_firma": p.mecanico_firma,
+        "materiales": [
+            {k: m[k] for k in ("cantidad", "unidad_medida", "concepto")}
+            for m in (x.to_dict() for x in p.materiales)
+        ],
+    }
 
 
 def _nombre_usuario(u):
@@ -575,3 +742,4 @@ class PeticionMaterial(db.Model):
             "precio_unitario": precio,
             "total": round(cantidad * precio, 2) if precio is not None else None,
         }
+

@@ -8,7 +8,7 @@ import { Modal, Boton, Alerta, Field, inputClass } from "../ui";
 // Roles base: definen los permisos. Los roles creados heredan de uno de ellos.
 const ROLES = [
   { value: "admin",    label: "Administrador" },
-  { value: "mecanico", label: "Mecánico" },
+  { value: "mecanico", label: "Parque vehicular" },
 ];
 
 // Cuenta de un área: no hereda a roles creados, lleva el área que representa

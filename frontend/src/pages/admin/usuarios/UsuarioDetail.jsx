@@ -15,7 +15,7 @@ const ROLE_CONFIG = {
   admin:    { label: "Administrador", color: "bg-institucional/10 text-institucional", icon: <Shield size={16} /> },
   // Rol retirado; solo para mostrar cuentas antiguas
   almacen:  { label: "Almacén (sin acceso)", color: "bg-slate-100 text-slate-500", icon: <Package size={16} /> },
-  mecanico: { label: "Mecánico",      color: "bg-emerald-100 text-emerald-700", icon: <Wrench size={16} /> },
+  mecanico: { label: "Parque vehicular", color: "bg-emerald-100 text-emerald-700", icon: <Wrench size={16} /> },
   area:     { label: "Área",          color: "bg-sky-100 text-sky-700",         icon: <Building2 size={16} /> },
 };
 

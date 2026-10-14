@@ -8,7 +8,7 @@ from extensions import db
 from models import PeticionServicio, PeticionMaterial, Vehiculo, Solicitud, utcnow, _iso
 from auth_utils import role_required, get_current_user
 from firmas import validar_firma, validar_nombre
-from routes.solicitudes import EN_TALLER
+from routes.solicitudes import EN_TALLER, abrir_servicio
 
 area_bp = Blueprint("area", __name__, url_prefix="/api/area")
 peticiones_bp = Blueprint("peticiones", __name__, url_prefix="/api/peticiones")
@@ -63,8 +63,9 @@ def vehiculos_de_area():
 MAX_MATERIALES = 50
 
 
-def _materiales(lista):
-    """Valida los materiales capturados. Devuelve (materiales, error)."""
+def _materiales(lista, modelo=PeticionMaterial):
+    """Valida los materiales capturados. Devuelve (materiales, error).
+    `modelo`: PeticionMaterial (solicitud del área) o SolicitudCompraMaterial."""
     if not isinstance(lista, list) or not lista:
         return None, "Agrega al menos un material"
     if len(lista) > MAX_MATERIALES:
@@ -83,7 +84,7 @@ def _materiales(lista):
             return None, f"Material {n}: indica la unidad de medida"
         if cantidad is None or not 0 < cantidad <= 99999:
             return None, f"Material {n}: la cantidad debe ser mayor a 0"
-        materiales.append(PeticionMaterial(
+        materiales.append(modelo(
             concepto=concepto, unidad_medida=unidad,
             cantidad=round(cantidad, 2),  # el precio unitario lo captura el admin
         ))
@@ -252,26 +253,35 @@ def capturar_precios(peticion_id):
 @peticiones_bp.route("/<int:peticion_id>/recibir", methods=["POST"])
 @role_required("mecanico")
 def recibir(peticion_id):
-    """Primer paso de "Atender": el mecánico responsable firma de recibido.
-    Con las dos firmas ya se puede ver el formato; luego sigue el ingreso a taller."""
+    """"Atender": el mecánico responsable firma de recibido y se abre el servicio
+    (paso Diagnóstico). Con las dos firmas ya se puede ver el formato de la solicitud."""
+    user = get_current_user()
     p = db.session.get(PeticionServicio, peticion_id)
     if not p:
         return jsonify({"msg": "Solicitud no encontrada"}), 404
     if p.estado != "pendiente":
         return jsonify({"msg": "Esta solicitud ya fue atendida"}), 409
-    if p.recibida_at:
-        return jsonify({"msg": "Esta solicitud ya tiene la firma del mecánico responsable"}), 409
 
-    data = request.get_json() or {}
-    nombre, error = validar_nombre(data.get("mecanico_nombre"), "del mecánico responsable")
-    if not error:
-        firma, error = validar_firma(data.get("mecanico_firma"), "del mecánico responsable")
+    # Si ya firmó antes (versión anterior del flujo) solo falta abrir el servicio
+    if not p.recibida_at:
+        data = request.get_json() or {}
+        nombre, error = validar_nombre(data.get("mecanico_nombre"), "del mecánico responsable")
+        if not error:
+            firma, error = validar_firma(data.get("mecanico_firma"), "del mecánico responsable")
+        if error:
+            return jsonify({"msg": error}), 400
+        p.mecanico_nombre = nombre
+        p.mecanico_firma = firma
+        p.recibida_at = utcnow()
+
+    s, error = abrir_servicio(p, user)
     if error:
-        return jsonify({"msg": error}), 400
-
-    p.mecanico_nombre = nombre
-    p.mecanico_firma = firma
-    p.recibida_at = utcnow()
+        db.session.rollback()
+        return jsonify({"msg": error[0]}), error[1]
+    p.estado = "atendida"
+    p.solicitud = s
+    p.atendida_por_id = user.id
+    p.atendida_at = p.recibida_at
     db.session.commit()
     return jsonify(p.to_dict()), 200
 

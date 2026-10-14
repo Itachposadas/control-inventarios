@@ -15,11 +15,10 @@ import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
-  CAMPOS_FORANEA, TALLERES_FORANEOS, FORANEO_BASE, SOLICITUDES_BASE,
+  CAMPOS_FORANEA, TALLERES_FORANEOS, FORANEO_BASE, SOLICITUDES_BASE, EN_TALLER,
 } from "../../config/solicitudes";
 import { ArrowLeft, Loader2, Trash2, ExternalLink } from "lucide-react";
 
-const EN_TALLER = ["recibida", "diagnostico", "reparacion"];
 
 function hoyISO() {
   const d = new Date();

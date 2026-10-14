@@ -1,14 +1,18 @@
 // src/config/solicitudes.js
 import { ROLES } from "./roles";
 
-// Orden del flujo de una solicitud
+// Pasos del servicio (se abre cuando el mecánico firma de recibido la solicitud del área).
+// "compra" (orden de compra) solo aplica si el diagnóstico tiene refacciones.
 export const ESTADOS = [
-  { value: "recibida",    label: "Recibida" },
   { value: "diagnostico", label: "Diagnóstico" },
+  { value: "ingreso",     label: "Formato de ingreso" },
+  { value: "compra",      label: "Orden de compra" },
   { value: "reparacion",  label: "Reparación" },
-  { value: "completada",  label: "Completada" },
   { value: "entregada",   label: "Entregada" },
 ];
+
+// Mientras no se entregue, el vehículo está en el taller
+export const EN_TALLER = ["diagnostico", "ingreso", "compra", "reparacion"];
 export const ESTADO_LABEL = Object.fromEntries(ESTADOS.map((e) => [e.value, e.label]));
 
 export const TIPOS = [
@@ -121,43 +125,31 @@ export function conceptosSinMarcar(checklist = {}) {
 /**
  * Qué le toca hacer al mecánico con este servicio, en palabras sencillas.
  * Sigue las mismas reglas que el backend para avanzar de paso.
- * texto: instrucción · accion: "foto" | "escribir" | "avanzar" | null
- * (foto: cuál toma · campo: qué escribe — "fallas" o "acciones")
- * Con `campos` (lo capturado en pantalla) revisa también lo escrito;
- * sin ellos (listas) solo da la instrucción general del paso.
+ * texto: instrucción · accion: "diagnostico" | "ingreso" | "orden" | "foto" | "entrega" | null
+ * (foto: cuál toma)
  */
-export function pasoSiguiente(s, campos) {
+export function pasoSiguiente(s) {
   const fotos = new Set(s.fotos_tipos || Object.keys(s.fotos || {}));
-  const vacio = (v) => !(v || "").trim();
 
-  if (s.estado === "recibida") {
-    if (!fotos.has("llegada")) {
-      return { texto: "Toma la foto de cómo llegó el vehículo.", accion: "foto", foto: "llegada" };
-    }
-    return { texto: "Revisa el vehículo y pásalo a Diagnóstico.", accion: "avanzar" };
-  }
   if (s.estado === "diagnostico") {
-    if (!campos || vacio(campos.fallas)) {
-      return { texto: "Escribe qué fallas tiene el vehículo.", accion: "escribir", campo: "fallas" };
+    return { texto: "Haz el diagnóstico: fallas presentadas, acciones a realizar y refacciones a utilizar.", accion: "diagnostico" };
+  }
+  if (s.estado === "ingreso") {
+    return { texto: "Llena el formato de ingreso a taller (accesorios y herramientas).", accion: "ingreso" };
+  }
+  if (s.estado === "compra") {
+    if (s.orden_compra || s.orden_compra_folio) {
+      return { texto: "Orden de compra enviada. Espera a que administración la atienda.", accion: null };
     }
-    return { texto: "Diagnóstico escrito. Ya puedes pasarlo a Reparación.", accion: "avanzar" };
+    return { texto: "Envía la orden de compra de las refacciones a administración.", accion: "orden" };
   }
   if (s.estado === "reparacion") {
-    if (!fotos.has("reparacion")) {
-      return { texto: "Toma la foto mientras cambias la pieza.", accion: "foto", foto: "reparacion" };
+    for (const [tipo, nombre] of [["llegada", "de llegada"], ["reparacion", "de la reparación"], ["final", "final"]]) {
+      if (!fotos.has(tipo)) return { texto: `Toma la foto ${nombre} en la evidencia fotográfica.`, accion: "foto", foto: tipo };
     }
-    if (!campos || vacio(campos.acciones)) {
-      return { texto: "Escribe qué le hiciste al vehículo (acciones realizadas).", accion: "escribir", campo: "acciones" };
-    }
-    if (!fotos.has("final")) {
-      return { texto: "Toma la foto final del vehículo ya reparado.", accion: "foto", foto: "final" };
-    }
-    return { texto: "Todo listo. Marca la reparación como terminada.", accion: "avanzar" };
+    return { texto: "Evidencia completa. Llena el formato de entrega del vehículo.", accion: "entrega" };
   }
-  if (s.estado === "completada") {
-    return { texto: "Terminada. El administrador captura el costo y la entrega.", accion: null };
-  }
-  return { texto: "Servicio entregado.", accion: null };
+  return { texto: "Vehículo entregado.", accion: null };
 }
 
 // Ruta base del módulo según el rol

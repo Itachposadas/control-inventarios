@@ -2,7 +2,7 @@
 # Buscador global y notificaciones (campana) de la barra superior.
 from flask import Blueprint, request, jsonify
 from extensions import db
-from models import Vehiculo, Solicitud, SolicitudEvento
+from models import Vehiculo, Solicitud, SolicitudEvento, OrdenCompra
 from auth_utils import role_required, get_current_user
 from routes.solicitudes import EN_TALLER
 
@@ -82,20 +82,21 @@ def notificaciones():
     items = []
 
     if user.role == "admin":
-        # Servicios que el mecánico ya terminó: falta costo y entrega
+        # Órdenes de compra que mandó parque vehicular y falta atender
         pendientes = (
-            Solicitud.query.filter(Solicitud.estado == "completada")
-            .order_by(Solicitud.updated_at.desc())
+            OrdenCompra.query.filter(OrdenCompra.estado == "enviada")
+            .order_by(OrdenCompra.created_at.asc())
             .all()
         )
-        for s in pendientes:
+        for o in pendientes:
             items.append({
-                "id": f"entregar-{s.id}",
-                "tipo": "entregar",
-                "titulo": "Listo para entregar",
-                "texto": f"{s.folio} · {_nombre_vehiculo(s.vehiculo)}",
-                "solicitud_id": s.id,
-                "fecha": s.updated_at.isoformat() if s.updated_at else None,
+                "id": f"orden-{o.id}",
+                "tipo": "orden_compra",
+                "titulo": "Orden de compra por atender",
+                "texto": f"{o.folio} · {_nombre_vehiculo(o.solicitud.vehiculo)}",
+                "solicitud_id": o.solicitud_id,
+                "ruta": "/admin/ordenes-compra",
+                "fecha": o.created_at.isoformat() if o.created_at else None,
             })
     else:
         # Servicios del mecánico que siguen en el taller

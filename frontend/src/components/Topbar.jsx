@@ -6,7 +6,7 @@ import { ROLE_COLOR, ROLE_LABEL, ROLES, VEHICULOS_BASE } from "../config/roles";
 import { ESTADO_LABEL, SOLICITUDES_BASE, formatFecha } from "../config/solicitudes";
 import { generalApi } from "../api/general";
 import {
-  Bell, Search, Car, ClipboardList, Loader2, X, UserCog, LogOut, CheckCircle2, Wrench,
+  Bell, Search, Car, ClipboardList, Loader2, X, UserCog, LogOut, CheckCircle2, Wrench, ShoppingCart,
 } from "lucide-react";
 
 // Cierra un menú al hacer clic fuera de él
@@ -325,11 +325,11 @@ function Notificaciones({ role }) {
 
   const abrir = (n) => {
     setOpen(false);
-    navigate(`${SOLICITUDES_BASE[role]}/${n.solicitud_id}`);
+    navigate(n.ruta || `${SOLICITUDES_BASE[role]}/${n.solicitud_id}`);
   };
 
   const vacio = role === ROLES.ADMIN
-    ? "No hay servicios pendientes de entregar"
+    ? "No hay órdenes de compra por atender"
     : "No tienes servicios en proceso";
 
   return (
@@ -361,7 +361,7 @@ function Notificaciones({ role }) {
           <div className="px-4 py-3 border-b border-slate-100">
             <p className="text-sm font-semibold text-slate-800">Pendientes</p>
             <p className="text-xs text-slate-500">
-              {role === ROLES.ADMIN ? "Servicios listos para capturar costo y entregar" : "Tus servicios en el taller"}
+              {role === ROLES.ADMIN ? "Órdenes de compra por atender" : "Tus servicios en el taller"}
             </p>
           </div>
           {data.items.length === 0 ? (
@@ -379,11 +379,11 @@ function Notificaciones({ role }) {
                   >
                     <span
                       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-                        ${n.tipo === "entregar" ? "bg-emerald-100 text-emerald-700"
+                        ${n.tipo === "orden_compra" ? "bg-amber-100 text-amber-700"
                           : n.tipo === "reasignada" ? "bg-blue-100 text-blue-700"
                           : "bg-amber-100 text-amber-700"}`}
                     >
-                      {n.tipo === "entregar" ? <CheckCircle2 size={16} /> : <Wrench size={16} />}
+                      {n.tipo === "orden_compra" ? <ShoppingCart size={16} /> : <Wrench size={16} />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-slate-800">{n.titulo}</span>

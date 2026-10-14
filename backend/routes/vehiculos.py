@@ -91,7 +91,7 @@ def get_historial(vehiculo_id):
             "solicitudId": s.id,
             "folio": s.folio,
             "tipo": s.tipo.capitalize(),
-            "estado": "Completado" if s.estado in ("completada", "entregada") else "En proceso",
+            "estado": "Completado" if s.estado == "entregada" else "En proceso",
             "descripcion": s.fallas or s.observaciones_ingreso or "Sin diagnóstico",
             "fecha": s.fecha_ingreso.isoformat(),
             "mecanico": (s.mecanico.nombre_completo or s.mecanico.username) if s.mecanico else "—",

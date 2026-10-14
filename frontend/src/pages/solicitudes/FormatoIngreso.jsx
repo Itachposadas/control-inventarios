@@ -1,46 +1,35 @@
-// src/pages/solicitudes/SolicitudNueva.jsx
-// FORMATO DE INGRESO A TALLER (Municipio de Atlacomulco). Solo lo llena el mecánico.
-//  1. Encabezado: fecha de ingreso (automática: el momento en que se atiende) y "Hoja no. __ de __"
-//  2. Datos del vehículo/maquinaria: los de la solicitud del área (?peticion=ID),
-//     tomados del catálogo (solo lectura)
+// src/pages/solicitudes/FormatoIngreso.jsx
+// FORMATO DE INGRESO A TALLER (Municipio de Atlacomulco). Paso 2 del servicio,
+// después del diagnóstico. Solo lo llena el mecánico asignado.
+//  1. Encabezado: fecha de ingreso (automática) y "Hoja no. __ de __"
+//  2. Datos del vehículo/maquinaria: tomados del catálogo (solo lectura)
 //  3. Accesorios y herramientas: SI / NO por concepto
 //  4. Observaciones
-// Antes, en "Solicitudes", el mecánico responsable ya firmó de recibido.
-// Las fotos se suben después en "Evidencia fotográfica".
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import DatosVehiculo, { datosDesdeVehiculo } from "../../components/solicitudes/DatosVehiculo";
+import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
 import { Section, Field, TextArea, inputClass, Boton } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
-import { peticionesApi } from "../../api/peticiones";
-import TablaMateriales from "../../components/peticiones/TablaMateriales";
+import { useAuth } from "../../context/AuthContext";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { CHECKLIST_ITEMS, conceptosSinMarcar } from "../../config/solicitudes";
 import { ArrowLeft, CarFront, Loader2, Inbox, CalendarCheck } from "lucide-react";
 
-export default function SolicitudNueva() {
+export default function FormatoIngreso() {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   // Fecha de hoy (solo se muestra: el sistema registra el ingreso al guardar)
   const fechaHoy = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
   const accesoriosRef = useRef(null);
 
-  // Solicitud del área que se atiende con este ingreso (?peticion=ID).
-  // El vehículo es el de la solicitud: el mecánico ya no lo busca.
-  const [peticion, setPeticion] = useState(null);
+  const [servicio, setServicio] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const [errorPeticion, setErrorPeticion] = useState("");
-  const vehiculo = peticion?.vehiculo || null;
+  const [errorCarga, setErrorCarga] = useState("");
 
-  // Formato
-  const [form, setForm] = useState({
-    hoja_no: 1,
-    hoja_total: 1,
-    checklist: {},
-    observaciones_ingreso: "",
-  });
+  const [form, setForm] = useState({ hoja_no: 1, hoja_total: 1, checklist: {}, observaciones_ingreso: "" });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [resaltarFaltantes, setResaltarFaltantes] = useState(false);
@@ -48,23 +37,22 @@ export default function SolicitudNueva() {
   const set = (campo, valor) => setForm((f) => ({ ...f, [campo]: valor }));
 
   useEffect(() => {
-    const id = searchParams.get("peticion");
-    if (!id) {
-      setErrorPeticion("El ingreso a taller se registra desde una solicitud.");
-      setCargando(false);
-      return;
-    }
-    peticionesApi
+    solicitudesApi
       .obtener(id)
-      .then((p) => {
-        if (p.estado !== "pendiente") setErrorPeticion(`La solicitud ${p.folio} ya fue atendida.`);
-        else if (!p.recibida_at)
-          setErrorPeticion(`Primero recibe la solicitud ${p.folio} con el nombre y la firma del mecánico responsable.`);
-        else setPeticion(p);
+      .then((s) => {
+        if (s.mecanico?.id !== user?.id) setErrorCarga("Este servicio no está asignado a ti.");
+        else if (s.estado !== "ingreso") {
+          setErrorCarga(
+            s.estado === "diagnostico"
+              ? "Primero haz el diagnóstico del servicio."
+              : "El formato de ingreso de este servicio ya se registró."
+          );
+        }
+        setServicio(s);
       })
-      .catch(() => setErrorPeticion("No se encontró la solicitud."))
+      .catch(() => setErrorCarga("No se encontró el servicio."))
       .finally(() => setCargando(false));
-  }, [searchParams]);
+  }, [id, user?.id]);
 
   const sinMarcar = conceptosSinMarcar(form.checklist);
   const marcados = CHECKLIST_ITEMS.length - sinMarcar.length;
@@ -76,7 +64,6 @@ export default function SolicitudNueva() {
     const hojaNo = Number(form.hoja_no);
     const hojaTotal = Number(form.hoja_total);
     if (!hojaNo || !hojaTotal || hojaNo > hojaTotal) return setError("Revisa la hoja (ej. hoja 1 de 1)");
-    if (!vehiculo) return setError("No hay solicitud que atender");
 
     if (sinMarcar.length) {
       setResaltarFaltantes(true);
@@ -88,20 +75,21 @@ export default function SolicitudNueva() {
 
     setSaving(true);
     try {
-      const creada = await solicitudesApi.crear({
+      await solicitudesApi.ingreso(servicio.id, {
         hoja_no: hojaNo,
         hoja_total: hojaTotal,
         checklist: form.checklist,
         observaciones_ingreso: form.observaciones_ingreso,
-        peticion_id: peticion.id,
       });
-      // Siguiente paso natural: tomar la foto de llegada
-      navigate(`/mecanico/evidencia?servicio=${creada.id}`, { replace: true });
+      // Vuelve al servicio: sigue la orden de compra o la reparación
+      navigate(`/mecanico/reparaciones/${servicio.id}`, { replace: true });
     } catch (err) {
       setError(err.message || "Error al registrar el ingreso");
       setSaving(false);
     }
   };
+
+  const vehiculo = servicio?.vehiculo;
 
   return (
     <DashboardLayout
@@ -111,45 +99,29 @@ export default function SolicitudNueva() {
       subtitle="Registra cómo llega el vehículo o maquinaria"
     >
       <button
-        onClick={() => navigate(-1)}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium
-                   text-slate-600 hover:text-institucional transition"
+        onClick={() => navigate(`/mecanico/reparaciones/${id}`)}
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-institucional transition"
       >
         <ArrowLeft size={16} />
-        Volver
+        Volver al servicio
       </button>
 
       {cargando ? (
         <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
         </div>
-      ) : errorPeticion ? (
+      ) : errorCarga ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <Inbox size={44} className="mx-auto text-slate-300" />
-          <p className="mt-4 text-sm font-medium text-slate-700">{errorPeticion}</p>
-          <p className="mt-1 text-xs text-slate-500">En Solicitudes pulsa “Atender” en la unidad que llegó y firma de recibido.</p>
-          <Boton className="mt-5" onClick={() => navigate("/mecanico/solicitudes-areas", { replace: true })}>
-            Ir a Solicitudes
-          </Boton>
+          <p className="mt-4 text-sm font-medium text-slate-700">{errorCarga}</p>
+          {servicio && (
+            <Boton className="mt-5" onClick={() => navigate(`/mecanico/reparaciones/${servicio.id}`, { replace: true })}>
+              Ir al servicio
+            </Boton>
+          )}
         </div>
       ) : (
       <form onSubmit={handleSubmit} className="space-y-5 pb-24">
-        {peticion && (
-          <div className="flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            <Inbox size={18} className="shrink-0 mt-0.5" />
-            <div className="min-w-0 flex-1">
-              <p>
-                Atiende la solicitud <span className="font-mono font-semibold">{peticion.folio}</span> del área{" "}
-                <span className="font-semibold">{peticion.area}</span>, recibida por{" "}
-                <span className="font-semibold">{peticion.mecanico_nombre}</span>. Materiales solicitados:
-              </p>
-              <div className="mt-2 bg-white text-slate-700">
-                <TablaMateriales materiales={peticion.materiales} total={peticion.total} />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ═════ ENCABEZADO ═════ */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
           <div className="h-1.5 bg-institucional" />
@@ -160,7 +132,9 @@ export default function SolicitudNueva() {
                 <h2 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight leading-tight">
                   FORMATO DE INGRESO A TALLER
                 </h2>
-                <p className="text-sm font-medium text-institucional">Municipio de Atlacomulco</p>
+                <p className="text-sm font-medium text-institucional">
+                  Municipio de Atlacomulco · <span className="font-mono">{servicio.folio}</span>
+                </p>
               </div>
             </div>
 
@@ -176,10 +150,7 @@ export default function SolicitudNueva() {
               <Field label="Hoja no.">
                 <div className="flex items-center gap-2">
                   <input
-                    type="number"
-                    min="1"
-                    max="99"
-                    inputMode="numeric"
+                    type="number" min="1" max="99" inputMode="numeric"
                     value={form.hoja_no}
                     onChange={(e) => set("hoja_no", e.target.value)}
                     aria-label="Hoja número"
@@ -187,10 +158,7 @@ export default function SolicitudNueva() {
                   />
                   <span className="text-sm text-slate-500 shrink-0">de</span>
                   <input
-                    type="number"
-                    min="1"
-                    max="99"
-                    inputMode="numeric"
+                    type="number" min="1" max="99" inputMode="numeric"
                     value={form.hoja_total}
                     onChange={(e) => set("hoja_total", e.target.value)}
                     aria-label="Total de hojas"
@@ -203,18 +171,20 @@ export default function SolicitudNueva() {
         </section>
 
         {/* ═════ DATOS DEL VEHÍCULO/MAQUINARIA ═════ */}
-        <Section title="DATOS DEL VEHÍCULO/MAQUINARIA" subtitle="Los de la solicitud del área, tomados del catálogo (solo lectura)">
+        <Section title="DATOS DEL VEHÍCULO/MAQUINARIA" subtitle="Tomados del catálogo (solo lectura)">
           <div className="space-y-5">
             <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
               <div className="w-11 h-11 rounded-xl bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
                 <CarFront size={22} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-slate-800 truncate">{vehiculo.nombre}</p>
-                <p className="text-xs text-slate-500 truncate">{vehiculo.unidad || vehiculo.descripcion}</p>
+                <p className="font-semibold text-slate-800 truncate">
+                  {vehiculo?.numeroEconomico || vehiculo?.unidad || vehiculo?.noInventario}
+                </p>
+                <p className="text-xs text-slate-500 truncate">{servicio.ingreso?.unidad}</p>
               </div>
             </div>
-            <DatosVehiculo datos={datosDesdeVehiculo(vehiculo)} />
+            <DatosVehiculo datos={servicio.ingreso} />
           </div>
         </Section>
 
@@ -232,15 +202,11 @@ export default function SolicitudNueva() {
               </span>
             }
           >
-            {/* Atenuado y sin poder tocarse hasta que haya vehículo */}
-            <div className={vehiculo ? "" : "opacity-50 pointer-events-none select-none"} aria-disabled={!vehiculo}>
-              <Checklist
-                value={form.checklist}
-                onChange={(v) => set("checklist", v)}
-                resaltarFaltantes={resaltarFaltantes}
-                disabled={!vehiculo}
-              />
-            </div>
+            <Checklist
+              value={form.checklist}
+              onChange={(v) => set("checklist", v)}
+              resaltarFaltantes={resaltarFaltantes}
+            />
           </Section>
         </div>
 
@@ -251,7 +217,6 @@ export default function SolicitudNueva() {
             onChange={(v) => set("observaciones_ingreso", v)}
             placeholder="Ej. No trae faros delanteros"
             rows={4}
-            disabled={!vehiculo}
           />
         </Section>
 
@@ -267,10 +232,10 @@ export default function SolicitudNueva() {
                   : "Accesorios y herramientas completos"}
               </p>
             )}
-            <Boton variante="fantasma" onClick={() => navigate(-1)}>
+            <Boton variante="fantasma" onClick={() => navigate(`/mecanico/reparaciones/${id}`)}>
               Cancelar
             </Boton>
-            <Boton type="submit" disabled={saving || !vehiculo}>
+            <Boton type="submit" disabled={saving}>
               {saving ? "Registrando..." : "Registrar ingreso"}
             </Boton>
           </div>

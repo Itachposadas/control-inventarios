@@ -21,7 +21,7 @@ export const VEHICULOS_BASE = {
 // Nombre legible del rol (para mostrar en la UI)
 export const ROLE_LABEL = {
   [ROLES.ADMIN]: "Administrador",
-  [ROLES.MECANICO]: "Mecánico",
+  [ROLES.MECANICO]: "Parque vehicular",  // el taller (internamente el rol sigue siendo "mecanico")
   [ROLES.AREA]: "Área",
 };
 

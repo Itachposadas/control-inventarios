@@ -1,10 +1,9 @@
 // src/pages/peticiones/PeticionesAreas.jsx
 // "Solicitudes": lo que piden las áreas desde la página de inicio.
-// Mecánico: cuando llega la unidad la atiende en dos pasos:
-//   1. "Atender": firma de recibido (nombre y firma del mecánico responsable);
-//      con eso ya se puede ver el formato de la solicitud (PDF).
-//   2. "Registrar ingreso": formato de ingreso a taller; luego diagnóstico, etc.
-// También puede descartarla con un motivo.
+// Mecánico: cuando llega la unidad pulsa "Atender" y firma de recibido (nombre y
+// firma del mecánico responsable). Con eso se abre el servicio (diagnóstico,
+// formato de ingreso, orden de compra, evidencia y entrega) y ya se puede ver
+// el formato de la solicitud (PDF). También puede descartarla con un motivo.
 // Admin: consulta y captura el precio unitario de los materiales.
 // Las pendientes se ordenan por tiempo de espera: las más antiguas son prioridad.
 import { useEffect, useMemo, useState } from "react";
@@ -20,7 +19,7 @@ import TablaMateriales from "../../components/peticiones/TablaMateriales";
 import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
 import PanelFirma from "../../components/peticiones/PanelFirma";
 import {
-  Loader2, Inbox, CarFront, ClipboardPlus, XCircle, Building2, Clock, DollarSign, FileDown, UserRound,
+  Loader2, Inbox, CarFront, XCircle, Building2, Clock, DollarSign, FileDown, UserRound,
   PenLine, CheckCircle2, ArrowRight,
 } from "lucide-react";
 
@@ -69,7 +68,7 @@ function fechaHora(iso) {
 
 export default function PeticionesAreas() {
   const navigate = useNavigate();
-  const { role, user } = useAuth();
+  const { role } = useAuth();
   const { menu, secondaryMenu } = menusForRole(role);
   const esMecanico = role === ROLES.MECANICO;
   const esAdmin = role === ROLES.ADMIN;
@@ -126,7 +125,7 @@ export default function PeticionesAreas() {
     return lista;
   }, [items, area, prioridad, orden, pendientes]);
 
-  const registrarIngreso = (p) => navigate(`/mecanico/reparaciones/nueva?peticion=${p.id}`);
+  const irAlServicio = (p) => navigate(`${SOLICITUDES_BASE[role]}/${p.solicitud.id}`);
   const actualizar = (p) => setItems((lista) => lista.map((x) => (x.id === p.id ? p : x)));
 
   return (
@@ -273,42 +272,28 @@ export default function PeticionesAreas() {
                     >
                       Descartar
                     </Boton>
-                    {p.recibida_at ? (
-                      <Boton
-                        tamano="sm"
-                        icono={<ClipboardPlus size={14} />}
-                        onClick={() => registrarIngreso(p)}
-                        disabled={p.vehiculo?.estado === "mantenimiento"}
-                        title="Llena el formato de ingreso a taller de esta unidad"
-                      >
-                        Registrar ingreso
-                      </Boton>
-                    ) : (
-                      <Boton
-                        tamano="sm"
-                        icono={<PenLine size={14} />}
-                        onClick={() => setRecibiendo(p)}
-                        disabled={p.vehiculo?.estado === "mantenimiento"}
-                        title="Recibe la solicitud con tu nombre y firma"
-                      >
-                        Atender
-                      </Boton>
-                    )}
+                    <Boton
+                      tamano="sm"
+                      icono={<PenLine size={14} />}
+                      onClick={() => setRecibiendo(p)}
+                      disabled={p.vehiculo?.estado === "mantenimiento"}
+                      title="Recibe la solicitud con tu nombre y firma"
+                    >
+                      Atender
+                    </Boton>
                   </>
                 )}
                 {p.estado === "pendiente" && !esMecanico && (
                   <span className="mr-auto text-xs text-slate-500">
-                    {p.recibida_at
-                      ? `Recibida por ${p.mecanico_nombre}; falta registrar el ingreso a taller`
-                      : "Esperando a que llegue la unidad al taller"}
+                    Esperando a que llegue la unidad al taller
                   </span>
                 )}
                 {p.estado === "atendida" && (
                   <p className="mr-auto text-xs text-slate-500">
-                    Ingresó con{" "}
+                    Servicio{" "}
                     {p.solicitud ? (
                       <button
-                        onClick={() => navigate(`${SOLICITUDES_BASE[role]}/${p.solicitud.id}`)}
+                        onClick={() => irAlServicio(p)}
                         className="font-mono font-semibold text-institucional hover:underline"
                       >
                         {p.solicitud.folio}
@@ -369,10 +354,10 @@ export default function PeticionesAreas() {
       {recibiendo && (
         <Recibir
           peticion={recibiendo}
-          nombreInicial={user?.nombre_completo || ""}
+          nombreInicial=""
           onClose={() => setRecibiendo(null)}
           onRecibida={actualizar}
-          onIngreso={registrarIngreso}
+          onContinuar={irAlServicio}
         />
       )}
 
@@ -518,9 +503,9 @@ function CapturarPrecios({ peticion, onClose, onListo }) {
   );
 }
 
-// "Atender", paso 1: el mecánico responsable firma de recibido. Después puede
-// ver el formato de la solicitud y continuar con el ingreso a taller.
-function Recibir({ peticion, nombreInicial, onClose, onRecibida, onIngreso }) {
+// "Atender": el mecánico responsable firma de recibido y se abre el servicio.
+// Después puede ver el formato de la solicitud y seguir con el diagnóstico.
+function Recibir({ peticion, nombreInicial, onClose, onRecibida, onContinuar }) {
   const [nombre, setNombre] = useState(nombreInicial);
   const [firma, setFirma] = useState(null);
   const [faltaFirma, setFaltaFirma] = useState(false);
@@ -563,8 +548,8 @@ function Recibir({ peticion, nombreInicial, onClose, onRecibida, onIngreso }) {
             <Boton variante="contorno" icono={<FileDown size={16} />} onClick={() => descargarSolicitudPdf(recibida)}>
               Ver formato de solicitud
             </Boton>
-            <Boton icono={<ArrowRight size={16} />} onClick={() => onIngreso(recibida)}>
-              Continuar con el ingreso
+            <Boton icono={<ArrowRight size={16} />} onClick={() => onContinuar(recibida)}>
+              Continuar con el diagnóstico
             </Boton>
           </div>
         </div>

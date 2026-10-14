@@ -21,7 +21,7 @@ import UsuarioDetail from "./pages/admin/usuarios/UsuarioDetail";
 
 // Módulo de solicitudes (admin y mecánico)
 import SolicitudesList from "./pages/solicitudes/SolicitudesList";
-import SolicitudNueva from "./pages/solicitudes/SolicitudNueva";
+import FormatoIngreso from "./pages/solicitudes/FormatoIngreso";
 import SolicitudDetail from "./pages/solicitudes/SolicitudDetail";
 import EvidenciaFotografica from "./pages/solicitudes/EvidenciaFotografica";
 
@@ -31,6 +31,9 @@ import OrdenForanea from "./pages/foraneas/OrdenForanea";
 
 // Solicitudes que mandan las áreas desde la página de inicio
 import PeticionesAreas from "./pages/peticiones/PeticionesAreas";
+
+// Órdenes de compra: las manda el mecánico, las atiende administración (admin)
+import OrdenesCompra from "./pages/ordenes/OrdenesCompra";
 
 // Préstamo de herramientas (solo mecánico)
 import PrestamoHerramientas from "./pages/herramientas/PrestamoHerramientas";
@@ -95,6 +98,7 @@ export default function App() {
           <Route path="/admin/foraneo/:id" element={solo([ADMIN], <OrdenForanea />)} />
 
           <Route path="/admin/solicitudes-areas" element={solo([ADMIN], <PeticionesAreas />)} />
+          <Route path="/admin/ordenes-compra" element={solo([ADMIN], <OrdenesCompra />)} />
 
           <Route path="/admin/*" element={solo([ADMIN], <EnConstruccion />)} />
 
@@ -111,7 +115,9 @@ export default function App() {
             ))}
           />
           {/* El ingreso a taller solo se abre desde una solicitud: /nueva?peticion=ID */}
-          <Route path="/mecanico/reparaciones/nueva" element={solo([MECANICO], <SolicitudNueva />)} />
+          {/* El servicio se abre al firmar de recibido en Solicitudes; el ingreso es su paso 2 */}
+          <Route path="/mecanico/reparaciones/nueva" element={<Navigate to="/mecanico/solicitudes-areas" replace />} />
+          <Route path="/mecanico/reparaciones/:id/ingreso" element={solo([MECANICO], <FormatoIngreso />)} />
           <Route path="/mecanico/reparaciones/:id" element={solo([MECANICO], <SolicitudDetail />)} />
           <Route path="/mecanico/evidencia" element={solo([MECANICO], <EvidenciaFotografica />)} />
           <Route path="/mecanico/foraneo" element={solo([MECANICO], <OrdenesForaneas />)} />
