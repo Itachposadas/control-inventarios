@@ -11,7 +11,7 @@ const GRIS = [100, 116, 139];
 const MARGEN = 15;
 
 // Carga una imagen de /public como dataURL para incrustarla en el PDF
-async function cargarImagen(src) {
+export async function cargarImagen(src) {
   try {
     const blob = await (await fetch(src)).blob();
     const dataUrl = await new Promise((resolve, reject) => {

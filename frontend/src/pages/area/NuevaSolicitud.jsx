@@ -2,13 +2,16 @@
 // NUEVA SOLICITUD de la cuenta de un área (ej. Seguridad Pública):
 //   1. Elige un vehículo de SU área   2. Agrega los materiales
 // La fecha y la hora se registran solas al enviar y el área es la de la cuenta.
+// Al final se captura el nombre y la firma de quien solicita (la cuenta es compartida).
 // Al enviar recibe un folio; el taller la atiende cuando llega la unidad.
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { useAuth } from "../../context/AuthContext";
 import { areaApi } from "../../api/area";
 import { AREA_MENU, AREA_SECONDARY_MENU } from "../../config/menus";
-import { Boton, Alerta, inputClass } from "../../components/ui";
+import { Boton, Alerta, Field, inputClass } from "../../components/ui";
+import PanelFirma from "../../components/peticiones/PanelFirma";
 import {
   Search, Loader2, CarFront, ChevronRight, ArrowLeft, CheckCircle2, Send, AlertCircle, Plus, Trash2,
 } from "lucide-react";
@@ -192,9 +195,9 @@ function ElegirVehiculo({ area, onElegir }) {
                     )}
                   </span>
                   {v.en_taller ? (
-                    <Etiqueta>En el taller</Etiqueta>
+                    <Etiqueta>En servicio</Etiqueta>
                   ) : v.peticion_pendiente ? (
-                    <Etiqueta>Ya solicitado</Etiqueta>
+                    <Etiqueta>Solicitud pendiente</Etiqueta>
                   ) : (
                     <ChevronRight
                       size={18}
@@ -224,6 +227,9 @@ const materialVacio = () => ({
 function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
   const ahora = useReloj();
   const [materiales, setMateriales] = useState(() => [materialVacio()]);
+  const [solicitante, setSolicitante] = useState("");
+  const [firma, setFirma] = useState(null);
+  const [faltaFirma, setFaltaFirma] = useState(false);
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
 
@@ -241,6 +247,11 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
       if (!m.unidad_medida.trim()) return setError(`${n}indica la unidad de medida`);
       if (!m.concepto.trim()) return setError(`${n}escribe el concepto`);
     }
+    if (solicitante.trim().length < 3) return setError("Escribe el nombre completo de quien solicita");
+    if (!firma) {
+      setFaltaFirma(true);
+      return setError("Falta la firma del solicitante");
+    }
 
     setEnviando(true);
     try {
@@ -250,6 +261,8 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
         materiales: materiales.map(({ cantidad, unidad_medida, concepto }) => ({
           cantidad, unidad_medida, concepto,
         })),
+        solicitante_nombre: solicitante.trim(),
+        solicitante_firma: firma,
       });
       onEnviada(r);
     } catch (err) {
@@ -362,6 +375,34 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
         </p>
       </div>
 
+      {/* Responsable de la solicitud */}
+      <fieldset className="mt-8 border-t border-slate-100 pt-6">
+        <legend className="sr-only">Solicitante</legend>
+        <h3 className="text-base font-semibold text-slate-800">Nombre y firma del solicitante</h3>
+        <p className="mt-0.5 text-sm text-slate-500">Persona del área que hace la solicitud y se hace responsable de ella.</p>
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <Field label="Nombre completo" required>
+            <input
+              value={solicitante}
+              onChange={(e) => setSolicitante(e.target.value)}
+              maxLength={120}
+              autoComplete="off"
+              placeholder="Ej. Juan Pérez García"
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Firma" required>
+            <PanelFirma
+              invalido={faltaFirma && !firma}
+              onChange={(f) => {
+                setFirma(f);
+                if (f) setFaltaFirma(false);
+              }}
+            />
+          </Field>
+        </div>
+      </fieldset>
+
       <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <Boton variante="fantasma" tamano="lg" onClick={onAtras}>
           Atrás
@@ -415,6 +456,7 @@ function Celda({ etiqueta, className = "", children }) {
 /* ───── Confirmación ───── */
 
 function Enviada({ datos, onOtra }) {
+  const navigate = useNavigate();
   return (
     <div className="px-5 py-12 sm:py-16 text-center animate-fade-in">
       <span className="mx-auto w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
@@ -432,10 +474,13 @@ function Enviada({ datos, onOtra }) {
         <p className="mt-0.5 text-2xl sm:text-3xl font-bold font-mono text-institucional tracking-wide">{datos.folio}</p>
       </div>
       <p className="mt-3 text-xs text-slate-500">
-        Anótalo y menciónalo al llevar la unidad al taller.
+        Con este folio puedes consultar el avance en “Seguimiento”.
       </p>
 
-      <div className="mt-8">
+      <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+        <Boton onClick={() => navigate(`/area/seguimiento?folio=${encodeURIComponent(datos.folio)}`)}>
+          Ver seguimiento
+        </Boton>
         <Boton variante="contorno" onClick={onOtra}>
           Hacer otra solicitud
         </Boton>
@@ -447,8 +492,9 @@ function Enviada({ datos, onOtra }) {
 /* ───── Piezas pequeñas ───── */
 
 function motivoBloqueo(v) {
-  if (v.en_taller) return "Ya está en el taller; podrás pedir otra solicitud cuando salga.";
-  return `Ya tiene la solicitud ${v.peticion_pendiente} pendiente; espera a que el taller la atienda.`;
+  // en_taller = ya se atendió una solicitud y el servicio sigue abierto
+  if (v.en_taller) return "Su solicitud ya fue atendida y el servicio está en proceso; podrás hacer otra cuando concluya.";
+  return `Ya tiene la solicitud ${v.peticion_pendiente} en espera de ser atendida.`;
 }
 
 function Encabezado({ titulo, texto }) {

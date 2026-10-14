@@ -233,6 +233,10 @@ def crear():
     if peticion.estado != "pendiente":
         return jsonify({"msg": "Esta solicitud ya fue atendida"}), 409
 
+    # Antes del ingreso el mecánico responsable firma de recibido (POST /peticiones/<id>/recibir)
+    if not peticion.recibida_at:
+        return jsonify({"msg": "Primero recibe la solicitud con el nombre y la firma del mecánico responsable"}), 409
+
     vehiculo = peticion.vehiculo
     if vehiculo.estado == "baja":
         return jsonify({"msg": "El vehículo está dado de baja"}), 400

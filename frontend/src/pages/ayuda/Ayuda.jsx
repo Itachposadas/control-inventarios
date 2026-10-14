@@ -16,7 +16,9 @@ const GUIA_MECANICO = [
     titulo: "1. Registrar el ingreso a taller",
     pasos: [
       "Las áreas piden servicio desde la página de inicio. Entra a Solicitudes: las que llevan más tiempo esperando aparecen primero.",
-      "Cuando llegue la unidad, pulsa “Atender” en su solicitud. Los datos del vehículo se llenan solos desde el catálogo (no se pueden modificar; si alguno está mal, avisa al administrador).",
+      "Cuando llegue la unidad, pulsa “Atender” en su solicitud. Escribe tu nombre completo y firma en el recuadro como mecánico responsable, y pulsa “Firmar de recibido”.",
+      "Con las dos firmas ya puedes ver el formato de la solicitud (botón “Formato”, en PDF).",
+      "Pulsa “Continuar con el ingreso” (o “Registrar ingreso” en la solicitud). Los datos del vehículo se llenan solos desde el catálogo (no se pueden modificar; si alguno está mal, avisa al administrador).",
       "Revisa la fecha de ingreso y la hoja (ej. hoja 1 de 1).",
       "En “Accesorios y herramientas” marca SI o NO en los 40 conceptos (incluidos los birlos); sin eso no se puede registrar.",
       "Escribe las observaciones (ej. “No trae faros delanteros”).",
@@ -92,9 +94,10 @@ const GUIA_AREA = [
     titulo: "1. Hacer una solicitud",
     pasos: [
       "Al entrar ya estás en “Nueva solicitud”. Solo aparecen los vehículos de tu área.",
-      "Elige el vehículo. Si dice “En el taller” o “Ya solicitado”, espera a que el taller lo atienda.",
+      "Elige el vehículo. Si dice “Solicitud pendiente” o “En servicio”, ya tiene una solicitud en curso y podrás hacer otra cuando concluya.",
       "Agrega los materiales: cantidad, unidad de medida y concepto. El precio lo captura el administrador.",
-      "Con “Agregar material” sumas más conceptos. Pulsa “Enviar solicitud”.",
+      "Con “Agregar material” sumas más conceptos.",
+      "Escribe el nombre completo de quien solicita y firma en el recuadro (con el mouse o el dedo). Pulsa “Enviar solicitud”.",
     ],
     nota: "La fecha, la hora y el área se registran solas. Al enviar recibes un folio (ej. PET-2026-0001).",
   },
@@ -106,6 +109,17 @@ const GUIA_AREA = [
       "El mecánico atiende tu solicitud al recibir la unidad.",
     ],
     nota: "Solo ves los vehículos de tu área. La cuenta es de toda el área: no compartas la contraseña fuera de ella.",
+  },
+  {
+    icon: <CheckCircle2 size={20} />,
+    titulo: "3. Consultar el seguimiento",
+    pasos: [
+      "Entra a “Seguimiento”: aparecen las solicitudes de tu área, la más reciente primero.",
+      "Escribe el folio (ej. PET-2026-0001), el vehículo o las placas para encontrarla.",
+      "La línea de etapas muestra el avance: Enviada, Recibida en taller, Diagnóstico, Reparación, Terminada y Entregada.",
+      "Si una solicitud no procedió, se muestra el motivo.",
+    ],
+    nota: "Con “En curso” y “Concluidas” filtras las solicitudes.",
   },
 ];
 

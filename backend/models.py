@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 
@@ -491,12 +492,20 @@ class PeticionServicio(db.Model):
     vehiculo_id = db.Column(db.Integer, db.ForeignKey("vehiculos.id"), nullable=False, index=True)
     estado = db.Column(db.Enum(*ESTADOS_PETICION), default="pendiente", nullable=False, index=True)
     creado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)  # cuenta del área
+    # Quién hace la solicitud (la cuenta es del área y la usan varias personas)
+    solicitante_nombre = db.Column(db.String(120))
+    solicitante_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))  # data:image/png;base64,...
 
     # Seguimiento del taller (no lo llena el área)
     solicitud_id = db.Column(db.Integer, db.ForeignKey("solicitudes.id"), nullable=True)
     atendida_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)
     motivo_descarte = db.Column(db.Text)
     atendida_at = db.Column(db.DateTime)
+    # Paso 1 de "Atender": el mecánico responsable recibe la solicitud con su
+    # nombre y firma. Después se registra el ingreso a taller (estado "atendida").
+    mecanico_nombre = db.Column(db.String(120))
+    mecanico_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))
+    recibida_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=utcnow, index=True)
 
     vehiculo = db.relationship("Vehiculo")
@@ -529,7 +538,12 @@ class PeticionServicio(db.Model):
             "precios_completos": bool(materiales) and all(m["precio_unitario"] is not None for m in materiales),
             "solicitud": {"id": self.solicitud.id, "folio": self.solicitud.folio} if self.solicitud else None,
             "creado_por": _nombre_usuario(self.creado_por),
+            "solicitante_nombre": self.solicitante_nombre,
+            "solicitante_firma": self.solicitante_firma,
             "atendida_por": _nombre_usuario(self.atendida_por),
+            "mecanico_nombre": self.mecanico_nombre,
+            "mecanico_firma": self.mecanico_firma,
+            "recibida_at": _iso(self.recibida_at),
             "motivo_descarte": self.motivo_descarte,
             "atendida_at": _iso(self.atendida_at),
         }

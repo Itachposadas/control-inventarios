@@ -1,6 +1,6 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import { ROLES } from "./config/roles";
 import RoleRoute from "./components/RoleRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -40,6 +40,7 @@ import Reportes from "./pages/reportes/Reportes";
 
 // Cuenta de un área: solo hace solicitudes
 import NuevaSolicitud from "./pages/area/NuevaSolicitud";
+import Seguimiento from "./pages/area/Seguimiento";
 
 // Mi cuenta y ayuda (todos los roles)
 import MiCuenta from "./pages/cuenta/MiCuenta";
@@ -49,12 +50,6 @@ import Ayuda from "./pages/ayuda/Ayuda";
 import EnConstruccion from "./pages/admin/EnConstruccion";
 
 const { ADMIN, MECANICO, AREA } = ROLES;
-
-function PublicRoute({ children }) {
-  const { user, loading, homePath } = useAuth();
-  if (loading) return null;
-  return user ? <Navigate to={homePath} replace /> : children;
-}
 
 // Si una pantalla falla, muestra un aviso en lugar de dejar la página en blanco.
 // Al cambiar de ruta se vuelve a intentar.
@@ -75,7 +70,7 @@ export default function App() {
           {/* ══════════ PÚBLICAS ══════════ */}
           {/* Inicio: explica cómo pedir servicio; cada área entra con su cuenta */}
           <Route path="/" element={<Inicio />} />
-          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/login" element={<Login />} />
 
           {/* ══════════ ADMIN ══════════ */}
           <Route path="/admin" element={solo([ADMIN], <AdminDashboard />)} />
@@ -135,6 +130,7 @@ export default function App() {
 
           {/* ══════════ ÁREA ══════════ */}
           <Route path="/area" element={solo([AREA], <NuevaSolicitud />)} />
+          <Route path="/area/seguimiento" element={solo([AREA], <Seguimiento />)} />
           <Route path="/area/mi-cuenta" element={solo([AREA], <MiCuenta />)} />
           <Route path="/area/ayuda" element={solo([AREA], <Ayuda />)} />
           <Route path="/area/*" element={<Navigate to="/area" replace />} />

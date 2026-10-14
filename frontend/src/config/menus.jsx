@@ -4,7 +4,7 @@
 import {
   LayoutDashboard, Car, Users, BarChart3,
   UserCog, HelpCircle,
-  Wrench, History, Camera, Truck, Hammer, Inbox, Plus,
+  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks,
 } from "lucide-react";
 import { ROLES } from "./roles";
 
@@ -45,6 +45,7 @@ export const MECANICO_SECONDARY_MENU = [
 // ─── Cuenta de un área ───
 export const AREA_MENU = [
   { label: "Nueva solicitud", to: "/area", icon: <Plus size={18} /> },
+  { label: "Seguimiento", to: "/area/seguimiento", icon: <ListChecks size={18} /> },
 ];
 
 export const AREA_SECONDARY_MENU = [

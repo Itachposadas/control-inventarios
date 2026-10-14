@@ -5,8 +5,9 @@
 #  - /api/peticiones/... bandeja del taller (mecánico la atiende, admin consulta).
 from flask import Blueprint, request, jsonify
 from extensions import db
-from models import PeticionServicio, PeticionMaterial, Vehiculo, Solicitud, utcnow
+from models import PeticionServicio, PeticionMaterial, Vehiculo, Solicitud, utcnow, _iso
 from auth_utils import role_required, get_current_user
+from firmas import validar_firma, validar_nombre
 from routes.solicitudes import EN_TALLER
 
 area_bp = Blueprint("area", __name__, url_prefix="/api/area")
@@ -112,9 +113,34 @@ def _para_area(p):
             {k: m[k] for k in ("id", "cantidad", "unidad_medida", "concepto")} for m in d["materiales"]
         ],
         "creado_por": d["creado_por"],
+        "solicitante_nombre": d["solicitante_nombre"],  # la firma no se regresa al área
         "motivo_descarte": d["motivo_descarte"],
         "atendida_at": d["atendida_at"],
+        "recibida_at": d["recibida_at"],  # el mecánico ya firmó de recibido
+        # Avance del servicio en el taller (solo etapa y fechas, sin datos internos)
+        "servicio": {
+            "folio": p.solicitud.folio,
+            "estado": p.solicitud.estado,
+            "fecha_ingreso": _iso(p.solicitud.fecha_ingreso),
+            "fecha_entrega": _iso(p.solicitud.fecha_entrega),
+        } if p.solicitud else None,
     }
+
+
+@area_bp.route("/peticiones", methods=["GET"])
+@role_required("area")
+def mis_peticiones():
+    """Seguimiento: solicitudes de los vehículos del área, la más reciente primero."""
+    area = get_current_user().area
+    items = (
+        PeticionServicio.query
+        .join(Vehiculo, PeticionServicio.vehiculo_id == Vehiculo.id)
+        .filter(Vehiculo.area == area)
+        .order_by(PeticionServicio.created_at.desc(), PeticionServicio.id.desc())
+        .limit(200)
+        .all()
+    )
+    return jsonify([_para_area(p) for p in items]), 200
 
 
 @area_bp.route("/peticiones", methods=["POST"])
@@ -132,15 +158,24 @@ def crear_peticion():
     if error:
         return jsonify({"msg": error}), 400
 
+    solicitante, error = validar_nombre(data.get("solicitante_nombre"), "de quien solicita")
+    if not error:
+        firma, error = validar_firma(data.get("solicitante_firma"), "del solicitante")
+    if error:
+        return jsonify({"msg": error}), 400
+
     en_taller = vehiculo.solicitudes.filter(Solicitud.estado.in_(EN_TALLER)).first()
     if en_taller:
-        return jsonify({"msg": "Esta unidad ya está en el taller"}), 409
+        return jsonify({"msg": "Esta unidad ya tiene un servicio en proceso"}), 409
     pendiente = PeticionServicio.query.filter_by(vehiculo_id=vehiculo.id, estado="pendiente").first()
     if pendiente:
         return jsonify({"msg": f"Ya hay una solicitud pendiente para esta unidad ({pendiente.folio})"}), 409
 
     # Fecha, hora y área no se reciben: salen de created_at y del vehículo
-    p = PeticionServicio(vehiculo=vehiculo, materiales=materiales, creado_por_id=user.id)
+    p = PeticionServicio(
+        vehiculo=vehiculo, materiales=materiales, creado_por_id=user.id,
+        solicitante_nombre=solicitante, solicitante_firma=firma,
+    )
     db.session.add(p)
     db.session.flush()  # obtiene el id para armar el folio
     p.folio = f"PET-{p.created_at.year}-{p.id:04d}"
@@ -210,6 +245,33 @@ def capturar_precios(peticion_id):
             return jsonify({"msg": f"Precio inválido para «{m.concepto}»"}), 400
         m.precio_unitario = round(precio, 2)
 
+    db.session.commit()
+    return jsonify(p.to_dict()), 200
+
+
+@peticiones_bp.route("/<int:peticion_id>/recibir", methods=["POST"])
+@role_required("mecanico")
+def recibir(peticion_id):
+    """Primer paso de "Atender": el mecánico responsable firma de recibido.
+    Con las dos firmas ya se puede ver el formato; luego sigue el ingreso a taller."""
+    p = db.session.get(PeticionServicio, peticion_id)
+    if not p:
+        return jsonify({"msg": "Solicitud no encontrada"}), 404
+    if p.estado != "pendiente":
+        return jsonify({"msg": "Esta solicitud ya fue atendida"}), 409
+    if p.recibida_at:
+        return jsonify({"msg": "Esta solicitud ya tiene la firma del mecánico responsable"}), 409
+
+    data = request.get_json() or {}
+    nombre, error = validar_nombre(data.get("mecanico_nombre"), "del mecánico responsable")
+    if not error:
+        firma, error = validar_firma(data.get("mecanico_firma"), "del mecánico responsable")
+    if error:
+        return jsonify({"msg": error}), 400
+
+    p.mecanico_nombre = nombre
+    p.mecanico_firma = firma
+    p.recibida_at = utcnow()
     db.session.commit()
     return jsonify(p.to_dict()), 200
 

@@ -3,9 +3,8 @@
 // áreas, vehículos ni solicitudes reales. Cada área entra con su propia cuenta
 // (la crea el administrador) y solo ve lo de su área.
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import {
-  LogIn, LayoutDashboard, KeyRound, ClipboardList, CarFront, ArrowRight, Building2, Sparkles,
+  LogIn, KeyRound, ClipboardList, CarFront, ArrowRight, Building2, Sparkles,
 } from "lucide-react";
 
 const PASOS = [
@@ -25,10 +24,8 @@ const PASOS = [
 
 export default function Inicio() {
   const navigate = useNavigate();
-  const { user, homePath } = useAuth();
-
-  const entrar = () => navigate(user ? homePath : "/login");
-  const textoEntrar = user ? "Ir a mi panel" : "Iniciar sesión";
+  // Siempre lleva al login: cada vez se piden usuario y contraseña
+  const entrar = () => navigate("/login");
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-slate-800">
@@ -45,10 +42,6 @@ export default function Inicio() {
             </span>
           </a>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <a href="#como-funciona" className="hover:text-institucional transition">Cómo funciona</a>
-          </nav>
-
           <button
             onClick={entrar}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold
@@ -56,8 +49,8 @@ export default function Inicio() {
                        shadow-[0_6px_16px_-6px_rgba(159,34,65,0.6)]
                        focus:outline-none focus-visible:ring-4 focus-visible:ring-institucional/25 transition"
           >
-            {user ? <LayoutDashboard size={16} /> : <LogIn size={16} />}
-            {textoEntrar}
+            <LogIn size={16} />
+            Iniciar sesión
           </button>
         </div>
       </header>
@@ -89,15 +82,14 @@ export default function Inicio() {
             </p>
 
             <h1 className="mt-6 text-4xl sm:text-5xl xl:text-6xl font-extrabold leading-[1.05] tracking-tight">
-              Solicita materiales para tu vehículo,{" "}
+              Bienvenido al Sistema de{" "}
               <span className="bg-gradient-to-r from-amber-200 via-rose-100 to-white bg-clip-text text-transparent">
-                sin papeleo.
+                Control Vehicular
               </span>
             </h1>
 
             <p className="mt-6 text-lg sm:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-              La Coordinación de Parque Vehicular recibe en línea las solicitudes de cada área y las
-              atiende en el taller municipal por orden de prioridad.
+              Acceso exclusivo para el personal autorizado del H. Ayuntamiento de Atlacomulco.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row justify-center gap-3">
@@ -108,17 +100,9 @@ export default function Inicio() {
                            shadow-[0_18px_40px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-0.5 hover:shadow-[0_22px_48px_-12px_rgba(0,0,0,0.55)]
                            focus:outline-none focus-visible:ring-4 focus-visible:ring-white/40 transition"
               >
-                {user ? "Ir a mi panel" : "Hacer una solicitud"}
+                Realizar solicitud
                 <ArrowRight size={19} className="group-hover:translate-x-1 transition" />
               </button>
-              <a
-                href="#como-funciona"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl
-                           border border-white/25 bg-white/5 backdrop-blur text-white font-semibold
-                           hover:bg-white/10 transition"
-              >
-                ¿Cómo funciona?
-              </a>
             </div>
 
           </div>
@@ -205,7 +189,7 @@ export default function Inicio() {
                            bg-white text-institucional font-bold text-base shadow-xl
                            hover:-translate-y-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/40 transition"
               >
-                {textoEntrar}
+                Iniciar sesión
                 <ArrowRight size={19} className="group-hover:translate-x-1 transition" />
               </button>
             </div>

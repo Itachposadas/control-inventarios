@@ -5,6 +5,7 @@
 //     tomados del catálogo (solo lectura)
 //  3. Accesorios y herramientas: SI / NO por concepto
 //  4. Observaciones
+// Antes, en "Solicitudes", el mecánico responsable ya firmó de recibido.
 // Las fotos se suben después en "Evidencia fotográfica".
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -57,6 +58,8 @@ export default function SolicitudNueva() {
       .obtener(id)
       .then((p) => {
         if (p.estado !== "pendiente") setErrorPeticion(`La solicitud ${p.folio} ya fue atendida.`);
+        else if (!p.recibida_at)
+          setErrorPeticion(`Primero recibe la solicitud ${p.folio} con el nombre y la firma del mecánico responsable.`);
         else setPeticion(p);
       })
       .catch(() => setErrorPeticion("No se encontró la solicitud."))
@@ -124,7 +127,7 @@ export default function SolicitudNueva() {
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <Inbox size={44} className="mx-auto text-slate-300" />
           <p className="mt-4 text-sm font-medium text-slate-700">{errorPeticion}</p>
-          <p className="mt-1 text-xs text-slate-500">Elige en Solicitudes la unidad que llegó y pulsa “Atender”.</p>
+          <p className="mt-1 text-xs text-slate-500">En Solicitudes pulsa “Atender” en la unidad que llegó y firma de recibido.</p>
           <Boton className="mt-5" onClick={() => navigate("/mecanico/solicitudes-areas", { replace: true })}>
             Ir a Solicitudes
           </Boton>
@@ -137,7 +140,8 @@ export default function SolicitudNueva() {
             <div className="min-w-0 flex-1">
               <p>
                 Atiende la solicitud <span className="font-mono font-semibold">{peticion.folio}</span> del área{" "}
-                <span className="font-semibold">{peticion.area}</span>. Materiales solicitados:
+                <span className="font-semibold">{peticion.area}</span>, recibida por{" "}
+                <span className="font-semibold">{peticion.mecanico_nombre}</span>. Materiales solicitados:
               </p>
               <div className="mt-2 bg-white text-slate-700">
                 <TablaMateriales materiales={peticion.materiales} total={peticion.total} />

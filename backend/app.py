@@ -26,6 +26,11 @@ COLUMNAS_NUEVAS = [
     ("usuarios", "rol_id", "INT NULL"),
     ("usuarios", "area", "VARCHAR(100) NULL"),
     ("peticiones_servicio", "creado_por_id", "INT NULL"),
+    ("peticiones_servicio", "solicitante_nombre", "VARCHAR(120) NULL"),
+    ("peticiones_servicio", "solicitante_firma", "MEDIUMTEXT NULL"),
+    ("peticiones_servicio", "mecanico_nombre", "VARCHAR(120) NULL"),
+    ("peticiones_servicio", "mecanico_firma", "MEDIUMTEXT NULL"),
+    ("peticiones_servicio", "recibida_at", "DATETIME NULL"),
 ]
 
 # Valores que debe aceptar la columna usuarios.role (ENUM de MySQL)

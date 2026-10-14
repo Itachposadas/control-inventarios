@@ -1,7 +1,10 @@
 // src/pages/peticiones/PeticionesAreas.jsx
 // "Solicitudes": lo que piden las áreas desde la página de inicio.
-// Mecánico: cuando llega la unidad la atiende (registra el ingreso a taller,
-// que queda ligado a la solicitud) o la descarta con un motivo.
+// Mecánico: cuando llega la unidad la atiende en dos pasos:
+//   1. "Atender": firma de recibido (nombre y firma del mecánico responsable);
+//      con eso ya se puede ver el formato de la solicitud (PDF).
+//   2. "Registrar ingreso": formato de ingreso a taller; luego diagnóstico, etc.
+// También puede descartarla con un motivo.
 // Admin: consulta y captura el precio unitario de los materiales.
 // Las pendientes se ordenan por tiempo de espera: las más antiguas son prioridad.
 import { useEffect, useMemo, useState } from "react";
@@ -14,7 +17,12 @@ import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import { SOLICITUDES_BASE } from "../../config/solicitudes";
 import TablaMateriales from "../../components/peticiones/TablaMateriales";
-import { Loader2, Inbox, CarFront, ClipboardPlus, XCircle, Building2, Clock, DollarSign } from "lucide-react";
+import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
+import PanelFirma from "../../components/peticiones/PanelFirma";
+import {
+  Loader2, Inbox, CarFront, ClipboardPlus, XCircle, Building2, Clock, DollarSign, FileDown, UserRound,
+  PenLine, CheckCircle2, ArrowRight,
+} from "lucide-react";
 
 const PESTANAS = [
   { valor: "pendiente", label: "Pendientes" },
@@ -61,7 +69,7 @@ function fechaHora(iso) {
 
 export default function PeticionesAreas() {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const { menu, secondaryMenu } = menusForRole(role);
   const esMecanico = role === ROLES.MECANICO;
   const esAdmin = role === ROLES.ADMIN;
@@ -72,6 +80,7 @@ export default function PeticionesAreas() {
   const [error, setError] = useState("");
   const [descartando, setDescartando] = useState(null);
   const [preciando, setPreciando] = useState(null);
+  const [recibiendo, setRecibiendo] = useState(null);
 
   // Filtros (las pendientes llegan del backend de la más antigua a la más reciente)
   const [prioridad, setPrioridad] = useState("");
@@ -117,7 +126,8 @@ export default function PeticionesAreas() {
     return lista;
   }, [items, area, prioridad, orden, pendientes]);
 
-  const atender = (p) => navigate(`/mecanico/reparaciones/nueva?peticion=${p.id}`);
+  const registrarIngreso = (p) => navigate(`/mecanico/reparaciones/nueva?peticion=${p.id}`);
+  const actualizar = (p) => setItems((lista) => lista.map((x) => (x.id === p.id ? p : x)));
 
   return (
     <DashboardLayout
@@ -247,6 +257,8 @@ export default function PeticionesAreas() {
                 <TablaMateriales materiales={p.materiales} total={p.total} />
               </div>
 
+              <Solicitante p={p} />
+
               <div className="mt-auto px-5 py-3 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2">
                 {p.estado === "pendiente" && esMecanico && (
                   <>
@@ -261,19 +273,35 @@ export default function PeticionesAreas() {
                     >
                       Descartar
                     </Boton>
-                    <Boton
-                      tamano="sm"
-                      icono={<ClipboardPlus size={14} />}
-                      onClick={() => atender(p)}
-                      disabled={p.vehiculo?.estado === "mantenimiento"}
-                      title="Registra el ingreso a taller de esta unidad"
-                    >
-                      Atender
-                    </Boton>
+                    {p.recibida_at ? (
+                      <Boton
+                        tamano="sm"
+                        icono={<ClipboardPlus size={14} />}
+                        onClick={() => registrarIngreso(p)}
+                        disabled={p.vehiculo?.estado === "mantenimiento"}
+                        title="Llena el formato de ingreso a taller de esta unidad"
+                      >
+                        Registrar ingreso
+                      </Boton>
+                    ) : (
+                      <Boton
+                        tamano="sm"
+                        icono={<PenLine size={14} />}
+                        onClick={() => setRecibiendo(p)}
+                        disabled={p.vehiculo?.estado === "mantenimiento"}
+                        title="Recibe la solicitud con tu nombre y firma"
+                      >
+                        Atender
+                      </Boton>
+                    )}
                   </>
                 )}
                 {p.estado === "pendiente" && !esMecanico && (
-                  <span className="mr-auto text-xs text-slate-500">Esperando a que llegue la unidad al taller</span>
+                  <span className="mr-auto text-xs text-slate-500">
+                    {p.recibida_at
+                      ? `Recibida por ${p.mecanico_nombre}; falta registrar el ingreso a taller`
+                      : "Esperando a que llegue la unidad al taller"}
+                  </span>
                 )}
                 {p.estado === "atendida" && (
                   <p className="mr-auto text-xs text-slate-500">
@@ -296,6 +324,18 @@ export default function PeticionesAreas() {
                     <span className="font-semibold text-slate-600">Motivo:</span> {p.motivo_descarte}
                     {p.atendida_por && ` · ${p.atendida_por}`}
                   </p>
+                )}
+                {/* El formato sale cuando ya firmaron quien solicita y el mecánico que recibe */}
+                {p.estado !== "descartada" && p.solicitante_firma && p.mecanico_firma && (
+                  <Boton
+                    variante="fantasma"
+                    tamano="sm"
+                    icono={<FileDown size={14} />}
+                    onClick={() => descargarSolicitudPdf(p)}
+                    title="Descarga el formato con las firmas del solicitante y del mecánico responsable"
+                  >
+                    Formato
+                  </Boton>
                 )}
                 {/* El precio unitario solo lo captura el admin */}
                 {esAdmin && p.estado !== "descartada" && (
@@ -326,6 +366,16 @@ export default function PeticionesAreas() {
         />
       )}
 
+      {recibiendo && (
+        <Recibir
+          peticion={recibiendo}
+          nombreInicial={user?.nombre_completo || ""}
+          onClose={() => setRecibiendo(null)}
+          onRecibida={actualizar}
+          onIngreso={registrarIngreso}
+        />
+      )}
+
       {descartando && (
         <Descartar
           peticion={descartando}
@@ -337,6 +387,32 @@ export default function PeticionesAreas() {
         />
       )}
     </DashboardLayout>
+  );
+}
+
+// Firmas de la solicitud: quien la hace (área) y el mecánico que recibe la unidad.
+// Las solicitudes anteriores a este cambio no las tienen.
+function Solicitante({ p }) {
+  const firmas = [
+    { titulo: "Solicitante", nombre: p.solicitante_nombre, firma: p.solicitante_firma },
+    { titulo: "Mecánico responsable", nombre: p.mecanico_nombre, firma: p.mecanico_firma },
+  ].filter((f) => f.nombre || f.firma);
+  if (!firmas.length) return null;
+  return (
+    <div className="mx-5 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {firmas.map((f) => (
+        <div key={f.titulo} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 min-w-0">
+          <UserRound size={16} className="text-slate-500 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-wide text-slate-500">{f.titulo}</p>
+            <p className="text-sm font-semibold text-slate-800 truncate">{f.nombre || "—"}</p>
+          </div>
+          {f.firma && (
+            <img src={f.firma} alt={`Firma de ${f.nombre || f.titulo}`} className="h-10 w-auto max-w-[45%] object-contain shrink-0" />
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -436,6 +512,107 @@ function CapturarPrecios({ peticion, onClose, onListo }) {
             <Boton variante="fantasma" onClick={onClose}>Cancelar</Boton>
             <Boton onClick={guardar} disabled={guardando}>{guardando ? "Guardando..." : "Guardar precios"}</Boton>
           </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// "Atender", paso 1: el mecánico responsable firma de recibido. Después puede
+// ver el formato de la solicitud y continuar con el ingreso a taller.
+function Recibir({ peticion, nombreInicial, onClose, onRecibida, onIngreso }) {
+  const [nombre, setNombre] = useState(nombreInicial);
+  const [firma, setFirma] = useState(null);
+  const [faltaFirma, setFaltaFirma] = useState(false);
+  const [error, setError] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [recibida, setRecibida] = useState(null);
+
+  const firmar = async () => {
+    setError("");
+    if (nombre.trim().length < 3) return setError("Escribe el nombre completo del mecánico responsable");
+    if (!firma) {
+      setFaltaFirma(true);
+      return setError("Falta la firma del mecánico responsable");
+    }
+    setGuardando(true);
+    try {
+      const p = await peticionesApi.recibir(peticion.id, { mecanico_nombre: nombre.trim(), mecanico_firma: firma });
+      setRecibida(p);
+      onRecibida(p);
+    } catch (e) {
+      setError(e.message || "No se pudo registrar la firma");
+      setGuardando(false);
+    }
+  };
+
+  const v = peticion.vehiculo || {};
+
+  if (recibida) {
+    return (
+      <Modal titulo="Solicitud recibida" subtitulo={`${recibida.folio} · ${v.nombre}`} onClose={onClose} ancho="max-w-xl">
+        <div className="p-6 text-center">
+          <span className="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <CheckCircle2 size={30} />
+          </span>
+          <p className="mt-4 text-sm text-slate-600">
+            Quedó firmada por <span className="font-semibold text-slate-800">{recibida.mecanico_nombre}</span>.
+            Ya puedes ver el formato de la solicitud con las dos firmas.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row justify-center gap-2">
+            <Boton variante="contorno" icono={<FileDown size={16} />} onClick={() => descargarSolicitudPdf(recibida)}>
+              Ver formato de solicitud
+            </Boton>
+            <Boton icono={<ArrowRight size={16} />} onClick={() => onIngreso(recibida)}>
+              Continuar con el ingreso
+            </Boton>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal titulo="Atender solicitud" subtitulo={`${peticion.folio} · ${v.nombre} · ${peticion.area}`} onClose={onClose} ancho="max-w-xl">
+      <div className="p-6 space-y-4">
+        {error && <Alerta>{error}</Alerta>}
+        <dl className="grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-lg bg-slate-50 px-3 py-2 min-w-0">
+            <dt className="text-slate-500">Vehículo</dt>
+            <dd className="mt-0.5 font-semibold text-slate-800 truncate">
+              {[v.nombre, v.placas].filter(Boolean).join(" · ")}
+            </dd>
+          </div>
+          <div className="rounded-lg bg-slate-50 px-3 py-2 min-w-0">
+            <dt className="text-slate-500">Solicitante</dt>
+            <dd className="mt-0.5 font-semibold text-slate-800 truncate">{peticion.solicitante_nombre || "—"}</dd>
+          </div>
+        </dl>
+        <p className="text-sm text-slate-600">Como mecánico responsable, recibe la solicitud con tu nombre y firma.</p>
+        <Field label="Nombre completo" required>
+          <input
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            maxLength={120}
+            autoComplete="off"
+            placeholder="Ej. José Martínez López"
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Firma" required>
+          <PanelFirma
+            invalido={faltaFirma && !firma}
+            onChange={(f) => {
+              setFirma(f);
+              if (f) setFaltaFirma(false);
+            }}
+          />
+        </Field>
+        <div className="flex justify-end gap-2">
+          <Boton variante="fantasma" onClick={onClose}>Cancelar</Boton>
+          <Boton icono={<PenLine size={16} />} onClick={firmar} disabled={guardando}>
+            {guardando ? "Guardando..." : "Firmar de recibido"}
+          </Boton>
         </div>
       </div>
     </Modal>
