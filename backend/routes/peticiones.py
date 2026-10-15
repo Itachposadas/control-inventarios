@@ -144,6 +144,25 @@ def mis_peticiones():
     return jsonify([_para_area(p) for p in items]), 200
 
 
+@area_bp.route("/peticiones/<int:peticion_id>/formato", methods=["GET"])
+@role_required("area")
+def formato_peticion(peticion_id):
+    """Datos del formato de solicitud (con las dos firmas) para que el área lo
+    descargue o imprima. Solo existe cuando el mecánico ya firmó de recibido."""
+    p = db.session.get(PeticionServicio, peticion_id)
+    if not p or not p.vehiculo or p.vehiculo.area != get_current_user().area:
+        return jsonify({"msg": "Solicitud no encontrada"}), 404
+    if not p.recibida_at or p.estado == "descartada":
+        return jsonify({"msg": "El formato estará disponible cuando el taller firme de recibido"}), 409
+    d = _para_area(p)
+    v = p.vehiculo
+    d["vehiculo"].update(numeroEconomico=v.numero_economico, area=v.area)
+    d["solicitante_firma"] = p.solicitante_firma
+    d["mecanico_nombre"] = p.mecanico_nombre
+    d["mecanico_firma"] = p.mecanico_firma
+    return jsonify(d), 200
+
+
 @area_bp.route("/peticiones", methods=["POST"])
 @role_required("area")
 def crear_peticion():

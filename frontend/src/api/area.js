@@ -9,4 +9,7 @@ export const areaApi = {
   enviar: (payload) => request("/area/peticiones", { method: "POST", body: payload }),
 
   peticiones: () => request("/area/peticiones"),
+
+  // Formato de solicitud con las firmas (cuando el taller ya la recibió)
+  formato: (id) => request(`/area/peticiones/${id}/formato`),
 };

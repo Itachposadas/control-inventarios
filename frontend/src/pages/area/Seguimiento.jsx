@@ -2,14 +2,17 @@
 // SEGUIMIENTO de la cuenta de un área: sus solicitudes con el avance de cada una.
 // Se busca por folio (PET-… de la solicitud o SOL-… del servicio), vehículo o placas.
 // Solo muestra la etapa y las fechas; los datos internos del taller no salen aquí.
+// Cuando el mecánico firma de recibido, el área ya puede descargar o imprimir
+// el formato de solicitud con las dos firmas.
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { useAuth } from "../../context/AuthContext";
 import { areaApi } from "../../api/area";
 import { AREA_MENU, AREA_SECONDARY_MENU } from "../../config/menus";
-import { Alerta, Insignia } from "../../components/ui";
-import { Search, Loader2, CarFront, Check, XCircle, AlertCircle } from "lucide-react";
+import { Alerta, Boton, Insignia } from "../../components/ui";
+import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
+import { Search, Loader2, CarFront, Check, XCircle, AlertCircle, FileText, FileDown, Printer } from "lucide-react";
 
 // Etapas que ve el área, de la solicitud a la entrega
 const ETAPAS = ["Enviada", "Recibida en taller", "Diagnóstico", "Reparación", "Entregada"];
@@ -195,7 +198,60 @@ function Tarjeta({ p }) {
         )}
       </div>
 
+      {etapa !== null && p.recibida_at && <FormatoSolicitud p={p} />}
     </li>
+  );
+}
+
+// Formato de solicitud firmado por el solicitante y el mecánico que la recibió.
+// Se pide al momento porque trae las firmas.
+function FormatoSolicitud({ p }) {
+  const [ocupado, setOcupado] = useState(null);
+  const [error, setError] = useState("");
+
+  const generar = async (accion) => {
+    // La pestaña se abre en el clic para que el navegador no la bloquee
+    const ventana = accion === "imprimir" ? window.open("", "_blank") : null;
+    setOcupado(accion);
+    setError("");
+    try {
+      await descargarSolicitudPdf(await areaApi.formato(p.id), ventana || undefined);
+    } catch (e) {
+      ventana?.close();
+      setError(e.message || "No se pudo generar el formato");
+    } finally {
+      setOcupado(null);
+    }
+  };
+
+  const icono = (accion, Icono) =>
+    ocupado === accion ? <Loader2 size={14} className="animate-spin" /> : <Icono size={14} />;
+
+  return (
+    <div className="border-t border-slate-100 bg-slate-50/70 px-4 sm:px-5 py-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-institucional flex items-center justify-center shrink-0">
+          <FileText size={16} />
+        </span>
+        <div className="min-w-0 mr-auto">
+          <p className="text-sm font-semibold text-slate-800">Formato de solicitud</p>
+          <p className="text-xs text-slate-500">
+            Firmado por el taller el {fechaHora(p.recibida_at)}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Boton variante="secundario" tamano="sm" icono={icono("imprimir", Printer)}
+            onClick={() => generar("imprimir")} disabled={!!ocupado}>
+            Ver e imprimir
+          </Boton>
+          <Boton variante="contorno" tamano="sm" icono={icono("descargar", FileDown)}
+            onClick={() => generar("descargar")} disabled={!!ocupado}>
+            Descargar
+          </Boton>
+        </div>
+      </div>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+    </div>
   );
 }
 
