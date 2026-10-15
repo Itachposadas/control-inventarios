@@ -2,10 +2,12 @@
 // Paso 1 del servicio: diagnóstico de fallas presentadas, acciones a realizar /
 // observaciones y refacciones a utilizar (piezas a comprar). Las refacciones son
 // los materiales que pidió el solicitante: el mecánico no agrega ni cambia ninguno.
+// Ya guardado, se puede descargar el formato "Dictamen".
 import { useState } from "react";
 import { Section, Field, TextArea, Boton, Alerta } from "../ui";
 import { solicitudesApi } from "../../api/solicitudes";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { descargarDiagnosticoPdf } from "../../utils/diagnosticoPdf";
+import { ArrowRight, FileDown, Loader2 } from "lucide-react";
 
 const cantidad = (n) => Number(n).toLocaleString("es-MX", { maximumFractionDigits: 2 });
 
@@ -85,7 +87,14 @@ function Formulario({ s, onGuardado }) {
 
 function Resumen({ s }) {
   return (
-    <Section title="1. Diagnóstico">
+    <Section
+      title="1. Diagnóstico"
+      actions={s.fallas && (
+        <Boton variante="contorno" tamano="sm" icono={<FileDown size={14} />} onClick={() => descargarDiagnosticoPdf(s)}>
+          Ver formato de diagnóstico
+        </Boton>
+      )}
+    >
       <dl className="space-y-4 text-sm">
         <div>
           <dt className="text-xs font-medium text-slate-500">Diagnóstico de fallas presentadas</dt>

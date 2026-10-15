@@ -1,6 +1,6 @@
 // src/components/vehiculos/ExpedienteServicios.jsx
 // Expediente de mantenimiento de una unidad: resumen y línea de tiempo de sus
-// servicios con sus formatos (solicitud, orden de compra y entrega) en PDF.
+// servicios con sus formatos (solicitud, diagnóstico, ingreso, orden de compra y entrega) en PDF.
 // El gasto y los costos solo se muestran si vienen (el backend solo los manda al admin).
 import { useState } from "react";
 import { EstadoBadge } from "../solicitudes/Badges";
@@ -9,6 +9,8 @@ import { peticionesApi } from "../../api/peticiones";
 import { ordenesCompraApi } from "../../api/ordenesCompra";
 import { solicitudesApi } from "../../api/solicitudes";
 import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
+import { descargarDiagnosticoPdf } from "../../utils/diagnosticoPdf";
+import { descargarIngresoPdf } from "../../utils/ingresoPdf";
 import { descargarOrdenCompraPdf } from "../../utils/ordenCompraPdf";
 import { descargarEntregaPdf } from "../../utils/entregaPdf";
 import { formatFecha, formatMoneda } from "../../config/solicitudes";
@@ -77,6 +79,8 @@ function Servicio({ s, onAbrir }) {
     setDescargando(cual);
     try {
       if (cual === "solicitud") await descargarSolicitudPdf(await peticionesApi.obtener(s.solicitud.id));
+      if (cual === "diagnostico") await descargarDiagnosticoPdf(await solicitudesApi.obtener(s.id));
+      if (cual === "ingreso") await descargarIngresoPdf(await solicitudesApi.obtener(s.id));
       if (cual === "orden") await descargarOrdenCompraPdf(await ordenesCompraApi.obtener(s.orden_compra.id));
       if (cual === "entrega") await descargarEntregaPdf(await solicitudesApi.obtener(s.id));
     } catch {
@@ -141,6 +145,8 @@ function Servicio({ s, onAbrir }) {
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {s.solicitud && boton("solicitud", "Solicitud")}
+          {s.fallas && boton("diagnostico", "Diagnóstico")}
+          {s.ingreso_at && boton("ingreso", "Ingreso a taller")}
           {s.orden_compra && boton("orden", "Orden de compra")}
           {entregado && boton("entrega", "Formato de entrega")}
           <Boton variante="fantasma" tamano="sm" onClick={() => onAbrir(s)} icono={<ExternalLink size={14} />} className="ml-auto">

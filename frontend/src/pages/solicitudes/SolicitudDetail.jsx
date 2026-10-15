@@ -17,6 +17,7 @@ import { EstadoBadge, PrioridadBadge } from "../../components/solicitudes/Badges
 import PasoDiagnostico from "../../components/servicio/PasoDiagnostico";
 import PasoOrdenCompra from "../../components/servicio/PasoOrdenCompra";
 import PasoEntrega from "../../components/servicio/PasoEntrega";
+import { descargarIngresoPdf } from "../../utils/ingresoPdf";
 import { Section, Field, inputClass, Boton, Alerta } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
 import { usuariosApi } from "../../api/usuarios";
@@ -30,7 +31,7 @@ import {
 import { fechaCorta } from "../../config/reportes";
 import {
   ArrowLeft, Undo2, Check, Loader2, CarFront, Trash2, Save, Camera, Truck, Plus,
-  Stethoscope, ClipboardList, ShoppingCart, FileCheck2,
+  Stethoscope, ClipboardList, ShoppingCart, FileCheck2, FileDown,
 } from "lucide-react";
 
 const FOTOS_REQUERIDAS = ["llegada", "reparacion", "final"];
@@ -315,11 +316,17 @@ export default function SolicitudDetail() {
           <Section
             title="2. Formato de ingreso a taller"
             subtitle="Accesorios y herramientas con los que llegó la unidad"
-            actions={puedeLlenar && s.estado === "ingreso" && (
-              <Boton tamano="sm" icono={<ClipboardList size={14} />} onClick={() => navigate(`/mecanico/reparaciones/${s.id}/ingreso`)}>
-                Llenar formato
-              </Boton>
-            )}
+            actions={
+              s.ingreso_at ? (
+                <Boton variante="contorno" tamano="sm" icono={<FileDown size={14} />} onClick={() => descargarIngresoPdf(s)}>
+                  Ver formato de ingreso
+                </Boton>
+              ) : puedeLlenar && s.estado === "ingreso" && (
+                <Boton tamano="sm" icono={<ClipboardList size={14} />} onClick={() => navigate(`/mecanico/reparaciones/${s.id}/ingreso`)}>
+                  Llenar formato
+                </Boton>
+              )
+            }
           >
             {s.ingreso_at ? (
               <>

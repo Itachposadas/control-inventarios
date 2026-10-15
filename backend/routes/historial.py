@@ -112,6 +112,7 @@ def vehiculo(vehiculo_id):
             "mecanico": (s.mecanico.nombre_completo or s.mecanico.username) if s.mecanico else None,
             "fallas": s.fallas,
             "acciones_a_realizar": s.acciones_a_realizar,
+            "ingreso_at": _iso(s.ingreso_at),  # ya tiene formato de ingreso
             "trabajo_realizado": s.acciones,
             "observaciones": s.observaciones,
             "refacciones": [r.to_dict() for r in s.piezas],
