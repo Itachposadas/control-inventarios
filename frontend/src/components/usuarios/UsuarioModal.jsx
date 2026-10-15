@@ -4,6 +4,8 @@ import { Eye, EyeOff, Plus } from "lucide-react";
 import { rolesApi } from "../../api/roles";
 import { vehiculosApi } from "../../api/vehiculos";
 import { Modal, Boton, Alerta, Field, inputClass } from "../ui";
+import ReglasPassword from "../ui/ReglasPassword";
+import { errorPassword } from "../../config/password";
 
 // Roles base: definen los permisos. Los roles creados heredan de uno de ellos.
 const ROLES = [
@@ -82,8 +84,9 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
     const esArea = !nuevoRol && form.role === ROL_AREA.value;
     if (!form.email.trim() && !esArea) return setError("El email es obligatorio");
     if (!editando && !form.password) return setError("La contraseña es obligatoria");
-    if (form.password && form.password.length < 6) {
-      return setError("La contraseña debe tener al menos 6 caracteres");
+    if (form.password) {
+      const invalida = errorPassword(form.password, form.username.trim());
+      if (invalida) return setError(invalida);
     }
     if (nuevoRol && !rolNombre.trim()) {
       return setError("Escribe el nombre del nuevo rol");
@@ -197,7 +200,8 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               type={showPassword ? "text" : "password"}
               value={form.password}
               onChange={handleChange}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Contraseña temporal"
+              autoComplete="new-password"
               className={`${inputClass} pr-11`}
             />
             <button
@@ -210,6 +214,14 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+          {(form.password || !editando) && (
+            <div className="mt-2 space-y-1.5">
+              <ReglasPassword password={form.password} usuario={form.username.trim()} />
+              <p className="text-xs text-slate-500">
+                Es temporal: al entrar, la persona tendrá que cambiarla por una propia.
+              </p>
+            </div>
+          )}
         </Field>
 
         {/* Rol */}

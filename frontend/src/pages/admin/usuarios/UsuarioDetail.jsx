@@ -7,10 +7,10 @@ import UsuarioModal from "../../../components/usuarios/UsuarioModal";
 import { usuariosApi } from "../../../api/usuarios";
 import {
   Users, ArrowLeft, Mail, User as UserIcon, Shield, Package, Wrench, Building2,
-  Calendar, CheckCircle2, XCircle, Loader2, Pencil,
+  Calendar, CheckCircle2, XCircle, Loader2, Pencil, Lock, KeyRound, Unlock,
 } from "lucide-react";
 
-import { Boton } from "../../../components/ui";
+import { Boton, Alerta } from "../../../components/ui";
 const ROLE_CONFIG = {
   admin:    { label: "Administrador", color: "bg-institucional/10 text-institucional", icon: <Shield size={16} /> },
   // Rol retirado; solo para mostrar cuentas antiguas
@@ -26,6 +26,7 @@ export default function UsuarioDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [desbloqueando, setDesbloqueando] = useState(false);
 
   useEffect(() => {
     usuariosApi
@@ -34,6 +35,17 @@ export default function UsuarioDetail() {
       .catch(() => setError("No se pudo cargar el usuario"))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const desbloquear = async () => {
+    setDesbloqueando(true);
+    try {
+      setUsuario(await usuariosApi.editar(id, { desbloquear: true }));
+    } catch (e) {
+      setError(e.message || "No se pudo desbloquear la cuenta");
+    } finally {
+      setDesbloqueando(false);
+    }
+  };
 
   const handleSave = async (payload) => {
     await usuariosApi.editar(id, payload);
@@ -99,6 +111,27 @@ export default function UsuarioDetail() {
         Volver a la lista
       </button>
 
+      {usuario.bloqueado_hasta && (
+        <Alerta tipo="aviso" className="mb-4" icono={<Lock size={16} />}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between w-full">
+            <span>
+              <span className="font-semibold">Cuenta bloqueada</span> por varios intentos fallidos de inicio de sesión,
+              hasta las {new Date(usuario.bloqueado_hasta + "Z").toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}.
+            </span>
+            <Boton
+              tamano="sm"
+              variante="contorno"
+              onClick={desbloquear}
+              disabled={desbloqueando}
+              icono={desbloqueando ? <Loader2 size={14} className="animate-spin" /> : <Unlock size={14} />}
+              className="shrink-0 self-start sm:self-auto bg-white"
+            >
+              Desbloquear
+            </Boton>
+          </div>
+        </Alerta>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl border border-slate-200
@@ -145,6 +178,12 @@ export default function UsuarioDetail() {
                 label="Estado"
                 value={usuario.activo ? "Activo" : "Inactivo"}
                 valueClass={usuario.activo ? "text-emerald-700" : "text-red-600"}
+              />
+              <InfoRow
+                icon={<KeyRound size={16} />}
+                label="Contraseña"
+                value={usuario.debe_cambiar_password ? "Temporal: debe cambiarla al entrar" : "Personal"}
+                valueClass={usuario.debe_cambiar_password ? "text-amber-900" : ""}
               />
               <InfoRow icon={<Calendar size={16} />} label="Fecha de alta" value={fechaAlta} />
             </ul>

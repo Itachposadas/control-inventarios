@@ -27,8 +27,20 @@ export const authApi = {
     return data;
   },
 
+  // Responde { msg, user } con la cuenta ya sin contraseña temporal
   cambiarPassword: (actual, nueva) =>
     request("/auth/password", { method: "PUT", body: { actual, nueva } }),
+
+  // Token nuevo para seguir con la sesión abierta
+  async renovar() {
+    const data = await request("/auth/renovar", { method: "POST" });
+    localStorage.setItem(TOKEN_KEY, data.access_token);
+    return data.access_token;
+  },
+
+  guardarUsuario(user) {
+    localStorage.setItem(CURRENT_KEY, JSON.stringify(user));
+  },
 
   logout() {
     localStorage.removeItem(TOKEN_KEY);

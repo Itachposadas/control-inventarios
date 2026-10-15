@@ -1,5 +1,5 @@
 // src/components/dashboard/KpiCard.jsx
-import { TrendingUp, TrendingDown, AlertCircle, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { useCountUp } from "../../hooks/useCountUp";
 import { COLORS } from "../../config/colors";
 

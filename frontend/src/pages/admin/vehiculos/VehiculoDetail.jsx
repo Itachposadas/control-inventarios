@@ -18,7 +18,6 @@ import {
   Car, ArrowLeft, CarFront, Hash, Tag, KeyRound, Wrench as WrenchIcon,
   CircleDot, Calendar, Loader2, Pencil, Trash2, } from "lucide-react";
 
-import { Boton } from "../../../components/ui";
 export default function VehiculoDetail() {
   const { id } = useParams();
   const navigate = useNavigate();

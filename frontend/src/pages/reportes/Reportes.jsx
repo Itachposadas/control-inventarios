@@ -12,7 +12,7 @@ import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../config/menus";
 import { TIPO_LABEL } from "../../config/solicitudes";
 import { PERIODOS, rangoDePeriodo, etiquetaMes, moneda, fechaCorta } from "../../config/reportes";
 import {
-  FileDown, Loader2, ClipboardList, DollarSign, Timer, Wrench, AlertTriangle, BarChart3,
+  FileDown, Loader2, ClipboardList, DollarSign, Timer, Wrench, AlertTriangle, BarChart3, FileSpreadsheet,
 } from "lucide-react";
 import { COLORS } from "../../config/colors";
 
@@ -25,7 +25,7 @@ export default function Reportes() {
   const [reporte, setReporte] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [generando, setGenerando] = useState(false);
+  const [generando, setGenerando] = useState(null); // "pdf" | "excel" | null
 
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function Reportes() {
   };
 
   const handlePdf = async () => {
-    setGenerando(true);
+    setGenerando("pdf");
     try {
       // jsPDF es pesado: se descarga solo cuando se pide el PDF
       const { descargarReportePdf } = await import("../../utils/reportePdf");
@@ -60,7 +60,28 @@ export default function Reportes() {
       console.error(e);
       setError("No se pudo generar el PDF");
     } finally {
-      setGenerando(false);
+      setGenerando(null);
+    }
+  };
+
+  // El Excel lo arma el backend con los mismos datos del reporte
+  const handleExcel = async () => {
+    setGenerando("excel");
+    try {
+      const { desde, hasta, area: areaReporte } = reporte.periodo;
+      const archivo = await reportesApi.excel({ desde, hasta, area: areaReporte || "" });
+      const url = URL.createObjectURL(archivo);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = `reporte-mantenimiento_${desde}_${hasta}${areaReporte ? `_${areaReporte.replace(/\s+/g, "-")}` : ""}.xlsx`;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      setError(e.message || "No se pudo generar el Excel");
+    } finally {
+      setGenerando(null);
     }
   };
 
@@ -114,14 +135,23 @@ export default function Reportes() {
             </select>
           </Filtro>
 
-          <div className="lg:ml-auto">
+          <div className="lg:ml-auto flex flex-col sm:flex-row gap-2">
             <Boton
-              onClick={handlePdf}
-              disabled={!reporte || loading || generando}
-              icono={generando ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+              variante="contorno"
+              onClick={handleExcel}
+              disabled={!reporte || loading || !!generando}
+              icono={generando === "excel" ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />}
               className="w-full lg:w-auto"
             >
-              {generando ? "Generando PDF..." : "Descargar PDF"}
+              {generando === "excel" ? "Generando Excel..." : "Descargar Excel"}
+            </Boton>
+            <Boton
+              onClick={handlePdf}
+              disabled={!reporte || loading || !!generando}
+              icono={generando === "pdf" ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+              className="w-full lg:w-auto"
+            >
+              {generando === "pdf" ? "Generando PDF..." : "Descargar PDF"}
             </Boton>
           </div>
         </div>

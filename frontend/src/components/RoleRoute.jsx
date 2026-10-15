@@ -17,6 +17,9 @@ export default function RoleRoute({ allowed = [], children }) {
   // Sin sesión → al login
   if (!user) return <Navigate to="/login" replace />;
 
+  // Contraseña temporal o débil → primero tiene que cambiarla
+  if (user.debe_cambiar_password) return <Navigate to="/cambiar-password" replace />;
+
   // Con sesión pero rol no permitido → a su home
   if (allowed.length > 0 && !allowed.includes(role)) {
     return <Navigate to={homePath} replace />;

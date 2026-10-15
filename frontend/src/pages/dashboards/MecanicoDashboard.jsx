@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { Alerta } from "../../components/ui";
+import AvisosPreventivo from "../../components/dashboard/AvisosPreventivo";
 const ACTIVAS = EN_TALLER;
 
 const ACCIONES = [
@@ -143,6 +144,11 @@ export default function MecanicoDashboard() {
           })}
         </ul>
       )}
+
+      {/* Unidades que deben volver a revisión */}
+      <div className="mt-8">
+        <AvisosPreventivo historial="/mecanico/historial" />
+      </div>
     </DashboardLayout>
   );
 }

@@ -18,6 +18,7 @@ import {
 import { COLORS } from "../../config/colors";
 
 import { Alerta } from "../../components/ui";
+import AvisosPreventivo from "../../components/dashboard/AvisosPreventivo";
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -153,6 +154,9 @@ export default function AdminDashboard() {
               </ul>
             </div>
           )}
+
+          {/* Unidades que deben volver a revisión */}
+          <AvisosPreventivo historial="/admin/historial" />
 
           {/* Acciones rápidas */}
           <div className="mb-5">

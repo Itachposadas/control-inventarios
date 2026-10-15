@@ -39,7 +39,7 @@ export function useSystemHealth() {
       if (!mountedRef.current) return;
       setStatus(result.status || "online");
       setLastCheck(new Date());
-    } catch (err) {
+    } catch {
       if (!mountedRef.current) return;
       setStatus("offline");
       setLastCheck(new Date());

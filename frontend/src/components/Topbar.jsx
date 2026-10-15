@@ -7,7 +7,25 @@ import { ESTADO_LABEL, SOLICITUDES_BASE, formatFecha } from "../config/solicitud
 import { generalApi } from "../api/general";
 import {
   Bell, Search, Car, ClipboardList, Loader2, X, UserCog, LogOut, CheckCircle2, Wrench, ShoppingCart,
+  CarFront, XCircle,
 } from "lucide-react";
+
+// Ícono y color de cada tipo de aviso de la campana
+const TIPO_AVISO = {
+  orden_compra: { icono: <ShoppingCart size={16} />, color: "bg-amber-100 text-amber-900" },
+  reasignada: { icono: <Wrench size={16} />, color: "bg-blue-100 text-blue-700" },
+  en_taller: { icono: <Wrench size={16} />, color: "bg-amber-100 text-amber-900" },
+  // Cuentas de área
+  listo: { icono: <CheckCircle2 size={16} />, color: "bg-emerald-100 text-emerald-700" },
+  entregada: { icono: <CarFront size={16} />, color: "bg-slate-100 text-slate-700" },
+  descartada: { icono: <XCircle size={16} />, color: "bg-red-100 text-red-700" },
+};
+
+const TEXTOS_CAMPANA = {
+  admin: { subtitulo: "Órdenes de compra por atender", vacio: "No hay órdenes de compra por atender" },
+  mecanico: { subtitulo: "Tus servicios en el taller", vacio: "No tienes servicios en proceso" },
+  area: { subtitulo: "Tus vehículos en el taller", vacio: "No tienes vehículos en el taller" },
+};
 
 // Cierra un menú al hacer clic fuera de él
 function useClickFuera(ref, onFuera) {
@@ -63,11 +81,11 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
           )}
         </div>
 
-        {/* Buscador y notificaciones: solo el personal del taller */}
+        {/* Buscador: solo el personal del taller. Notificaciones: todos */}
         <div className="flex-1 max-w-md mx-auto lg:mx-6">
           {esTaller && <Buscador role={role} />}
         </div>
-        {esTaller && <Notificaciones role={role} />}
+        {role && <Notificaciones role={role} />}
 
         {/* Usuario */}
         <div className="relative" ref={userRef}>
@@ -328,9 +346,8 @@ function Notificaciones({ role }) {
     navigate(n.ruta || `${SOLICITUDES_BASE[role]}/${n.solicitud_id}`);
   };
 
-  const vacio = role === ROLES.ADMIN
-    ? "No hay órdenes de compra por atender"
-    : "No tienes servicios en proceso";
+  const textos = TEXTOS_CAMPANA[role] || TEXTOS_CAMPANA.mecanico;
+  const esArea = role === ROLES.AREA;
 
   return (
     <div className="relative" ref={ref}>
@@ -359,15 +376,13 @@ function Notificaciones({ role }) {
         <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-lg
                         border border-slate-200 z-40 overflow-hidden origin-top-right animate-pop">
           <div className="px-4 py-3 border-b border-slate-100">
-            <p className="text-sm font-semibold text-slate-800">Pendientes</p>
-            <p className="text-xs text-slate-500">
-              {role === ROLES.ADMIN ? "Órdenes de compra por atender" : "Tus servicios en el taller"}
-            </p>
+            <p className="text-sm font-semibold text-slate-800">{esArea ? "Avisos" : "Pendientes"}</p>
+            <p className="text-xs text-slate-500">{textos.subtitulo}</p>
           </div>
           {data.items.length === 0 ? (
             <div className="px-4 py-8 text-center">
               <CheckCircle2 size={28} className="mx-auto text-emerald-500" />
-              <p className="mt-2 text-sm text-slate-500">{vacio}</p>
+              <p className="mt-2 text-sm text-slate-500">{textos.vacio}</p>
             </div>
           ) : (
             <ul className="max-h-80 overflow-y-auto divide-y divide-slate-100">
@@ -379,17 +394,16 @@ function Notificaciones({ role }) {
                   >
                     <span
                       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-                        ${n.tipo === "orden_compra" ? "bg-amber-100 text-amber-900"
-                          : n.tipo === "reasignada" ? "bg-blue-100 text-blue-700"
-                          : "bg-amber-100 text-amber-900"}`}
+                        ${(TIPO_AVISO[n.tipo] || TIPO_AVISO.en_taller).color}`}
                     >
-                      {n.tipo === "orden_compra" ? <ShoppingCart size={16} /> : <Wrench size={16} />}
+                      {(TIPO_AVISO[n.tipo] || TIPO_AVISO.en_taller).icono}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-slate-800">{n.titulo}</span>
                       <span className="block text-xs text-slate-500 truncate">{n.texto}</span>
                       <span className="block text-[11px] text-slate-500 mt-0.5">
-                        {n.estado ? `${ESTADO_LABEL[n.estado]} · ` : ""}{formatFecha(n.fecha, true)}
+                        {/* El área no ve los pasos internos del taller */}
+                        {n.estado && !esArea ? `${ESTADO_LABEL[n.estado]} · ` : ""}{formatFecha(n.fecha, true)}
                       </span>
                     </span>
                   </button>

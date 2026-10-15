@@ -22,7 +22,7 @@ export default function Login() {
     } catch {
       /* sin acceso a localStorage: no hay nada que borrar */
     }
-  }, []);
+  }, [logout]);
 
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +42,7 @@ export default function Login() {
     setLoading(true);
     try {
       const u = await login(form.identifier.trim(), form.password);
-      navigate(HOME_BY_ROLE[u.role] || "/login", { replace: true });
+      navigate(u.debe_cambiar_password ? "/cambiar-password" : HOME_BY_ROLE[u.role] || "/login", { replace: true });
     } catch (err) {
       setError(err?.response?.data?.msg || "Error al iniciar sesión");
     } finally {
@@ -98,16 +98,17 @@ export default function Login() {
         <div className="relative w-full max-w-md mx-auto min-h-full flex flex-col
                         px-5 sm:px-8 pt-6 pb-6 lg:py-10">
           {/* Logos */}
+          {/* Logos (PNG con fondo transparente: se ven sobre el fondo y la marca de agua) */}
           <div className="flex items-center justify-between gap-4 mb-6 lg:mb-12">
             <img
               src="/gobierno-estado.png"
               alt="Gobierno del Estado de México"
-              className="h-10 sm:h-12 lg:h-14 w-auto object-contain"
+              className="h-11 sm:h-14 lg:h-16 w-auto max-w-[47%] object-contain"
             />
             <img
               src="/logo-atlacomulco.png"
               alt="Logo Atlacomulco"
-              className="h-10 sm:h-12 lg:h-14 w-auto object-contain"
+              className="h-11 sm:h-14 lg:h-16 w-auto max-w-[47%] object-contain"
             />
           </div>
 

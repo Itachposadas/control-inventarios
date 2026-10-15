@@ -6,10 +6,11 @@
 // el formato de la solicitud (PDF). También puede descartarla con un motivo.
 // Admin: solo consulta (los precios se capturan en la orden de compra).
 // Las pendientes se ordenan por tiempo de espera: las más antiguas son prioridad.
-import { useEffect, useMemo, useState } from "react";
+// La búsqueda, los filtros y la paginación los resuelve el backend (10 por página).
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { Boton, Alerta, Modal, Field, TextArea, inputClass } from "../../components/ui";
+import { Boton, Alerta, Modal, Field, TextArea, Paginacion, inputClass } from "../../components/ui";
 import { peticionesApi } from "../../api/peticiones";
 import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
@@ -20,7 +21,7 @@ import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
 import PanelFirma from "../../components/peticiones/PanelFirma";
 import {
   Loader2, Inbox, CarFront, XCircle, Building2, Clock, FileDown, UserRound,
-  PenLine, CheckCircle2, ArrowRight,
+  PenLine, CheckCircle2, ArrowRight, Search,
 } from "lucide-react";
 
 const PESTANAS = [
@@ -73,58 +74,62 @@ export default function PeticionesAreas() {
   const esMecanico = role === ROLES.MECANICO;
 
   const [estado, setEstado] = useState("pendiente");
-  const [items, setItems] = useState([]);
+  const [datos, setDatos] = useState(null); // página actual: { items, total, paginas, conteo, areas, ... }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [descartando, setDescartando] = useState(null);
   const [recibiendo, setRecibiendo] = useState(null);
 
   // Filtros (las pendientes llegan del backend de la más antigua a la más reciente)
+  const [pagina, setPagina] = useState(1);
+  const [q, setQ] = useState("");
+  const [buscar, setBuscar] = useState(""); // lo escrito, cuando se deja de escribir
   const [prioridad, setPrioridad] = useState("");
   const [area, setArea] = useState("");
   const [orden, setOrden] = useState("antiguas");
 
-  const cargar = () => {
+  useEffect(() => {
+    const t = setTimeout(() => setBuscar(q.trim()), 350);
+    return () => clearTimeout(t);
+  }, [q]);
+  // Una búsqueda nueva empieza en la página 1
+  useEffect(() => setPagina(1), [buscar]);
+
+  const cargar = useCallback(() => {
     setLoading(true);
     setError("");
     peticionesApi
-      .listar({ estado })
-      .then(setItems)
+      .pagina({ estado, pagina, q: buscar, area, prioridad, orden })
+      .then(setDatos)
       .catch((e) => setError(e.message || "No se pudieron cargar las solicitudes"))
       .finally(() => setLoading(false));
-  };
+  }, [estado, pagina, buscar, area, prioridad, orden]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(cargar, [estado]);
+  useEffect(cargar, [cargar]);
+
+  // Cada filtro nuevo empieza en la página 1
+  const filtrar = (setter) => (valor) => {
+    setter(valor);
+    setPagina(1);
+  };
 
   const cambiarPestana = (valor) => {
     setEstado(valor);
+    setPagina(1);
     setPrioridad("");
     setArea("");
     setOrden(valor === "pendiente" ? "antiguas" : "recientes");
   };
 
   const pendientes = estado === "pendiente";
-  const areas = useMemo(() => [...new Set(items.map((p) => p.area).filter(Boolean))].sort(), [items]);
-  const conteo = useMemo(() => {
-    const c = {};
-    items.forEach((p) => {
-      const v = prioridadDe(p).valor;
-      c[v] = (c[v] || 0) + 1;
-    });
-    return c;
-  }, [items]);
-
-  const visibles = useMemo(() => {
-    const lista = items.filter(
-      (p) => (!area || p.area === area) && (!pendientes || !prioridad || prioridadDe(p).valor === prioridad)
-    );
-    lista.sort((a, b) => (aFecha(a.fecha) - aFecha(b.fecha)) * (orden === "antiguas" ? 1 : -1));
-    return lista;
-  }, [items, area, prioridad, orden, pendientes]);
+  const visibles = datos?.items || [];
+  const areas = datos?.areas || [];
+  const conteo = datos?.conteo || {};
+  const hayFiltro = Boolean(buscar || area || prioridad);
 
   const irAlServicio = (p) => navigate(`${SOLICITUDES_BASE[role]}/${p.solicitud.id}`);
-  const actualizar = (p) => setItems((lista) => lista.map((x) => (x.id === p.id ? p : x)));
+  const actualizar = (p) =>
+    setDatos((d) => (d ? { ...d, items: d.items.map((x) => (x.id === p.id ? p : x)) } : d));
 
   return (
     <DashboardLayout
@@ -152,11 +157,11 @@ export default function PeticionesAreas() {
                       flex flex-col lg:flex-row lg:items-center gap-3">
         {pendientes && (
           <div className="flex flex-wrap gap-1.5 flex-1" role="group" aria-label="Prioridad">
-            <Chip activo={!prioridad} onClick={() => setPrioridad("")}>
-              Todas <Cuenta>{items.length}</Cuenta>
+            <Chip activo={!prioridad} onClick={() => filtrar(setPrioridad)("")}>
+              Todas <Cuenta>{conteo.todas || 0}</Cuenta>
             </Chip>
             {PRIORIDADES.map((x) => (
-              <Chip key={x.valor} activo={prioridad === x.valor} onClick={() => setPrioridad(x.valor)}>
+              <Chip key={x.valor} activo={prioridad === x.valor} onClick={() => filtrar(setPrioridad)(x.valor)}>
                 <span className={`w-2 h-2 rounded-full ${x.punto}`} />
                 {x.label}
                 <span className="hidden sm:inline text-slate-500 font-normal">
@@ -168,9 +173,19 @@ export default function PeticionesAreas() {
           </div>
         )}
         <div className={`flex flex-col sm:flex-row gap-3 ${pendientes ? "" : "flex-1"}`}>
+          <div className="relative sm:w-64">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Folio, vehículo, placas o solicitante"
+              aria-label="Buscar solicitud"
+              className={`${inputClass} pl-9`}
+            />
+          </div>
           <select
             value={area}
-            onChange={(e) => setArea(e.target.value)}
+            onChange={(e) => filtrar(setArea)(e.target.value)}
             aria-label="Área"
             className={`${inputClass} sm:w-56`}
           >
@@ -179,7 +194,7 @@ export default function PeticionesAreas() {
           </select>
           <select
             value={orden}
-            onChange={(e) => setOrden(e.target.value)}
+            onChange={(e) => filtrar(setOrden)(e.target.value)}
             aria-label="Orden"
             className={`${inputClass} sm:w-52`}
           >
@@ -191,7 +206,7 @@ export default function PeticionesAreas() {
 
       {error && <Alerta className="mb-4">{error}</Alerta>}
 
-      {loading ? (
+      {loading && !datos ? (
         <div className="flex items-center justify-center py-20 text-slate-500">
           <Loader2 size={28} className="animate-spin" />
         </div>
@@ -199,11 +214,12 @@ export default function PeticionesAreas() {
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <Inbox size={44} className="mx-auto text-slate-300" />
           <p className="mt-4 text-sm font-medium text-slate-700">
-            {items.length ? "Ninguna solicitud coincide con el filtro" : VACIO[estado]}
+            {hayFiltro ? "Ninguna solicitud coincide con la búsqueda o el filtro" : VACIO[estado]}
           </p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <>
+        <ul className={`grid grid-cols-1 xl:grid-cols-2 gap-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
           {visibles.map((p) => {
             const prio = pendientes ? prioridadDe(p) : null;
             return (
@@ -325,6 +341,18 @@ export default function PeticionesAreas() {
             );
           })}
         </ul>
+        <Paginacion
+          className="mt-5"
+          pagina={datos.pagina}
+          paginas={datos.paginas}
+          total={datos.total}
+          porPagina={datos.por_pagina}
+          onCambiar={(n) => {
+            setPagina(n);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
+        </>
       )}
 
       {recibiendo && (

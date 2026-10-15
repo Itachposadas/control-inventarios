@@ -3,11 +3,13 @@
 #  - /api/area/...       cuenta del área: vehículos de SU área y enviar
 #                        solicitudes para ellos (nunca ve las de otras áreas).
 #  - /api/peticiones/... bandeja del taller (parque vehicular la atiende, admin consulta).
+from datetime import timedelta
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models import PeticionServicio, PeticionMaterial, Vehiculo, Solicitud, utcnow, _iso
 from auth_utils import role_required, get_current_user
 from firmas import validar_firma, validar_nombre
+from paginacion import pide_pagina, paginar
 from routes.solicitudes import EN_TALLER, abrir_servicio
 
 area_bp = Blueprint("area", __name__, url_prefix="/api/area")
@@ -99,6 +101,11 @@ def _numero(valor):
     return n if n == n else None  # descarta NaN
 
 
+def servicio_listo(s):
+    """La reparación terminó (ya tiene la foto final) y solo falta entregar la unidad."""
+    return s.estado == "reparacion" and any(f.tipo == "final" for f in s.fotos)
+
+
 def _para_area(p):
     """Confirmación que recibe el área al enviar (sin datos internos del taller)."""
     d = p.to_dict()
@@ -124,6 +131,7 @@ def _para_area(p):
             "estado": p.solicitud.estado,
             "fecha_ingreso": _iso(p.solicitud.fecha_ingreso),
             "fecha_entrega": _iso(p.solicitud.fecha_entrega),
+            "listo": servicio_listo(p.solicitud),
         } if p.solicitud else None,
     }
 
@@ -213,22 +221,67 @@ def _to_int(valor):
 
 # ════════════════════ BANDEJA DEL TALLER ════════════════════
 
+# Prioridad de una pendiente según cuántos días lleva esperando (igual que el frontend)
+PRIORIDAD_DIAS = {"alta": (3, None), "media": (1, 3), "baja": (0, 1)}
+
+
+def _filtro_prioridad(query, prioridad):
+    desde, hasta = PRIORIDAD_DIAS[prioridad]
+    ahora = utcnow()
+    query = query.filter(PeticionServicio.created_at <= ahora - timedelta(days=desde))
+    if hasta is not None:
+        query = query.filter(PeticionServicio.created_at > ahora - timedelta(days=hasta))
+    return query
+
+
 @peticiones_bp.route("", methods=["GET"])
 @peticiones_bp.route("/", methods=["GET"])
 @role_required("admin", "mecanico")
 def listar():
+    """?estado=pendiente|atendida|descartada|todas &orden=antiguas|recientes
+    Con ?pagina=N además: &q= (folio, vehículo, placas, solicitante) &area= &prioridad=alta|media|baja
+    y responde {items, total, pagina, paginas, conteo, areas}."""
     estado = (request.args.get("estado") or "pendiente").strip()
     # Pendientes: las que llevan más tiempo esperando van primero (son prioridad)
     orden = (request.args.get("orden") or ("antiguas" if estado == "pendiente" else "recientes")).strip()
-    query = PeticionServicio.query
+    query = PeticionServicio.query.join(Vehiculo, PeticionServicio.vehiculo_id == Vehiculo.id)
     if estado != "todas":
         query = query.filter(PeticionServicio.estado == estado)
     if orden == "antiguas":
         query = query.order_by(PeticionServicio.created_at.asc(), PeticionServicio.id.asc())
     else:
         query = query.order_by(PeticionServicio.created_at.desc(), PeticionServicio.id.desc())
-    items = query.limit(200).all()
-    return jsonify([p.to_dict() for p in items]), 200
+
+    if not pide_pagina():
+        return jsonify([p.to_dict() for p in query.limit(200).all()]), 200
+
+    # Áreas que tienen solicitudes en esta pestaña (para el filtro)
+    areas = sorted({a for (a,) in query.order_by(None).with_entities(Vehiculo.area).distinct() if a})
+
+    area = (request.args.get("area") or "").strip()
+    q = (request.args.get("q") or "").strip()
+    if area:
+        query = query.filter(Vehiculo.area == area)
+    if q:
+        like = f"%{q}%"
+        query = query.filter(db.or_(
+            PeticionServicio.folio.like(like), PeticionServicio.solicitante_nombre.like(like),
+            Vehiculo.numero_economico.like(like), Vehiculo.unidad.like(like),
+            Vehiculo.placas.like(like), Vehiculo.no_inventario.like(like),
+        ))
+
+    # Cuántas hay de cada prioridad (solo pendientes), antes de filtrar por prioridad
+    conteo = None
+    if estado == "pendiente":
+        conteo = {"todas": query.order_by(None).count()}
+        for nombre in PRIORIDAD_DIAS:
+            conteo[nombre] = _filtro_prioridad(query, nombre).order_by(None).count()
+        prioridad = (request.args.get("prioridad") or "").strip()
+        if prioridad in PRIORIDAD_DIAS:
+            query = _filtro_prioridad(query, prioridad)
+
+    items, info = paginar(query, por_defecto=10)
+    return jsonify({**info, "items": [p.to_dict() for p in items], "conteo": conteo, "areas": areas}), 200
 
 
 @peticiones_bp.route("/<int:peticion_id>", methods=["GET"])

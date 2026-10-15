@@ -102,7 +102,9 @@ const GUIA_MECANICO = [
       "En Historial de servicios aparecen solo las unidades que ya han tenido servicio. Búscalas por placas, inventario o vehículo, o filtra por área.",
       "Elige una unidad para ver su expediente: cada servicio con sus fechas, diagnóstico, trabajo realizado y refacciones.",
       "Descarga sus formatos (solicitud, orden de compra y entrega) o pulsa “Ver servicio” para abrirlo.",
+      "Con el filtro de mantenimiento preventivo ves las unidades que ya deben volver a revisión. En tu inicio también aparecen.",
     ],
+    nota: "Cada unidad debe revisarse 6 meses después de su último servicio entregado; se avisa 30 días antes.",
   },
 ];
 
@@ -136,6 +138,7 @@ const GUIA_AREA = [
       "Escribe el folio (ej. PET-2026-0001), el vehículo o las placas para encontrarla.",
       "La línea de etapas muestra el avance: Enviada, Recibida en taller, Diagnóstico, Reparación y Entregada.",
       "Si una solicitud no procedió, se muestra el motivo.",
+      "Cuando tu vehículo esté listo para recogerse, la campana de arriba te avisa y la solicitud lo marca en verde.",
     ],
     nota: "Con “En curso” y “Concluidas” filtras las solicitudes.",
   },
@@ -194,6 +197,7 @@ const GUIA_ADMIN = [
     pasos: [
       "Muestra solo las unidades que han tenido servicio, con cuántos servicios llevan, el último y el gasto total.",
       "Busca por placas o inventario, filtra por área u ordena por más recientes, más servicios o mayor gasto.",
+      "El filtro de mantenimiento preventivo muestra las unidades vencidas o próximas a revisión.",
       "Al elegir una unidad ves su expediente completo y puedes descargar los formatos de cada servicio.",
     ],
     nota: "Parque vehicular también ve el historial, pero sin gastos ni costos.",
@@ -212,15 +216,25 @@ const GUIA_ADMIN = [
     pasos: [
       "Crea las cuentas de los mecánicos en Usuarios.",
       "Si alguien deja de trabajar, desactiva su cuenta. Las cuentas con servicios registrados no se pueden eliminar para no perder el historial.",
-      "Si un mecánico olvidó su contraseña, asígnale una nueva desde Usuarios → Editar.",
+      "Si un mecánico olvidó su contraseña, asígnale una nueva desde Usuarios → Editar. Es temporal: al entrar tendrá que cambiarla.",
+      "Si una cuenta quedó bloqueada por intentos fallidos, ábrela en Usuarios y pulsa “Desbloquear”.",
     ],
+    nota: "Las contraseñas deben tener al menos 8 caracteres, con letras y números, y no contener el nombre de usuario.",
   },
 ];
 
 const PREGUNTAS = [
   {
     p: "Olvidé mi contraseña",
-    r: "Pídele al administrador que te asigne una nueva. Después cámbiala tú en Mi cuenta.",
+    r: "Pídele al administrador que te asigne una nueva. Al entrar, el sistema te pedirá cambiarla por una tuya.",
+  },
+  {
+    p: "Mi cuenta quedó bloqueada",
+    r: "Después de 5 intentos fallidos la cuenta se bloquea 15 minutos. Espera o pide al administrador que la desbloquee.",
+  },
+  {
+    p: "Me apareció “Tu sesión está por cerrarse”",
+    r: "Si no usas el sistema por un rato, la sesión se cierra para proteger la información. Pulsa “Seguir conectado” para continuar.",
   },
   {
     p: "Dice “Credenciales inválidas” pero mi contraseña es correcta",

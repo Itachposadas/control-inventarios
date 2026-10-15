@@ -1,14 +1,18 @@
 # backend/routes/general.py
 # Buscador global y notificaciones (campana) de la barra superior.
+from datetime import timedelta
 from flask import Blueprint, request, jsonify
 from extensions import db
-from models import Vehiculo, Solicitud, SolicitudEvento, OrdenCompra
+from models import Vehiculo, Solicitud, SolicitudEvento, OrdenCompra, PeticionServicio, ROLES, utcnow
 from auth_utils import role_required, get_current_user
 from routes.solicitudes import EN_TALLER
+from routes.peticiones import servicio_listo
 
 general_bp = Blueprint("general", __name__, url_prefix="/api")
 
 LIMITE = 6
+# Cuánto tiempo sigue apareciendo al área un aviso de "entregado" o "no procedió"
+DIAS_AVISO_CERRADO = 7
 
 
 def _nombre_vehiculo(v):
@@ -74,14 +78,56 @@ def buscar():
     }), 200
 
 
+def _notificaciones_area(user):
+    """Avisos de la cuenta de un área sobre sus solicitudes: listo para entregar,
+    en el taller, entregado o no procedió (estos dos, solo unos días)."""
+    reciente = utcnow() - timedelta(days=DIAS_AVISO_CERRADO)
+    peticiones = (
+        PeticionServicio.query.join(Vehiculo, PeticionServicio.vehiculo_id == Vehiculo.id)
+        .filter(Vehiculo.area == user.area, PeticionServicio.estado != "pendiente")
+        .order_by(PeticionServicio.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    items = []
+    for p in peticiones:
+        s = p.solicitud
+        base = {"ruta": f"/area/seguimiento?folio={p.folio}", "texto": f"{p.folio} · {_nombre_vehiculo(p.vehiculo)}"}
+        if p.estado == "descartada":
+            if p.atendida_at and p.atendida_at >= reciente:
+                items.append({**base, "id": f"area-desc-{p.id}", "tipo": "descartada",
+                              "titulo": "Tu solicitud no procedió", "fecha": _iso_o_none(p.atendida_at)})
+        elif s and s.estado == "entregada":
+            if s.fecha_entrega and s.fecha_entrega >= reciente:
+                items.append({**base, "id": f"area-ent-{p.id}", "tipo": "entregada",
+                              "titulo": "Tu vehículo fue entregado", "fecha": _iso_o_none(s.fecha_entrega)})
+        elif s and servicio_listo(s):
+            items.append({**base, "id": f"area-listo-{p.id}", "tipo": "listo",
+                          "titulo": "Tu vehículo está listo para entregarse", "fecha": _iso_o_none(s.updated_at)})
+        elif s:
+            items.append({**base, "id": f"area-taller-{p.id}", "tipo": "en_taller",
+                          "titulo": "Tu vehículo está en el taller", "estado": s.estado,
+                          "fecha": _iso_o_none(s.updated_at)})
+    # Primero lo que requiere que el área haga algo (recoger la unidad)
+    orden = {"listo": 0, "en_taller": 1, "entregada": 2, "descartada": 3}
+    items.sort(key=lambda n: orden[n["tipo"]])
+    return items
+
+
+def _iso_o_none(dt):
+    return dt.isoformat() if dt else None
+
+
 # ─── Notificaciones (pendientes según el rol) ───
 @general_bp.route("/notificaciones", methods=["GET"])
-@role_required()
+@role_required(*ROLES)
 def notificaciones():
     user = get_current_user()
     items = []
 
-    if user.role == "admin":
+    if user.role == "area":
+        items = _notificaciones_area(user)
+    elif user.role == "admin":
         # Órdenes de compra que mandó parque vehicular y falta atender
         pendientes = (
             OrdenCompra.query.filter(OrdenCompra.estado == "enviada")

@@ -38,6 +38,9 @@ COLUMNAS_NUEVAS = [
     ("solicitudes", "operador", "VARCHAR(150) NULL"),
     ("ordenes_compra", "autoriza_nombre", "VARCHAR(120) NULL"),
     ("ordenes_compra", "autoriza_firma", "MEDIUMTEXT NULL"),
+    ("usuarios", "debe_cambiar_password", "BOOLEAN NOT NULL DEFAULT 0"),
+    ("usuarios", "intentos_fallidos", "INT NOT NULL DEFAULT 0"),
+    ("usuarios", "bloqueado_hasta", "DATETIME NULL"),
 ]
 
 # Valores que debe aceptar la columna usuarios.role (ENUM de MySQL)

@@ -50,10 +50,18 @@ class Usuario(db.Model):
     area = db.Column(db.String(100))
     activo = db.Column(db.Boolean, default=True, nullable=False)
     ultimo_acceso = db.Column(db.DateTime)
+    # Seguridad: contraseña temporal (la puso el admin o ya no cumple las reglas)
+    # e intentos fallidos de inicio de sesión (al llegar al límite se bloquea un rato)
+    debe_cambiar_password = db.Column(db.Boolean, default=False, nullable=False)
+    intentos_fallidos = db.Column(db.Integer, default=0, nullable=False)
+    bloqueado_hasta = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     rol = db.relationship("Rol")
+
+    def bloqueada(self):
+        return bool(self.bloqueado_hasta and self.bloqueado_hasta > utcnow())
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -74,6 +82,8 @@ class Usuario(db.Model):
             "activo": self.activo,
             "ultimo_acceso": self.ultimo_acceso.isoformat() if self.ultimo_acceso else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            "debe_cambiar_password": bool(self.debe_cambiar_password),
+            "bloqueado_hasta": self.bloqueado_hasta.isoformat() if self.bloqueada() else None,
         }
 
 

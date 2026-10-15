@@ -1,42 +1,23 @@
 # Parque Vehicular · Atlacomulco (Frontend)
 
-Base del frontend construida con React + Vite + Tailwind CSS + React Router + Chart.js.
-
-## Arranque
+Aplicación React + Vite + Tailwind CSS. La instalación completa del sistema
+(backend, base de datos y variables de entorno) está en el [README principal](../README.md).
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev      # http://localhost:5173
+pnpm lint     # revisión del código con ESLint
+pnpm build    # versión para producción en dist/
 ```
 
-Se abrirá en `http://localhost:5173`.
+## Estructura de `src/`
 
-## Estructura
-
-```
-src/
-  components/     Componentes reutilizables (Sidebar, Topbar, StatCard...)
-  layouts/        DashboardLayout: sidebar + topbar + <Outlet />
-  pages/          Una página por módulo (Dashboard, Vehículos, Inventario...)
-  nav.config.js   Fuente única de verdad para la navegación del sidebar
-```
-
-## Módulos incluidos (con datos de muestra, listos para conectar al backend Flask)
-
-- **Dashboard** (`/dashboard`) — tarjetas de estadísticas + gráfica de consumo mensual (Chart.js)
-- **Vehículos** (`/vehiculos`) — catálogo de unidades
-- **Inventario** (`/inventario`) — stock de refacciones con alerta de stock bajo
-- **Mantenimientos** (`/mantenimientos`) — historial de intervenciones
-- **Reportes** (`/reportes`) — disparadores de generación de PDF (ReportLab en backend)
-- **Usuarios** (`/usuarios`) — administración de accesos
-- **Login** (`/login`) — formulario listo para conectar a `/api/auth/login` (JWT)
-
-Cada página trae datos de ejemplo marcados con `// TODO` en el punto exacto donde debe
-ir el `fetch`/`axios` a tu API Flask.
-
-## Próximos pasos sugeridos
-
-1. Crear un cliente HTTP centralizado (`src/api/client.js`) que agregue el header
-   `Authorization: Bearer <token>` automáticamente.
-2. Proteger las rutas del `DashboardLayout` verificando el token (redirigir a `/login` si no existe).
-3. Reemplazar los arrays de ejemplo en cada página por llamadas reales a la API.
+| Carpeta | Contenido |
+|---|---|
+| `pages/` | Una carpeta por módulo (solicitudes, historial, reportes, usuarios…) |
+| `components/ui/` | Piezas base: `Boton`, `Alerta`, `Modal`, `Paginacion`, campos de formulario |
+| `components/` | Piezas por módulo (`servicio/`, `dashboard/`, `vehiculos/`…) |
+| `api/` | Llamadas al backend; `client.js` agrega el token y maneja la sesión |
+| `context/AuthContext.jsx` | Sesión: entrar, salir, renovación automática y aviso de inactividad |
+| `config/` | Menús, roles, colores (`colors.js` es la única fuente de la paleta) y reglas de contraseña |
+| `utils/` | Generadores de PDF de los formatos y del reporte |

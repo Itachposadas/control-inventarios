@@ -6,4 +6,6 @@ export { default as Alerta } from "./Alerta";
 export { default as Modal } from "./Modal";
 export { default as Insignia } from "./Insignia";
 export { default as MarcaAgua } from "./MarcaAgua";
+export { default as Paginacion } from "./Paginacion";
+export { default as ReglasPassword } from "./ReglasPassword";
 export { inputClass, Section, Field, TextArea } from "./Formulario";

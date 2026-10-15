@@ -50,6 +50,7 @@ import Seguimiento from "./pages/area/Seguimiento";
 
 // Mi cuenta y ayuda (todos los roles)
 import MiCuenta from "./pages/cuenta/MiCuenta";
+import CambiarPassword from "./pages/cuenta/CambiarPassword";
 import Ayuda from "./pages/ayuda/Ayuda";
 
 // Placeholder para subrutas no implementadas aún
@@ -77,6 +78,8 @@ export default function App() {
           {/* Inicio: explica cómo pedir servicio; cada área entra con su cuenta */}
           <Route path="/" element={<Inicio />} />
           <Route path="/login" element={<Login />} />
+          {/* Contraseña temporal o débil: se cambia antes de entrar al sistema */}
+          <Route path="/cambiar-password" element={<CambiarPassword />} />
 
           {/* ══════════ ADMIN ══════════ */}
           <Route path="/admin" element={solo([ADMIN], <AdminDashboard />)} />

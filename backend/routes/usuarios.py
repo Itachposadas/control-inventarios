@@ -1,6 +1,7 @@
 # backend/routes/usuarios.py
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
+from seguridad import error_password
 from auth_utils import role_required
 from extensions import db
 from models import Usuario, Rol, Solicitud, SolicitudEvento, Prestamo, PeticionServicio, Vehiculo, ROLES
@@ -93,8 +94,9 @@ def crear_usuario():
     # Validaciones
     if not username or not password:
         return jsonify({"msg": "Usuario y contraseña son obligatorios"}), 400
-    if len(password) < 6:
-        return jsonify({"msg": "La contraseña debe tener al menos 6 caracteres"}), 400
+    error = error_password(password, username)
+    if error:
+        return jsonify({"msg": error}), 400
     try:
         role, rol_id = _resolver_rol(data)
         area = _resolver_area(role, data)
@@ -118,6 +120,8 @@ def crear_usuario():
         area=area,
         nombre_completo=nombre_completo or None,
         activo=True,
+        # La contraseña la pone el admin: el usuario la cambia al entrar por primera vez
+        debe_cambiar_password=True,
     )
     user.set_password(password)
     db.session.add(user)
@@ -178,11 +182,22 @@ def editar_usuario(user_id):
         db.session.rollback()
         return jsonify({"msg": "El email es obligatorio"}), 400
 
-    # Cambiar contraseña (opcional)
+    # Cambiar contraseña (opcional). Si el admin la cambia a otra persona es
+    # temporal: se le pedirá cambiarla al entrar. También desbloquea la cuenta.
     if data.get("password"):
-        if len(data["password"]) < 6:
-            return jsonify({"msg": "La contraseña debe tener al menos 6 caracteres"}), 400
+        error = error_password(data["password"], user.username)
+        if error:
+            db.session.rollback()
+            return jsonify({"msg": error}), 400
         user.set_password(data["password"])
+        user.debe_cambiar_password = not es_uno_mismo
+        user.intentos_fallidos = 0
+        user.bloqueado_hasta = None
+
+    # Desbloquear una cuenta bloqueada por intentos fallidos
+    if data.get("desbloquear"):
+        user.intentos_fallidos = 0
+        user.bloqueado_hasta = None
 
     db.session.commit()
     return jsonify(user.to_dict()), 200

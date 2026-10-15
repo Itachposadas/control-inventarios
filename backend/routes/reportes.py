@@ -2,7 +2,7 @@
 # Reportes del admin. Se toman los servicios cuyo INGRESO a taller cae en el periodo.
 from collections import defaultdict
 from datetime import datetime, timedelta
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from sqlalchemy.orm import selectinload
 from models import Solicitud, Vehiculo, utcnow
 from auth_utils import role_required
@@ -55,17 +55,43 @@ def _fecha_completada(s):
     return max(fechas) if fechas else None
 
 
+def _periodo():
+    """(desde, hasta, area) de ?desde=AAAA-MM-DD&hasta=...&area=; por defecto, el mes en curso."""
+    hoy = _local(utcnow()).date()
+    desde = _fecha(request.args.get("desde"), hoy.replace(day=1))
+    hasta = _fecha(request.args.get("hasta"), hoy)
+    return desde, hasta, (request.args.get("area") or "").strip()
+
+
 @reportes_bp.route("", methods=["GET"])
 @reportes_bp.route("/", methods=["GET"])
 @role_required("admin")
 def reporte():
-    hoy = _local(utcnow()).date()
-    desde = _fecha(request.args.get("desde"), hoy.replace(day=1))
-    hasta = _fecha(request.args.get("hasta"), hoy)
+    desde, hasta, area = _periodo()
     if desde > hasta:
         return jsonify({"msg": "La fecha inicial no puede ser mayor a la final"}), 400
-    area = (request.args.get("area") or "").strip()
+    return jsonify(calcular_reporte(desde, hasta, area)), 200
 
+
+@reportes_bp.route("/excel", methods=["GET"])
+@role_required("admin")
+def reporte_excel():
+    """El mismo reporte en un archivo de Excel (.xlsx)."""
+    from reporte_excel import generar_excel  # openpyxl solo se carga si se pide el Excel
+
+    desde, hasta, area = _periodo()
+    if desde > hasta:
+        return jsonify({"msg": "La fecha inicial no puede ser mayor a la final"}), 400
+    archivo = generar_excel(calcular_reporte(desde, hasta, area))
+    nombre = f"reporte-mantenimiento_{desde}_{hasta}{'_' + area.replace(' ', '-') if area else ''}.xlsx"
+    return send_file(
+        archivo, as_attachment=True, download_name=nombre,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+def calcular_reporte(desde, hasta, area=""):
+    """Resumen, gasto por mes/área/tipo y vehículos con más gasto e ingresos del periodo."""
     query = (
         Solicitud.query.join(Vehiculo)
         .options(selectinload(Solicitud.eventos))
@@ -135,7 +161,7 @@ def reporte():
 
     vehiculos = list(por_vehiculo.values())
 
-    return jsonify({
+    return {
         "periodo": {"desde": desde.isoformat(), "hasta": hasta.isoformat(), "area": area or None},
         "resumen": {
             "servicios": len(servicios),
@@ -152,4 +178,4 @@ def reporte():
         "por_tipo": ordenar(por_tipo, "tipo"),
         "top_costo": sorted(vehiculos, key=lambda x: (-x["gasto"], -x["servicios"]))[:TOP],
         "top_ingresos": sorted(vehiculos, key=lambda x: (-x["servicios"], -x["gasto"]))[:TOP],
-    }), 200
+    }

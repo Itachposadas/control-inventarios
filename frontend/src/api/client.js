@@ -10,6 +10,21 @@ export const TOKEN_KEY = "token";
 // Evento que avisa a AuthContext que la sesión expiró o ya no es válida
 export const AUTH_EXPIRED_EVENT = "auth:expired";
 
+// Evento que avisa que el backend exige cambiar la contraseña antes de seguir
+export const CAMBIAR_PASSWORD_EVENT = "auth:cambiar-password";
+
+/** Milisegundos (epoch) en que vence el token guardado, o null si no hay. */
+export function venceToken() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload.exp ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 function apiError(status, data) {
   const err = new Error(data?.msg || "Error inesperado");
   // Compatible con el `err.response.data.msg` que ya usan las pantallas
@@ -48,7 +63,7 @@ export async function request(path, { method = "GET", body, auth = true, blob = 
   if (blob && r.ok) return r.blob();
 
   const text = await r.text();
-  let data = null;
+  let data;
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
@@ -58,6 +73,9 @@ export async function request(path, { method = "GET", body, auth = true, blob = 
   if (!r.ok) {
     if (r.status === 401 && auth) {
       window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
+    if (r.status === 403 && data?.codigo === "cambiar_password") {
+      window.dispatchEvent(new Event(CAMBIAR_PASSWORD_EVENT));
     }
     throw apiError(r.status, data || { msg: `Error del servidor (${r.status})` });
   }

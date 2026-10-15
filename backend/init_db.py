@@ -24,12 +24,14 @@ def seed():
         if not Usuario.query.filter_by(username="admin").first():
             admin = Usuario(username="admin", email="admin@demo.com", role="admin", nombre_completo="Administrador del Sistema")
             admin.set_password(password)
+            admin.debe_cambiar_password = True  # temporal: se cambia al entrar
             db.session.add(admin)
             print(f"✓ Usuario 'admin' creado (contraseña: {password})")
 
         if not Usuario.query.filter_by(username="mecanico").first():
             mec = Usuario(username="mecanico", email="mecanico@demo.com", role="mecanico", nombre_completo="Mecánico")
             mec.set_password(password)
+            mec.debe_cambiar_password = True  # temporal: se cambia al entrar
             db.session.add(mec)
             print(f"✓ Usuario 'mecanico' creado (contraseña: {password})")
 

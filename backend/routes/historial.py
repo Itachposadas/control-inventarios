@@ -2,6 +2,7 @@
 # Historial de servicios por vehículo (expediente de mantenimiento).
 #  - GET /api/historial/vehiculos       vehículos que ya tuvieron al menos un servicio
 #  - GET /api/historial/vehiculos/<id>  datos de la unidad y todos sus servicios
+#  - GET /api/historial/preventivo      unidades con mantenimiento preventivo vencido o próximo
 # Lo consultan el admin y parque vehicular; el gasto y los costos solo el admin.
 from flask import Blueprint, request, jsonify
 from sqlalchemy import func
@@ -9,6 +10,8 @@ from extensions import db
 from models import Vehiculo, Solicitud, PeticionServicio, _iso, _ve_costos
 from auth_utils import role_required
 from routes.solicitudes import EN_TALLER
+from paginacion import pide_pagina, paginar_lista
+import preventivo
 
 historial_bp = Blueprint("historial", __name__, url_prefix="/api/historial")
 
@@ -26,7 +29,8 @@ def _nombre(v):
 @historial_bp.route("/vehiculos", methods=["GET"])
 @role_required("admin", "mecanico")
 def vehiculos():
-    """?q= (nombre, placas, inventario, marca) &area= &orden=reciente|servicios|gasto"""
+    """?q= (nombre, placas, inventario, marca) &area= &orden=reciente|servicios|gasto
+    &preventivo=vencido|proximo|avisos (avisos = vencido o próximo) &pagina= &por_pagina="""
     q = (request.args.get("q") or "").strip()
     area = (request.args.get("area") or "").strip()
     orden = request.args.get("orden") or "reciente"
@@ -61,8 +65,15 @@ def vehiculos():
             Vehiculo.no_inventario.like(like), Vehiculo.marca.like(like), Vehiculo.modelo.like(like),
         ))
 
+    prev = preventivo.por_vehiculo()
+    filtro_prev = (request.args.get("preventivo") or "").strip()
     filas = []
     for v in query.all():
+        p = prev.get(v.id)
+        if filtro_prev == "avisos" and not (p and p["estado"] != "al_dia"):
+            continue
+        if filtro_prev in ("vencido", "proximo") and not (p and p["estado"] == filtro_prev):
+            continue
         n, ultimo, gasto, abiertos = por_vehiculo[v.id]
         filas.append({
             "id": v.id,
@@ -77,9 +88,39 @@ def vehiculos():
             "ultimo": _iso(ultimo),
             "en_taller": bool(abiertos),
             "gasto": round(float(gasto), 2) if ve_costos and gasto is not None else None,
+            "preventivo": p,
         })
     filas.sort(key=ORDENES.get(orden, ORDENES["reciente"]), reverse=True)
-    return jsonify({"vehiculos": filas, "areas": areas}), 200
+    if not pide_pagina():
+        return jsonify({"vehiculos": filas, "areas": areas}), 200
+    pagina, info = paginar_lista(filas, por_defecto=25)
+    return jsonify({**info, "vehiculos": pagina, "areas": areas}), 200
+
+
+@historial_bp.route("/preventivo", methods=["GET"])
+@role_required("admin", "mecanico")
+def avisos_preventivo():
+    """Unidades con el mantenimiento preventivo vencido o próximo, la más atrasada primero."""
+    prev = preventivo.por_vehiculo()
+    avisos = {vid: p for vid, p in prev.items() if p["estado"] != "al_dia"}
+    vehiculos = Vehiculo.query.filter(Vehiculo.id.in_(avisos.keys())).all() if avisos else []
+    lista = sorted(
+        (
+            {
+                "id": v.id, "nombre": _nombre(v), "area": v.area, "placas": v.placas,
+                "no_inventario": v.no_inventario, **avisos[v.id],
+            }
+            for v in vehiculos
+        ),
+        key=lambda x: x["dias"],
+    )
+    return jsonify({
+        "meses": preventivo.MESES_PREVENTIVO,
+        "dias_aviso": preventivo.DIAS_AVISO,
+        "vencidos": sum(1 for x in lista if x["estado"] == "vencido"),
+        "proximos": sum(1 for x in lista if x["estado"] == "proximo"),
+        "avisos": lista,
+    }), 200
 
 
 @historial_bp.route("/vehiculos/<int:vehiculo_id>", methods=["GET"])

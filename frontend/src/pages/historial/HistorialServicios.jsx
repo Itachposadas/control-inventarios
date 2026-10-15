@@ -1,19 +1,35 @@
 // src/pages/historial/HistorialServicios.jsx
 // HISTORIAL DE SERVICIOS: solo las unidades que ya tuvieron servicio. A la
 // izquierda la lista (buscar, filtrar por área, ordenar); a la derecha el
-// expediente de la unidad elegida. ?vehiculo=ID la preselecciona.
+// expediente de la unidad elegida. ?vehiculo=ID la preselecciona y
+// ?preventivo=avisos abre la lista filtrada por mantenimiento preventivo.
+// La lista se pagina en el backend (25 por página).
 // Admin y parque vehicular; el gasto solo lo ve el admin.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ExpedienteServicios, { ResumenExpediente } from "../../components/vehiculos/ExpedienteServicios";
-import { Alerta, inputClass } from "../../components/ui";
+import { Alerta, Paginacion, inputClass } from "../../components/ui";
 import { historialApi } from "../../api/historial";
 import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import { SOLICITUDES_BASE, formatFecha, formatMoneda } from "../../config/solicitudes";
-import { Search, Loader2, CarFront, ChevronRight, History, Wrench } from "lucide-react";
+import { Search, Loader2, CarFront, ChevronRight, History, Wrench, CalendarClock } from "lucide-react";
+
+const FILTROS_PREVENTIVO = [
+  { valor: "", label: "Todas las unidades" },
+  { valor: "avisos", label: "Con aviso de mantenimiento preventivo" },
+  { valor: "vencido", label: "Preventivo vencido" },
+  { valor: "proximo", label: "Preventivo próximo" },
+];
+
+// "Vencido hace 12 días" / "Toca en 5 días" / "Toca hoy"
+function textoPreventivo(p) {
+  if (p.dias < 0) return `Preventivo vencido hace ${-p.dias} ${p.dias === -1 ? "día" : "días"}`;
+  if (p.dias === 0) return "Preventivo: toca hoy";
+  return `Preventivo en ${p.dias} ${p.dias === 1 ? "día" : "días"}`;
+}
 
 export default function HistorialServicios() {
   const navigate = useNavigate();
@@ -26,6 +42,8 @@ export default function HistorialServicios() {
   const [q, setQ] = useState("");
   const [area, setArea] = useState("");
   const [orden, setOrden] = useState("reciente");
+  const [preventivo, setPreventivo] = useState(params.get("preventivo") || "");
+  const [pagina, setPagina] = useState(1);
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState("");
   const [expediente, setExpediente] = useState(null);
@@ -36,7 +54,7 @@ export default function HistorialServicios() {
   useEffect(() => {
     const t = setTimeout(() => {
       historialApi
-        .vehiculos({ q, area, orden })
+        .vehiculos({ q, area, orden, preventivo, pagina })
         .then((d) => {
           setDatos(d);
           setError("");
@@ -44,7 +62,13 @@ export default function HistorialServicios() {
         .catch((e) => setError(e.message || "No se pudo cargar el historial"));
     }, q ? 300 : 0);
     return () => clearTimeout(t);
-  }, [q, area, orden]);
+  }, [q, area, orden, preventivo, pagina]);
+
+  // Cada búsqueda o filtro nuevo empieza en la página 1
+  const filtrar = (setter) => (valor) => {
+    setter(valor);
+    setPagina(1);
+  };
 
   useEffect(() => {
     if (!seleccion) {
@@ -64,6 +88,7 @@ export default function HistorialServicios() {
 
   const areas = useMemo(() => datos?.areas || [], [datos]);
   const lista = datos?.vehiculos || [];
+  const total = datos?.total ?? lista.length;
   const elegir = (id) => setParams({ vehiculo: id });
   const v = expediente?.vehiculo;
 
@@ -84,23 +109,31 @@ export default function HistorialServicios() {
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <input
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={(e) => filtrar(setQ)(e.target.value)}
                 placeholder="Buscar por placas, inventario o vehículo"
                 aria-label="Buscar vehículo"
                 className={`${inputClass} pl-9`}
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <select value={area} onChange={(e) => setArea(e.target.value)} aria-label="Área" className={inputClass}>
+              <select value={area} onChange={(e) => filtrar(setArea)(e.target.value)} aria-label="Área" className={inputClass}>
                 <option value="">Todas las áreas</option>
                 {areas.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
-              <select value={orden} onChange={(e) => setOrden(e.target.value)} aria-label="Ordenar" className={inputClass}>
+              <select value={orden} onChange={(e) => filtrar(setOrden)(e.target.value)} aria-label="Ordenar" className={inputClass}>
                 <option value="reciente">Más recientes</option>
                 <option value="servicios">Más servicios</option>
                 {esAdmin && <option value="gasto">Mayor gasto</option>}
               </select>
             </div>
+            <select
+              value={preventivo}
+              onChange={(e) => filtrar(setPreventivo)(e.target.value)}
+              aria-label="Mantenimiento preventivo"
+              className={inputClass}
+            >
+              {FILTROS_PREVENTIVO.map((f) => <option key={f.valor} value={f.valor}>{f.label}</option>)}
+            </select>
           </div>
 
           {datos === null ? (
@@ -109,13 +142,15 @@ export default function HistorialServicios() {
             <div className="px-5 py-10 text-center">
               <History size={34} className="mx-auto text-slate-300" />
               <p className="mt-3 text-sm text-slate-600">
-                {q || area ? "Ninguna unidad coincide con la búsqueda." : "Todavía ninguna unidad ha tenido servicio."}
+                {q || area || preventivo
+                  ? "Ninguna unidad coincide con la búsqueda o el filtro."
+                  : "Todavía ninguna unidad ha tenido servicio."}
               </p>
             </div>
           ) : (
             <>
               <p className="px-4 pt-3 text-xs text-slate-500">
-                {lista.length} {lista.length === 1 ? "unidad" : "unidades"} con servicio
+                {total} {total === 1 ? "unidad" : "unidades"} con servicio
               </p>
               <ul className="p-2 space-y-1 max-h-[65vh] overflow-y-auto">
                 {lista.map((x) => {
@@ -141,6 +176,15 @@ export default function HistorialServicios() {
                             {x.servicios} {x.servicios === 1 ? "servicio" : "servicios"} · Último {formatFecha(x.ultimo)}
                             {x.en_taller && <span className="font-semibold text-amber-900"> · En taller</span>}
                           </span>
+                          {x.preventivo && x.preventivo.estado !== "al_dia" && (
+                            <span
+                              className={`mt-1 inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded
+                                ${x.preventivo.estado === "vencido" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-900"}`}
+                            >
+                              <CalendarClock size={11} />
+                              {textoPreventivo(x.preventivo)}
+                            </span>
+                          )}
                         </span>
                         {x.gasto != null && (
                           <span className="text-xs font-semibold text-slate-700 shrink-0">{formatMoneda(x.gasto)}</span>
@@ -151,6 +195,16 @@ export default function HistorialServicios() {
                   );
                 })}
               </ul>
+              {datos.paginas > 1 && (
+                <Paginacion
+                  className="px-4 pb-4 pt-1 border-t border-slate-100 [&>p]:text-xs"
+                  pagina={datos.pagina}
+                  paginas={datos.paginas}
+                  total={datos.total}
+                  porPagina={datos.por_pagina}
+                  onCambiar={setPagina}
+                />
+              )}
             </>
           )}
         </section>

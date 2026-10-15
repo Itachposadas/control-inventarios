@@ -240,6 +240,12 @@ useEffect(() => {
                             ${u.activo ? "bg-emerald-500" : "bg-slate-400"}`} />
                           {u.activo ? "Activo" : "Inactivo"}
                         </span>
+                        {u.bloqueado_hasta && (
+                          <span className="block mt-1 text-[11px] font-semibold text-red-700">Bloqueada</span>
+                        )}
+                        {!u.bloqueado_hasta && u.debe_cambiar_password && (
+                          <span className="block mt-1 text-[11px] text-amber-900">Contraseña temporal</span>
+                        )}
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1">

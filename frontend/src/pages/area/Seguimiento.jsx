@@ -3,7 +3,8 @@
 // Se busca por folio (PET-… de la solicitud o SOL-… del servicio), vehículo o placas.
 // Solo muestra la etapa y las fechas; los datos internos del taller no salen aquí.
 // Cuando el mecánico firma de recibido, el área ya puede descargar o imprimir
-// el formato de solicitud con las dos firmas.
+// el formato de solicitud con las dos firmas. Cuando la reparación termina (ya
+// tiene la foto final) se avisa que la unidad está lista para recogerse.
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -12,7 +13,9 @@ import { areaApi } from "../../api/area";
 import { AREA_MENU, AREA_SECONDARY_MENU } from "../../config/menus";
 import { Alerta, Boton, Insignia } from "../../components/ui";
 import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
-import { Search, Loader2, CarFront, Check, XCircle, AlertCircle, FileText, FileDown, Printer } from "lucide-react";
+import {
+  Search, Loader2, CarFront, Check, XCircle, AlertCircle, FileText, FileDown, Printer, CheckCircle2,
+} from "lucide-react";
 
 // Etapas que ve el área, de la solicitud a la entrega
 const ETAPAS = ["Enviada", "Recibida en taller", "Diagnóstico", "Reparación", "Entregada"];
@@ -49,6 +52,7 @@ function situacion(p) {
   if (i === null) return { texto: "No procedió", tono: "rojo" };
   if (i === 0) return { texto: "En espera", tono: "ambar" };
   if (i === 4) return { texto: "Entregada", tono: "verde" };
+  if (p.servicio?.listo) return { texto: "Lista para entregar", tono: "verde" };
   return { texto: "En servicio", tono: "azul" };
 }
 
@@ -60,6 +64,11 @@ export default function Seguimiento() {
   const [lista, setLista] = useState(null);
   const [error, setError] = useState("");
   const [q, setQ] = useState(params.get("folio") || "");
+  // Al abrir un aviso de la campana estando ya en esta pantalla, busca ese folio
+  const folio = params.get("folio");
+  useEffect(() => {
+    if (folio) setQ(folio);
+  }, [folio]);
   const [filtro, setFiltro] = useState("todas");
 
   useEffect(() => {
@@ -179,6 +188,13 @@ function Tarjeta({ p }) {
             </p>
           </div>
         </div>
+
+        {p.servicio?.listo && (
+          <Alerta tipo="exito" className="mt-4" icono={<CheckCircle2 size={16} />}>
+            <span className="font-semibold">Tu vehículo está listo.</span> La reparación terminó; pasa a recogerlo
+            a la Coordinación de Parque Vehicular.
+          </Alerta>
+        )}
 
         {etapa === null ? (
           <Alerta className="mt-4" icono={<XCircle size={16} />}>

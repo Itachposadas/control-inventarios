@@ -1,56 +1,19 @@
 // src/pages/cuenta/MiCuenta.jsx
 // Datos del usuario y cambio de su propia contraseña (admin y mecánico).
-import { useState } from "react";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { Section, Field, inputClass, Boton, Alerta } from "../../components/ui";
-import { authApi } from "../../api/auth";
+import { Section } from "../../components/ui";
+import FormCambiarPassword from "../../components/cuenta/FormCambiarPassword";
 import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
 import { ROLE_COLOR, ROLE_LABEL } from "../../config/roles";
 import { formatFecha } from "../../config/solicitudes";
 import {
-  User as UserIcon, Mail, Shield, Calendar, Clock, Eye, EyeOff, CheckCircle2, AlertCircle,
+  User as UserIcon, Mail, Shield, Calendar, Clock,
 } from "lucide-react";
-
-const VACIO = { actual: "", nueva: "", confirmar: "" };
 
 export default function MiCuenta() {
   const { user, role } = useAuth();
   const { menu, secondaryMenu } = menusForRole(role);
-
-  const [form, setForm] = useState(VACIO);
-  const [ver, setVer] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [exito, setExito] = useState("");
-
-  const set = (campo) => (e) => {
-    setForm((f) => ({ ...f, [campo]: e.target.value }));
-    setError("");
-    setExito("");
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setExito("");
-
-    if (form.nueva.length < 6) return setError("La nueva contraseña debe tener al menos 6 caracteres");
-    if (form.nueva !== form.confirmar) return setError("La confirmación no coincide con la nueva contraseña");
-
-    setSaving(true);
-    try {
-      await authApi.cambiarPassword(form.actual, form.nueva);
-      setForm(VACIO);
-      setExito("Tu contraseña se actualizó correctamente");
-    } catch (err) {
-      setError(err.message || "No se pudo cambiar la contraseña");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const tipoInput = ver ? "text" : "password";
   const nombre = user?.nombre_completo || user?.username;
 
   return (
@@ -85,60 +48,8 @@ export default function MiCuenta() {
 
         {/* Cambiar contraseña */}
         <div className="lg:col-span-2">
-          <Section title="Cambiar contraseña" subtitle="Usa al menos 6 caracteres. Evita contraseñas fáciles como 123456.">
-            <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-              {error && (
-                <Alerta icono={<AlertCircle size={18} />}>{error}</Alerta>
-              )}
-              {exito && (
-                <Alerta tipo="exito" icono={<CheckCircle2 size={18} />}>{exito}</Alerta>
-              )}
-
-              <Field label="Contraseña actual" required>
-                <input
-                  type={tipoInput}
-                  value={form.actual}
-                  onChange={set("actual")}
-                  autoComplete="current-password"
-                  required
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Nueva contraseña" required>
-                <input
-                  type={tipoInput}
-                  value={form.nueva}
-                  onChange={set("nueva")}
-                  autoComplete="new-password"
-                  required
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Confirmar nueva contraseña" required>
-                <input
-                  type={tipoInput}
-                  value={form.confirmar}
-                  onChange={set("confirmar")}
-                  autoComplete="new-password"
-                  required
-                  className={inputClass}
-                />
-              </Field>
-
-              <div className="flex items-center justify-between gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setVer((v) => !v)}
-                  className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-institucional transition"
-                >
-                  {ver ? <EyeOff size={16} /> : <Eye size={16} />}
-                  {ver ? "Ocultar contraseñas" : "Mostrar contraseñas"}
-                </button>
-                <Boton type="submit" disabled={saving}>
-                  {saving ? "Guardando..." : "Cambiar contraseña"}
-                </Boton>
-              </div>
-            </form>
+          <Section title="Cambiar contraseña" subtitle="Usa una contraseña que solo tú conozcas; evita las fáciles como 123456.">
+            <FormCambiarPassword />
           </Section>
         </div>
       </div>
