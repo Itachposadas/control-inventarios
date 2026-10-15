@@ -1,5 +1,7 @@
 // src/components/peticiones/EditorMateriales.jsx
 // Lista editable de materiales (cantidad, unidad de medida y concepto).
+// La unidad de medida es texto libre: cada quien escribe la que use
+// (palabra o número, ej. "Litro", "Juego", "4 L").
 // La usan la solicitud del área y la solicitud de materiales a administración.
 //   const [materiales, setMateriales] = useState(() => [materialVacio()]);
 //   <EditorMateriales materiales={materiales} onChange={setMateriales} />
@@ -9,15 +11,12 @@
 import { Boton, inputClass } from "../ui";
 import { Plus, Trash2 } from "lucide-react";
 
-// Sugerencias para "Unidad de medida" (se puede escribir otra)
-const UNIDADES = ["Pieza", "Juego", "Litro", "Galón", "Kilogramo", "Metro", "Caja", "Paquete", "Servicio"];
-
 // Columnas de la tabla en escritorio
 const COLUMNAS = "md:grid md:grid-cols-[7rem_11rem_1fr_2.5rem]";
 
 let siguienteId = 1;
 export const materialVacio = (datos = {}) => ({
-  cantidad: "1", unidad_medida: "Pieza", concepto: "", ...datos, id: siguienteId++,
+  cantidad: "1", unidad_medida: "", concepto: "", ...datos, id: siguienteId++,
 });
 
 export function validarMateriales(materiales) {
@@ -43,10 +42,6 @@ export default function EditorMateriales({ materiales, onChange, etiquetaConcept
 
   return (
     <div>
-      <datalist id="unidades-medida">
-        {UNIDADES.map((u) => <option key={u} value={u} />)}
-      </datalist>
-
       {/* Encabezados de la tabla (escritorio) */}
       <div className={`hidden ${COLUMNAS} gap-2 px-1
                       text-[11px] font-semibold uppercase tracking-wide text-slate-500`}>
@@ -78,10 +73,10 @@ export default function EditorMateriales({ materiales, onChange, etiquetaConcept
             </Celda>
             <Celda etiqueta="Unidad de medida">
               <input
-                list="unidades-medida"
                 value={m.unidad_medida}
                 onChange={(e) => cambiar(m.id, "unidad_medida", e.target.value)}
                 maxLength={30}
+                placeholder="Ej. Litro, Juego, 4 L"
                 aria-label={`Unidad de medida del material ${i + 1}`}
                 className={inputClass}
               />

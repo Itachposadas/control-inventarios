@@ -1,7 +1,6 @@
 // src/utils/pdfComun.js
-// Piezas comunes de los formatos en PDF (solicitud, orden de compra, entrega):
+// Piezas comunes de los PDF (formatos y reporte de mantenimiento):
 // encabezado con los logotipos, firmas, pie y formatos de número/fecha.
-import { cargarImagen } from "./reportePdf";
 
 export const GUINDA = [159, 34, 65];
 export const TINTA = [30, 41, 59];
@@ -16,6 +15,28 @@ export const aFecha = (iso) => new Date(iso.endsWith("Z") ? iso : `${iso}Z`);
 export const fechaLarga = (iso) =>
   iso ? aFecha(iso).toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" }) : "—";
 export const cantidad = (n) => Number(n).toLocaleString("es-MX", { maximumFractionDigits: 2 });
+
+// Carga una imagen de /public como dataURL para incrustarla en el PDF
+export async function cargarImagen(src) {
+  try {
+    const blob = await (await fetch(src)).blob();
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    const { width, height } = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+    return { dataUrl, ratio: width / height };
+  } catch {
+    return null; // sin logo si no se pudo cargar
+  }
+}
 
 // Logotipo municipal a la izquierda y logo de Atlacomulco a la derecha
 export async function logos(doc) {

@@ -2,7 +2,8 @@
 // Paso 1 del servicio: diagnóstico de fallas presentadas, acciones a realizar /
 // observaciones y refacciones a utilizar (piezas a comprar). Las refacciones son
 // los materiales que pidió el solicitante: el mecánico no agrega ni cambia ninguno.
-// Ya guardado, se puede descargar el formato "Dictamen".
+// El formato "Dictamen" se puede descargar en cuanto el diagnóstico y las
+// acciones están escritos (antes de guardar, con lo capturado).
 import { useState } from "react";
 import { Section, Field, TextArea, Boton, Alerta } from "../ui";
 import { solicitudesApi } from "../../api/solicitudes";
@@ -37,8 +38,16 @@ function Formulario({ s, onGuardado }) {
     }
   };
 
+  const completo = fallas.trim() && acciones.trim();
+  const descargar = () =>
+    descargarDiagnosticoPdf({ ...s, fallas, acciones_a_realizar: acciones, refacciones: solicitados });
+
   return (
-    <Section title="1. Diagnóstico" subtitle="Opinión del mecánico sobre el estado actual del vehículo">
+    <Section
+      title="1. Diagnóstico"
+      subtitle="Opinión del mecánico sobre el estado actual del vehículo"
+      actions={<BotonFormato listo={completo} onClick={descargar} falta="Escribe el diagnóstico y las acciones a realizar" />}
+    >
       <div className="space-y-5">
         {error && <Alerta>{error}</Alerta>}
         <Field label="Diagnóstico de fallas presentadas" required>
@@ -89,11 +98,7 @@ function Resumen({ s }) {
   return (
     <Section
       title="1. Diagnóstico"
-      actions={s.fallas && (
-        <Boton variante="contorno" tamano="sm" icono={<FileDown size={14} />} onClick={() => descargarDiagnosticoPdf(s)}>
-          Ver formato de diagnóstico
-        </Boton>
-      )}
+      actions={s.fallas && <BotonFormato listo onClick={() => descargarDiagnosticoPdf(s)} />}
     >
       <dl className="space-y-4 text-sm">
         <div>
@@ -116,6 +121,24 @@ function Resumen({ s }) {
         </div>
       </dl>
     </Section>
+  );
+}
+
+// Descarga del formato de un paso: se activa cuando están los campos obligatorios
+// y las firmas; mientras tanto dice qué falta.
+export function BotonFormato({ listo, onClick, falta = "", texto = "Descargar formato" }) {
+  return (
+    <Boton
+      variante="contorno"
+      tamano="sm"
+      icono={<FileDown size={14} />}
+      onClick={onClick}
+      disabled={!listo}
+      title={listo ? "Descarga el formato en PDF" : falta}
+      className="shrink-0"
+    >
+      {texto}
+    </Boton>
   );
 }
 

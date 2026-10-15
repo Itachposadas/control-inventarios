@@ -8,8 +8,9 @@ import { Section, Field, TextArea, Boton, Alerta, inputClass } from "../ui";
 import ConfirmModal from "../ConfirmModal";
 import { solicitudesApi } from "../../api/solicitudes";
 import { descargarEntregaPdf } from "../../utils/entregaPdf";
+import { BotonFormato } from "./PasoDiagnostico";
 import { formatFecha } from "../../config/solicitudes";
-import { CheckCircle2, FileDown } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }) {
   const [trabajo, setTrabajo] = useState(s.acciones || "");
@@ -58,11 +59,20 @@ export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }
   return (
     <Section
       title="5. Formato de entrega de vehículo y/o maquinaria reparada"
-      actions={entregada && (
-        <Boton variante="contorno" tamano="sm" icono={<FileDown size={14} />} onClick={() => descargarEntregaPdf(s)}>
-          Ver formato de entrega
-        </Boton>
-      )}
+      actions={
+        entregada ? (
+          <BotonFormato listo onClick={() => descargarEntregaPdf(s)} />
+        ) : editable && (
+          // Antes de entregar: con lo capturado y la fecha de hoy
+          <BotonFormato
+            listo={!!trabajo.trim()}
+            onClick={() =>
+              descargarEntregaPdf({ ...s, acciones: trabajo, observaciones, operador, fecha_entrega: new Date().toISOString() })
+            }
+            falta="Describe el trabajo realizado"
+          />
+        )
+      }
     >
       <div className="space-y-5">
         {error && <Alerta>{error}</Alerta>}

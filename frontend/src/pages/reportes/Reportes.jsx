@@ -1,6 +1,6 @@
 // src/pages/reportes/Reportes.jsx
 // Reportes del admin: gasto y servicios del taller, con descarga en PDF.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import KpiCard from "../../components/dashboard/KpiCard";
@@ -27,8 +27,6 @@ export default function Reportes() {
   const [error, setError] = useState("");
   const [generando, setGenerando] = useState(false);
 
-  const graficaGasto = useRef(null);
-  const graficaServicios = useRef(null);
 
   useEffect(() => {
     vehiculosApi.areas().then(setAreas).catch(() => {});
@@ -57,10 +55,7 @@ export default function Reportes() {
     try {
       // jsPDF es pesado: se descarga solo cuando se pide el PDF
       const { descargarReportePdf } = await import("../../utils/reportePdf");
-      await descargarReportePdf(reporte, {
-        gasto: graficaGasto.current?.toBase64Image("image/png", 1) || null,
-        servicios: graficaServicios.current?.toBase64Image("image/png", 1) || null,
-      });
+      await descargarReportePdf(reporte);
     } catch (e) {
       console.error(e);
       setError("No se pudo generar el PDF");
@@ -206,7 +201,6 @@ export default function Reportes() {
                 <Tarjeta titulo="Gasto por mes" subtitulo="Suma del costo de los servicios">
                   <div className="h-64">
                     <BarrasPorMes
-                      ref={graficaGasto}
                       labels={meses.map((m) => etiquetaMes(m.mes))}
                       values={meses.map((m) => m.gasto)}
                       formato={(v) => moneda(v, 0)}
@@ -216,7 +210,6 @@ export default function Reportes() {
                 <Tarjeta titulo="Servicios ingresados por mes" subtitulo="Entradas al taller">
                   <div className="h-64">
                     <BarrasPorMes
-                      ref={graficaServicios}
                       labels={meses.map((m) => etiquetaMes(m.mes))}
                       values={meses.map((m) => m.servicios)}
                     />

@@ -1,201 +1,299 @@
 // src/utils/reportePdf.js
-// Genera y descarga el PDF del reporte de mantenimiento.
+// Genera y descarga el PDF del reporte de mantenimiento. Pensado para
+// imprimirse en blanco y negro: texto negro, grises para fondos y líneas,
+// tablas con filetes (sin rellenos de color) y gráficas dibujadas en el PDF.
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { TIPO_LABEL } from "../config/solicitudes";
 import { etiquetaMes, moneda, fechaCorta } from "../config/reportes";
+import { MARGEN, logos } from "./pdfComun";
 
-const GUINDA = [159, 34, 65];
-const TINTA = [30, 41, 59];
-const GRIS = [100, 116, 139];
-const MARGEN = 15;
+const NEGRO = [0, 0, 0];
+const TEXTO = [33, 33, 33];
+const GRIS = [100, 100, 100];
+const GRIS_CLARO = [200, 200, 200];
+const FONDO = [238, 238, 238];   // encabezados de tabla y recuadros
+const BARRA = [70, 70, 70];      // barras de las gráficas
+const FUENTE = "helvetica";
 
-// Carga una imagen de /public como dataURL para incrustarla en el PDF
-export async function cargarImagen(src) {
-  try {
-    const blob = await (await fetch(src)).blob();
-    const dataUrl = await new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = reject;
-      r.readAsDataURL(blob);
-    });
-    const { width, height } = await new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-      img.onerror = reject;
-      img.src = dataUrl;
-    });
-    return { dataUrl, ratio: width / height };
-  } catch {
-    return null; // sin logo si no se pudo cargar
-  }
-}
-
-/**
- * @param {object} reporte  respuesta de /api/reportes
- * @param {object} graficas { gasto: dataURL|null, servicios: dataURL|null }
- */
-export async function descargarReportePdf(reporte, graficas = {}) {
+/** @param {object} reporte  respuesta de /api/reportes */
+export async function descargarReportePdf(reporte) {
   const doc = new jsPDF({ unit: "mm", format: "letter" });
   const ancho = doc.internal.pageSize.getWidth();
   const alto = doc.internal.pageSize.getHeight();
+  const der = ancho - MARGEN;
   const util = ancho - MARGEN * 2;
   const { periodo, resumen } = reporte;
+  let seccion = 0;
 
-  // ─── Encabezado ───
-  const [gobierno, atlacomulco] = await Promise.all([
-    cargarImagen("/gobierno-estado.png"),
-    cargarImagen("/logo-atlacomulco.png"),
-  ]);
-  const altoLogo = 14;
-  if (gobierno) doc.addImage(gobierno.dataUrl, "PNG", MARGEN, 10, altoLogo * gobierno.ratio, altoLogo);
-  if (atlacomulco) {
-    const w = altoLogo * atlacomulco.ratio;
-    doc.addImage(atlacomulco.dataUrl, "PNG", ancho - MARGEN - w, 10, w, altoLogo);
-  }
-
-  let y = 32;
-  doc.setDrawColor(...GUINDA);
-  doc.setLineWidth(0.8);
-  doc.line(MARGEN, y - 4, ancho - MARGEN, y - 4);
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.setTextColor(...TINTA);
-  doc.text("Reporte de mantenimiento vehicular", MARGEN, y + 2);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...GRIS);
-  doc.text("Coordinación de Parque Vehicular · Atlacomulco", MARGEN, y + 8);
-
-  const lineasPeriodo = [
-    `Periodo: ${fechaCorta(periodo.desde)} al ${fechaCorta(periodo.hasta)}`,
-    `Área: ${periodo.area || "Todas"}`,
-    `Generado: ${new Date().toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}`,
-  ];
-  doc.text(lineasPeriodo, ancho - MARGEN, y + 2, { align: "right" });
-  y += 20;
-
-  // ─── Resumen ───
-  titulo(doc, "Resumen", y);
-  y += 3;
-  autoTable(doc, {
-    startY: y,
-    theme: "plain",
-    margin: { left: MARGEN, right: MARGEN },
-    styles: { fontSize: 9.5, cellPadding: 2, textColor: TINTA },
-    columnStyles: { 0: { textColor: GRIS, cellWidth: 70 }, 1: { fontStyle: "bold" } },
-    body: [
-      ["Servicios ingresados", String(resumen.servicios)],
-      ["Servicios terminados", String(resumen.terminados)],
-      ["Siguen en taller", String(resumen.en_taller)],
-      ["Gasto total", moneda(resumen.gasto_total)],
-      ["Gasto promedio por servicio", moneda(resumen.gasto_promedio)],
-      ["Tiempo promedio en taller", resumen.dias_promedio_taller == null ? "—" : `${resumen.dias_promedio_taller} días`],
-      ...(resumen.sin_costo ? [["Terminados sin costo capturado", String(resumen.sin_costo)]] : []),
-    ],
-  });
-  y = doc.lastAutoTable.finalY + 8;
-
-  // ─── Gráficas ───
-  const altoGrafica = 55;
-  for (const [nombre, img] of [["Gasto por mes", graficas.gasto], ["Servicios ingresados por mes", graficas.servicios]]) {
-    if (!img) continue;
-    y = saltoSiHaceFalta(doc, y, altoGrafica + 10);
-    titulo(doc, nombre, y);
-    doc.addImage(img, "PNG", MARGEN, y + 3, util, altoGrafica);
-    y += altoGrafica + 10;
-  }
-
-  // ─── Tablas ───
-  const tabla = (nombre, head, body, opciones = {}) => {
-    y = saltoSiHaceFalta(doc, y, 25);
-    titulo(doc, nombre, y);
-    autoTable(doc, {
-      startY: y + 3,
-      head: [head],
-      body: body.length ? body : [[{ content: "Sin datos en el periodo", colSpan: head.length, styles: { textColor: GRIS, halign: "center" } }]],
-      margin: { left: MARGEN, right: MARGEN, top: 20 },
-      styles: { fontSize: 9, cellPadding: 2.2, textColor: TINTA, lineColor: [226, 232, 240], lineWidth: 0.1 },
-      headStyles: { fillColor: GUINDA, textColor: 255, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      // El título de una columna numérica se alinea igual que sus valores
-      didParseCell: (data) => {
-        const halign = opciones.columnStyles?.[data.column.index]?.halign;
-        if (data.section === "head" && halign) data.cell.styles.halign = halign;
-      },
-      ...opciones,
-    });
-    y = doc.lastAutoTable.finalY + 8;
+  const texto = (t, x, y, { negrita = false, tam = 9.5, color = TEXTO, alinear = "left" } = {}) => {
+    doc.setFont(FUENTE, negrita ? "bold" : "normal");
+    doc.setFontSize(tam);
+    doc.setTextColor(...color);
+    doc.text(t ?? "", x, y, { align: alinear });
+  };
+  const linea = (x1, y1, x2, y2, grosor = 0.2, color = NEGRO) => {
+    doc.setDrawColor(...color);
+    doc.setLineWidth(grosor);
+    doc.line(x1, y1, x2, y2);
   };
 
-  const derecha = { halign: "right" };
+  // ─── Encabezado ───
+  await logos(doc);
+  linea(MARGEN, 30, der, 30, 0.6);
+  linea(MARGEN, 31, der, 31, 0.2);
+  texto("MUNICIPIO DE ATLACOMULCO", ancho / 2, 37.5, { negrita: true, tam: 10, alinear: "center" });
+  texto("COORDINACIÓN DE PARQUE VEHICULAR", ancho / 2, 42.5, { tam: 9, color: GRIS, alinear: "center" });
+  texto("REPORTE DE MANTENIMIENTO VEHICULAR", ancho / 2, 50, { negrita: true, tam: 14, color: NEGRO, alinear: "center" });
+
+  // Datos del reporte en un recuadro de tres columnas
+  let y = 55;
+  const datos = [
+    ["PERIODO", `${fechaCorta(periodo.desde)} al ${fechaCorta(periodo.hasta)}`],
+    ["ÁREA", periodo.area || "Todas las áreas"],
+    ["FECHA DE EMISIÓN", new Date().toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })],
+  ];
+  const colDato = util / datos.length;
+  doc.setDrawColor(...NEGRO);
+  doc.setLineWidth(0.3);
+  doc.rect(MARGEN, y, util, 12);
+  datos.forEach(([e, v], i) => {
+    const x = MARGEN + colDato * i;
+    if (i > 0) linea(x, y, x, y + 12, 0.2, GRIS_CLARO);
+    texto(e, x + colDato / 2, y + 4.5, { negrita: true, tam: 7, color: GRIS, alinear: "center" });
+    texto(doc.splitTextToSize(v, colDato - 4)[0], x + colDato / 2, y + 9.5, { negrita: true, tam: 9.5, color: NEGRO, alinear: "center" });
+  });
+  y += 20;
+
+  // Título numerado de sección con filete abajo
+  const titulo = (nombre) => {
+    seccion += 1;
+    texto(`${seccion}. ${nombre.toUpperCase()}`, MARGEN, y, { negrita: true, tam: 10.5, color: NEGRO });
+    linea(MARGEN, y + 1.8, der, y + 1.8, 0.3);
+    y += 5;
+  };
+  const salto = (necesario) => {
+    if (y + necesario > alto - 20) {
+      doc.addPage();
+      y = 20;
+    }
+  };
+
+  // ─── 1. Resumen: indicadores en recuadros (3 × 2) ───
+  titulo("Resumen del periodo");
+  const indicadores = [
+    ["Servicios ingresados", String(resumen.servicios)],
+    ["Servicios terminados", String(resumen.terminados)],
+    ["Siguen en taller", String(resumen.en_taller)],
+    ["Gasto total", moneda(resumen.gasto_total)],
+    ["Gasto promedio por servicio", moneda(resumen.gasto_promedio)],
+    ["Tiempo promedio en taller", resumen.dias_promedio_taller == null ? "—" : `${resumen.dias_promedio_taller} días`],
+  ];
+  const porFila = 3;
+  const sep = 3;
+  const wInd = (util - sep * (porFila - 1)) / porFila;
+  const hInd = 15;
+  indicadores.forEach(([e, v], i) => {
+    const x = MARGEN + (wInd + sep) * (i % porFila);
+    const yi = y + 1 + (hInd + sep) * Math.floor(i / porFila);
+    doc.setFillColor(...FONDO);
+    doc.setDrawColor(...GRIS_CLARO);
+    doc.setLineWidth(0.2);
+    doc.rect(x, yi, wInd, hInd, "FD");
+    linea(x, yi, x, yi + hInd, 1.2, NEGRO); // acento a la izquierda
+    texto(e.toUpperCase(), x + 4, yi + 5.5, { negrita: true, tam: 6.8, color: GRIS });
+    texto(v, x + 4, yi + 12, { negrita: true, tam: 12.5, color: NEGRO });
+  });
+  y += 1 + (hInd + sep) * Math.ceil(indicadores.length / porFila);
+  if (resumen.sin_costo) {
+    texto(
+      `Nota: ${resumen.sin_costo} ${resumen.sin_costo === 1 ? "servicio terminado no tiene" : "servicios terminados no tienen"} costo capturado; no suman al gasto.`,
+      MARGEN, y + 1, { tam: 8, color: GRIS }
+    );
+    y += 5;
+  }
+  y += 5;
+
+  // ─── Gráficas de barras (vectoriales, en gris) ───
+  const grafica = (nombre, valores, etiquetas, formato) => {
+    const altoG = 52;
+    salto(altoG + 14);
+    titulo(nombre);
+    const maximo = Math.max(...valores, 0);
+    const tope = maximo > 0 ? escalaBonita(maximo) : 1;
+    const ejeX = MARGEN + 22; // espacio para las cantidades del eje
+    const anchoG = der - ejeX;
+    const base = y + altoG - 7;
+    const altura = altoG - 14;
+
+    // Líneas guía y escala
+    for (let i = 0; i <= 4; i++) {
+      const v = (tope / 4) * i;
+      const yy = base - (altura * i) / 4;
+      linea(ejeX, yy, der, yy, i === 0 ? 0.4 : 0.1, i === 0 ? NEGRO : GRIS_CLARO);
+      texto(formato(v, true), ejeX - 2, yy + 1, { tam: 7, color: GRIS, alinear: "right" });
+    }
+    // Barras con su valor arriba
+    const n = valores.length || 1;
+    const hueco = anchoG / n;
+    const wBarra = Math.min(16, hueco * 0.6);
+    valores.forEach((v, i) => {
+      const h = tope ? (altura * v) / tope : 0;
+      const x = ejeX + hueco * i + (hueco - wBarra) / 2;
+      if (h > 0) {
+        doc.setFillColor(...BARRA);
+        doc.rect(x, base - h, wBarra, h, "F");
+      }
+      if (v > 0) texto(formato(v), x + wBarra / 2, base - h - 1.5, { negrita: true, tam: 7, color: NEGRO, alinear: "center" });
+      texto(etiquetas[i], x + wBarra / 2, base + 4.5, { tam: 7.5, color: TEXTO, alinear: "center" });
+    });
+    y += altoG + 8;
+  };
+
+  const meses = reporte.por_mes || [];
+  if (meses.length) {
+    const etiquetas = meses.map((m) => etiquetaMes(m.mes));
+    grafica("Gasto por mes", meses.map((m) => Number(m.gasto) || 0), etiquetas, (v, eje) => monedaCorta(v, eje));
+    grafica("Servicios ingresados por mes", meses.map((m) => Number(m.servicios) || 0), etiquetas, (v) =>
+      Number.isInteger(v) ? String(v) : v.toFixed(1)
+    );
+  }
+
+  // ─── Tablas con filetes: encabezado gris claro, renglones separados por líneas finas ───
+  const tabla = (nombre, head, body, { columnStyles = {}, total = null } = {}) => {
+    salto(30);
+    titulo(nombre);
+    const vacio = !body.length;
+    autoTable(doc, {
+      startY: y,
+      theme: "plain",
+      margin: { left: MARGEN, right: MARGEN, top: 20, bottom: 20 },
+      head: [head],
+      body: vacio
+        ? [[{ content: "Sin datos en el periodo", colSpan: head.length, styles: { textColor: GRIS, halign: "center", fontStyle: "italic" } }]]
+        : body,
+      foot: total && !vacio ? [total] : undefined,
+      showFoot: "lastPage",
+      styles: {
+        font: FUENTE, fontSize: 8.8, textColor: TEXTO, cellPadding: { top: 1.7, bottom: 1.7, left: 2.5, right: 2.5 },
+        valign: "middle", lineWidth: 0,
+      },
+      // El fondo gris del encabezado se pinta como una sola franja (willDrawCell)
+      headStyles: {
+        fillColor: false, textColor: NEGRO, fontStyle: "bold", fontSize: 8,
+        cellPadding: { top: 2.4, bottom: 2.4, left: 2.5, right: 2.5 },
+      },
+      footStyles: { fillColor: [255, 255, 255], textColor: NEGRO, fontStyle: "bold" },
+      columnStyles,
+      didParseCell: (data) => {
+        // Los títulos de columnas numéricas se alinean como sus valores
+        const halign = columnStyles[data.column.index]?.halign;
+        if ((data.section === "head" || data.section === "foot") && halign) data.cell.styles.halign = halign;
+        if (data.section === "head") data.cell.text = data.cell.text.map((t) => t.toUpperCase());
+      },
+      willDrawCell: (data) => {
+        if (data.section === "head" && data.column.index === 0) {
+          doc.setFillColor(...FONDO);
+          doc.rect(MARGEN, data.cell.y, util, data.cell.height, "F");
+        }
+      },
+      didDrawCell: (data) => {
+        const { x, y: yc, width, height } = data.cell;
+        const fin = data.column.index === head.length - 1;
+        // Filete grueso arriba y abajo del encabezado; fino entre renglones; doble arriba del total
+        if (data.section === "head") {
+          linea(x, yc, x + width, yc, 0.5);
+          linea(x, yc + height, x + width, yc + height, 0.3);
+        } else if (data.section === "body") {
+          linea(x, yc + height, x + width, yc + height, 0.1, GRIS_CLARO);
+        } else if (data.section === "foot") {
+          linea(x, yc, x + width, yc, 0.4);
+          linea(x, yc + height, x + width, yc + height, 0.5);
+        }
+        if (fin && data.section === "body" && data.row.index === data.table.body.length - 1 && !total) {
+          linea(MARGEN, yc + height, der, yc + height, 0.5);
+        }
+      },
+    });
+    y = doc.lastAutoTable.finalY + 9;
+  };
+
+  const der_ = { halign: "right" };
+  const suma = (lista, campo) => lista.reduce((t, x) => t + (Number(x[campo]) || 0), 0);
 
   tabla(
     "Gasto por mes",
     ["Mes", "Servicios", "Terminados", "Gasto"],
-    reporte.por_mes.map((m) => [etiquetaMes(m.mes), m.servicios, m.terminados, moneda(m.gasto)]),
-    { columnStyles: { 1: derecha, 2: derecha, 3: derecha } }
+    meses.map((m) => [etiquetaMes(m.mes), m.servicios, m.terminados, moneda(m.gasto)]),
+    {
+      columnStyles: { 1: der_, 2: der_, 3: der_ },
+      total: ["Total", suma(meses, "servicios"), suma(meses, "terminados"), moneda(suma(meses, "gasto"))],
+    }
   );
 
+  const areas = reporte.por_area || [];
   tabla(
     "Gasto por área",
-    ["Área", "Servicios", "Gasto"],
-    reporte.por_area.map((a) => [a.area, a.servicios, moneda(a.gasto)]),
-    { columnStyles: { 1: derecha, 2: derecha } }
+    ["Área", "Servicios", "Gasto", "% del gasto"],
+    areas.map((a) => [a.area, a.servicios, moneda(a.gasto), porcentaje(a.gasto, suma(areas, "gasto"))]),
+    {
+      columnStyles: { 1: der_, 2: der_, 3: { ...der_, cellWidth: 26 } },
+      total: ["Total", suma(areas, "servicios"), moneda(suma(areas, "gasto")), suma(areas, "gasto") ? "100 %" : "—"],
+    }
   );
 
+  const tipos = reporte.por_tipo || [];
   tabla(
     "Gasto por tipo de servicio",
-    ["Tipo", "Servicios", "Gasto"],
-    reporte.por_tipo.map((t) => [TIPO_LABEL[t.tipo] || t.tipo, t.servicios, moneda(t.gasto)]),
-    { columnStyles: { 1: derecha, 2: derecha } }
+    ["Tipo", "Servicios", "Gasto", "% del gasto"],
+    tipos.map((t) => [TIPO_LABEL[t.tipo] || t.tipo, t.servicios, moneda(t.gasto), porcentaje(t.gasto, suma(tipos, "gasto"))]),
+    {
+      columnStyles: { 1: der_, 2: der_, 3: { ...der_, cellWidth: 26 } },
+      total: ["Total", suma(tipos, "servicios"), moneda(suma(tipos, "gasto")), suma(tipos, "gasto") ? "100 %" : "—"],
+    }
   );
 
-  tabla(
-    "Vehículos con mayor gasto",
-    ["#", "Vehículo", "No. inventario", "Área", "Servicios", "Gasto"],
-    reporte.top_costo.map((v, i) => [i + 1, v.nombre, v.no_inventario, v.area || "—", v.servicios, moneda(v.gasto)]),
-    { columnStyles: { 0: { cellWidth: 8 }, 4: derecha, 5: derecha } }
-  );
-
-  tabla(
-    "Vehículos que más ingresan al taller",
-    ["#", "Vehículo", "No. inventario", "Área", "Servicios", "Gasto"],
-    reporte.top_ingresos.map((v, i) => [i + 1, v.nombre, v.no_inventario, v.area || "—", v.servicios, moneda(v.gasto)]),
-    { columnStyles: { 0: { cellWidth: 8 }, 4: derecha, 5: derecha } }
-  );
+  const vehiculos = (lista) =>
+    lista.map((v, i) => [i + 1, v.nombre, v.no_inventario, v.area || "—", v.servicios, moneda(v.gasto)]);
+  const colVehiculos = {
+    0: { cellWidth: 9, halign: "center" }, 2: { cellWidth: 38 }, 3: { cellWidth: 40 },
+    4: { ...der_, cellWidth: 22 }, 5: { ...der_, cellWidth: 26 },
+  };
+  tabla("Vehículos con mayor gasto", ["#", "Vehículo", "No. inventario", "Área", "Servicios", "Gasto"],
+    vehiculos(reporte.top_costo || []), { columnStyles: colVehiculos });
+  tabla("Vehículos que más ingresan al taller", ["#", "Vehículo", "No. inventario", "Área", "Servicios", "Gasto"],
+    vehiculos(reporte.top_ingresos || []), { columnStyles: colVehiculos });
 
   // ─── Pie de página en todas las hojas ───
   const paginas = doc.getNumberOfPages();
   for (let i = 1; i <= paginas; i++) {
     doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(...GRIS);
-    doc.text("Coordinación de Parque Vehicular · Atlacomulco", MARGEN, alto - 8);
-    doc.text(`Página ${i} de ${paginas}`, ancho - MARGEN, alto - 8, { align: "right" });
+    linea(MARGEN, alto - 13, der, alto - 13, 0.3);
+    texto("Coordinación de Parque Vehicular · Municipio de Atlacomulco", MARGEN, alto - 8.5, { tam: 7.5, color: GRIS });
+    texto(`Página ${i} de ${paginas}`, der, alto - 8.5, { tam: 7.5, color: GRIS, alinear: "right" });
   }
 
   const nombre = `reporte-mantenimiento_${periodo.desde}_${periodo.hasta}${periodo.area ? `_${periodo.area.replace(/\s+/g, "-")}` : ""}.pdf`;
   doc.save(nombre);
 }
 
-function titulo(doc, texto, y) {
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...GUINDA);
-  doc.text(texto, MARGEN, y);
-  doc.setFont("helvetica", "normal");
+// Tope "redondo" del eje para que las líneas guía caigan en números cerrados
+function escalaBonita(maximo) {
+  const paso = maximo / 4;
+  const potencia = 10 ** Math.floor(Math.log10(paso));
+  const base = [1, 2, 2.5, 5, 10].find((b) => b * potencia >= paso);
+  return base * potencia * 4;
 }
 
-// Agrega una hoja nueva si no cabe lo que sigue
-function saltoSiHaceFalta(doc, y, necesario) {
-  const alto = doc.internal.pageSize.getHeight();
-  if (y + necesario > alto - 18) {
-    doc.addPage();
-    return 20;
-  }
-  return y;
+// $12,500 → "$12.5 mil" en el eje; en las barras, cantidad completa sin centavos
+function monedaCorta(v, eje = false) {
+  if (!eje) return moneda(v, 0);
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toLocaleString("es-MX", { maximumFractionDigits: 1 })} M`;
+  if (v >= 1000) return `$${(v / 1000).toLocaleString("es-MX", { maximumFractionDigits: 1 })} mil`;
+  return moneda(v, 0);
+}
+
+function porcentaje(parte, total) {
+  if (!total) return "—";
+  return `${((Number(parte) || 0) / total * 100).toLocaleString("es-MX", { maximumFractionDigits: 1 })} %`;
 }

@@ -8,10 +8,9 @@
 // La firma que falte queda en blanco para firmarla a mano al imprimir.
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
-import { MARGEN, aFecha, logos, pie } from "./pdfComun";
+import { MARGEN, aFecha, logos, pie, cargarImagen } from "./pdfComun";
 import { AUTORIZA } from "../config/ordenCompra";
 import { CHECKLIST_IZQUIERDA, CHECKLIST_DERECHA } from "../config/solicitudes";
-import { cargarImagen } from "./reportePdf";
 
 const NEGRO = [0, 0, 0];
 const GRIS = [120, 120, 120];

@@ -14,10 +14,12 @@ import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
 import FotosEvidencia from "../../components/solicitudes/FotosEvidencia";
 import { EstadoBadge, PrioridadBadge } from "../../components/solicitudes/Badges";
-import PasoDiagnostico from "../../components/servicio/PasoDiagnostico";
+import PasoDiagnostico, { BotonFormato } from "../../components/servicio/PasoDiagnostico";
 import PasoOrdenCompra from "../../components/servicio/PasoOrdenCompra";
 import PasoEntrega from "../../components/servicio/PasoEntrega";
 import { descargarIngresoPdf } from "../../utils/ingresoPdf";
+import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
+import { peticionesApi } from "../../api/peticiones";
 import { Section, Field, inputClass, Boton, Alerta } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
 import { usuariosApi } from "../../api/usuarios";
@@ -31,7 +33,7 @@ import {
 import { fechaCorta } from "../../config/reportes";
 import {
   ArrowLeft, Undo2, Check, Loader2, CarFront, Trash2, Save, Camera, Truck, Plus,
-  Stethoscope, ClipboardList, ShoppingCart, FileCheck2, FileDown,
+  Stethoscope, ClipboardList, ShoppingCart, FileCheck2,
 } from "lucide-react";
 
 const FOTOS_REQUERIDAS = ["llegada", "reparacion", "final"];
@@ -254,6 +256,14 @@ export default function SolicitudDetail() {
               </span>
             </p>
           </div>
+          {/* Formato de la solicitud del área: ya tiene las firmas del solicitante y del mecánico */}
+          {s.peticion?.solicitante_firma && s.peticion?.mecanico_firma && (
+            <BotonFormato
+              listo
+              texto="Formato de solicitud"
+              onClick={async () => descargarSolicitudPdf(await peticionesApi.obtener(s.peticion.id))}
+            />
+          )}
           {esAdmin && (
             <button
               onClick={() => setDeleteModal({ open: true, loading: false })}
@@ -318,9 +328,7 @@ export default function SolicitudDetail() {
             subtitle="Accesorios y herramientas con los que llegó la unidad"
             actions={
               s.ingreso_at ? (
-                <Boton variante="contorno" tamano="sm" icono={<FileDown size={14} />} onClick={() => descargarIngresoPdf(s)}>
-                  Ver formato de ingreso
-                </Boton>
+                <BotonFormato listo onClick={() => descargarIngresoPdf(s)} />
               ) : puedeLlenar && s.estado === "ingreso" && (
                 <Boton tamano="sm" icono={<ClipboardList size={14} />} onClick={() => navigate(`/mecanico/reparaciones/${s.id}/ingreso`)}>
                   Llenar formato

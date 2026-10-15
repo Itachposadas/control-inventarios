@@ -1,6 +1,6 @@
 // src/components/reportes/BarrasPorMes.jsx
 // Barras de una sola serie (sin leyenda: el título la nombra).
-// Se expone el chart por ref para exportarlo como imagen al PDF.
+// Se expone el chart por ref (el PDF del reporte dibuja sus propias gráficas).
 import { forwardRef } from "react";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip,

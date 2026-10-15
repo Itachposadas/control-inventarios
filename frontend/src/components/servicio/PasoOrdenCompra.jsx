@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Section, Field, Boton, Alerta, Insignia, inputClass } from "../ui";
 import CampoFirma from "../peticiones/CampoFirma";
-import { TablaRefacciones } from "./PasoDiagnostico";
+import { TablaRefacciones, BotonFormato } from "./PasoDiagnostico";
 import { solicitudesApi } from "../../api/solicitudes";
 import { ESTADO_ORDEN, ordenesCompraApi } from "../../api/ordenesCompra";
 import { AUTORIZA } from "../../config/ordenCompra";
@@ -82,10 +82,40 @@ function Formulario({ s, nombreInicial, onEnviada }) {
     }
   };
 
+  // Con nombres y firmas ya se puede descargar (proveedor y precios quedan en blanco)
+  const completa = nombre.trim().length >= 3 && firma && autorizaNombre.trim().length >= 3 && autorizaFirma;
+  const descargar = () => {
+    const ing = s.ingreso || {};
+    descargarOrdenCompraPdf({
+      id: s.folio, // aún no tiene folio de orden: el archivo lleva el del servicio
+      fecha: new Date().toISOString(),
+      hoja_no: hoja.no,
+      hoja_total: hoja.total,
+      vehiculo: {
+        nombre: s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario,
+        unidad: ing.unidad, area: ing.area, modelo: ing.modelo, marca: ing.marca,
+        no_inventario: ing.no_inventario, serie: ing.serie, placas: ing.placas,
+      },
+      proveedor: {},
+      piezas: s.refacciones,
+      mecanico_nombre: nombre.trim(),
+      mecanico_firma: firma,
+      autoriza_nombre: autorizaNombre.trim(),
+      autoriza_firma: autorizaFirma,
+    });
+  };
+
   return (
     <Section
       title="3. Orden de compra"
       subtitle="Se manda a administración con las refacciones del diagnóstico; administración captura proveedor y precios"
+      actions={
+        <BotonFormato
+          listo={completa}
+          onClick={descargar}
+          falta="Faltan el nombre y la firma del mecánico/almacén y de quien autoriza"
+        />
+      }
     >
       <div className="space-y-5">
         {error && <Alerta>{error}</Alerta>}

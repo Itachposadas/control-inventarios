@@ -12,10 +12,11 @@ import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
 import { Section, Field, TextArea, inputClass, Boton } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
+import { descargarIngresoPdf } from "../../utils/ingresoPdf";
 import { useAuth } from "../../context/AuthContext";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { CHECKLIST_ITEMS, conceptosSinMarcar } from "../../config/solicitudes";
-import { ArrowLeft, CarFront, Loader2, Inbox, CalendarCheck } from "lucide-react";
+import { ArrowLeft, CarFront, Loader2, Inbox, CalendarCheck, FileDown } from "lucide-react";
 
 export default function FormatoIngreso() {
   const { id } = useParams();
@@ -90,6 +91,17 @@ export default function FormatoIngreso() {
   };
 
   const vehiculo = servicio?.vehiculo;
+  // Con la hoja y todos los accesorios marcados ya se puede descargar (antes de registrar)
+  const hojaValida = Number(form.hoja_no) >= 1 && Number(form.hoja_total) >= 1 && Number(form.hoja_no) <= Number(form.hoja_total);
+  const completo = hojaValida && !sinMarcar.length;
+  const descargar = () =>
+    descargarIngresoPdf({
+      ...servicio,
+      hoja_no: form.hoja_no,
+      hoja_total: form.hoja_total,
+      checklist: form.checklist,
+      observaciones_ingreso: form.observaciones_ingreso,
+    });
 
   return (
     <DashboardLayout
@@ -234,6 +246,16 @@ export default function FormatoIngreso() {
             )}
             <Boton variante="fantasma" onClick={() => navigate(`/mecanico/reparaciones/${id}`)}>
               Cancelar
+            </Boton>
+            <Boton
+              variante="contorno"
+              icono={<FileDown size={16} />}
+              onClick={descargar}
+              disabled={!completo}
+              title={completo ? "Descarga el formato en PDF" : "Marca todos los accesorios y revisa la hoja"}
+              aria-label="Descargar formato"
+            >
+              <span className="hidden sm:inline">Descargar formato</span>
             </Boton>
             <Boton type="submit" disabled={saving}>
               {saving ? "Registrando..." : "Registrar ingreso"}
