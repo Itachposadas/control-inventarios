@@ -4,7 +4,7 @@ import { Car, Wrench, } from "lucide-react";
 export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) {
   const estadoConfig = {
     activo:        { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50", label: "Activo" },
-    mantenimiento: { dot: "bg-amber-500",   text: "text-amber-700",   bg: "bg-amber-50",   label: "En mantenimiento" },
+    mantenimiento: { dot: "bg-amber-500",   text: "text-amber-900",   bg: "bg-amber-50",   label: "En mantenimiento" },
     baja:          { dot: "bg-red-500",     text: "text-red-700",     bg: "bg-red-50",     label: "Baja" },
   };
   const estado = estadoConfig[vehiculo.estado] || estadoConfig.activo;

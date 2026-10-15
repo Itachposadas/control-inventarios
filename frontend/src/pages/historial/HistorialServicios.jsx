@@ -129,7 +129,7 @@ export default function HistorialServicios() {
                           ${activo ? "bg-institucional/[0.06] ring-1 ring-institucional/30" : "hover:bg-slate-50"}`}
                       >
                         <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
-                          ${x.en_taller ? "bg-amber-100 text-amber-700" : "bg-institucional/10 text-institucional"}`}>
+                          ${x.en_taller ? "bg-amber-100 text-amber-900" : "bg-institucional/10 text-institucional"}`}>
                           {x.en_taller ? <Wrench size={18} /> : <CarFront size={19} />}
                         </span>
                         <span className="min-w-0 flex-1">
@@ -139,7 +139,7 @@ export default function HistorialServicios() {
                           </span>
                           <span className="block text-[11px] text-slate-500 mt-0.5">
                             {x.servicios} {x.servicios === 1 ? "servicio" : "servicios"} · Último {formatFecha(x.ultimo)}
-                            {x.en_taller && <span className="font-semibold text-amber-700"> · En taller</span>}
+                            {x.en_taller && <span className="font-semibold text-amber-900"> · En taller</span>}
                           </span>
                         </span>
                         {x.gasto != null && (

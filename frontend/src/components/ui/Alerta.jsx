@@ -6,7 +6,7 @@
 const TIPOS = {
   error: "bg-red-50 border-red-200 text-red-700",
   exito: "bg-emerald-50 border-emerald-200 text-emerald-700",
-  aviso: "bg-amber-50 border-amber-200 text-amber-800",
+  aviso: "bg-amber-50 border-amber-200 text-amber-900",
   info: "bg-blue-50 border-blue-100 text-blue-800",
 };
 

@@ -181,7 +181,7 @@ export default function Reportes() {
           </div>
 
           {res.sin_costo > 0 && (
-            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-xl">
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-900 text-sm px-4 py-3 rounded-xl">
               <AlertTriangle size={18} className="shrink-0" />
               {res.sin_costo} {res.sin_costo === 1 ? "servicio terminado no tiene" : "servicios terminados no tienen"} costo
               capturado; el gasto total puede estar incompleto.

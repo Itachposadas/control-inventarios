@@ -209,7 +209,7 @@ export default function Login() {
                     </button>
                   </InputConIcono>
                   {capsLock && (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                    <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-900">
                       <ArrowBigUp size={14} />
                       Bloq Mayús está activado
                     </p>

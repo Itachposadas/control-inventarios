@@ -158,7 +158,7 @@ export default function EvidenciaFotografica() {
                       </span>
                       <span
                         className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0
-                          ${n === 3 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+                          ${n === 3 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-900"}`}
                       >
                         <Camera size={11} className="inline -mt-px mr-1" />
                         {n}/3

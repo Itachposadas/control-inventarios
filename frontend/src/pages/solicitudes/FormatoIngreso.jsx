@@ -208,7 +208,7 @@ export default function FormatoIngreso() {
             actions={
               <span
                 className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0
-                  ${sinMarcar.length ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}
+                  ${sinMarcar.length ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-700"}`}
               >
                 {marcados} de {CHECKLIST_ITEMS.length}
               </span>

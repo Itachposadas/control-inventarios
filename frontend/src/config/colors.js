@@ -50,9 +50,10 @@ export const SERIES_GRAFICAS = [
 ];
 export const SERIE_OTRAS = "#94A3B8"; // gris neutro para "Otras"
 
-// Colores por estado de solicitud (texto -700 sobre fondo -100: ≥ 4.8:1 ✓)
+// Colores por estado de solicitud (texto -700 sobre fondo -100: ≥ 4.8:1 ✓;
+// el ámbar usa -900: 8.2:1, nivel AAA, porque -700 apenas llegaba a 4.5:1)
 export const ESTADO_STYLES = {
-  diagnostico: "bg-amber-100 text-amber-700",
+  diagnostico: "bg-amber-100 text-amber-900",
   ingreso: "bg-slate-100 text-slate-700",
   compra: "bg-purple-100 text-purple-700",
   reparacion: "bg-blue-100 text-blue-700",
@@ -62,6 +63,6 @@ export const ESTADO_STYLES = {
 // Colores por prioridad
 export const PRIORIDAD_STYLES = {
   alta: { dot: "bg-red-500", text: "text-red-700", bg: "bg-red-50" },
-  media: { dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50" },
+  media: { dot: "bg-amber-500", text: "text-amber-900", bg: "bg-amber-50" },
   baja: { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
 };

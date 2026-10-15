@@ -22,7 +22,7 @@ export function ResumenExpediente({ resumen }) {
   const tarjetas = [
     { label: "Servicios", value: resumen.servicios, icon: <Wrench size={18} />, color: "text-institucional", bg: "bg-institucional/10" },
     { label: "Entregados", value: resumen.entregados, icon: <CheckCircle2 size={18} />, color: "text-emerald-700", bg: "bg-emerald-100" },
-    { label: "En taller", value: resumen.en_taller, icon: <Clock size={18} />, color: "text-amber-700", bg: "bg-amber-100" },
+    { label: "En taller", value: resumen.en_taller, icon: <Clock size={18} />, color: "text-amber-900", bg: "bg-amber-100" },
     {
       label: "Días promedio en taller",
       value: resumen.dias_promedio ?? "—",
@@ -106,7 +106,7 @@ function Servicio({ s, onAbrir }) {
     <li className="relative pl-11">
       <span
         className={`absolute left-0 top-1 w-8 h-8 rounded-full flex items-center justify-center ring-4 ring-white
-          ${entregado ? "bg-emerald-600 text-white" : "bg-amber-100 text-amber-700"}`}
+          ${entregado ? "bg-emerald-600 text-white" : "bg-amber-100 text-amber-900"}`}
       >
         {entregado ? <CheckCircle2 size={16} /> : <Clock size={16} />}
       </span>

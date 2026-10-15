@@ -30,7 +30,7 @@ export default class ErrorBoundary extends Component {
       <div className="min-h-screen flex items-center justify-center bg-fondo p-4">
         <div className="animate-pop bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-md text-center">
           <div className="mx-auto w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
-            <AlertTriangle size={28} className="text-amber-700" />
+            <AlertTriangle size={28} className="text-amber-900" />
           </div>
           <h2 className="mt-4 text-lg font-semibold text-slate-800">Algo salió mal en esta pantalla</h2>
           <p className="mt-2 text-sm text-slate-500">

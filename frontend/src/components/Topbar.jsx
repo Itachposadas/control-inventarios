@@ -379,9 +379,9 @@ function Notificaciones({ role }) {
                   >
                     <span
                       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-                        ${n.tipo === "orden_compra" ? "bg-amber-100 text-amber-700"
+                        ${n.tipo === "orden_compra" ? "bg-amber-100 text-amber-900"
                           : n.tipo === "reasignada" ? "bg-blue-100 text-blue-700"
-                          : "bg-amber-100 text-amber-700"}`}
+                          : "bg-amber-100 text-amber-900"}`}
                     >
                       {n.tipo === "orden_compra" ? <ShoppingCart size={16} /> : <Wrench size={16} />}
                     </span>

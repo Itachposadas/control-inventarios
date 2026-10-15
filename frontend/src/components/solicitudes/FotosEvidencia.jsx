@@ -55,7 +55,7 @@ export default function FotosEvidencia({ solicitud, puedeSubir, onActualizada = 
         <div className="flex items-center gap-2 shrink-0">
           <span
             className={`text-xs font-semibold px-2.5 py-1 rounded-full
-              ${listas === 3 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+              ${listas === 3 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-900"}`}
           >
             {listas} de 3
           </span>

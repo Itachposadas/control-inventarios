@@ -305,7 +305,7 @@ function TarjetaPrestamo({ prestamo: p, activo, resaltar, ocupado, onDevolver })
                 )
               ) : (
                 parcial && (
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 shrink-0">
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 shrink-0">
                     Pendiente
                   </span>
                 )
@@ -519,7 +519,7 @@ function NuevoPrestamo({ onClose, onGuardado }) {
                                 : `${h.disponibles - elegida} de ${h.disponibles} disponible${h.disponibles === 1 ? "" : "s"}`}
                             </span>
                             {h.en_uso.length > 0 && (
-                              <span className="block text-[11px] text-amber-700 truncate">
+                              <span className="block text-[11px] text-amber-900 truncate">
                                 La tiene: {quienLaTiene(h)}
                               </span>
                             )}

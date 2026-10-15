@@ -194,7 +194,7 @@ function ElegirVehiculo({ area, onElegir }) {
                     </span>
                     <span className="block text-[11px] text-slate-500 font-mono truncate">{v.noInventario}</span>
                     {ocupado && (
-                      <span className="block mt-1 text-[11px] font-medium text-amber-700">{motivoBloqueo(v)}</span>
+                      <span className="block mt-1 text-[11px] font-medium text-amber-900">{motivoBloqueo(v)}</span>
                     )}
                   </span>
                   {v.en_taller ? (
@@ -424,7 +424,7 @@ function Cargando() {
 
 function Etiqueta({ children }) {
   return (
-    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0">
+    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 shrink-0">
       {children}
     </span>
   );

@@ -38,7 +38,7 @@ const VACIO = {
 // Prioridad según cuánto lleva esperando una solicitud pendiente
 const PRIORIDADES = [
   { valor: "alta", label: "Alta", desde: 3, chip: "bg-red-100 text-red-700", borde: "border-l-red-500", punto: "bg-red-500" },
-  { valor: "media", label: "Media", desde: 1, chip: "bg-amber-100 text-amber-700", borde: "border-l-amber-500", punto: "bg-amber-500" },
+  { valor: "media", label: "Media", desde: 1, chip: "bg-amber-100 text-amber-900", borde: "border-l-amber-500", punto: "bg-amber-500" },
   { valor: "baja", label: "Reciente", desde: 0, chip: "bg-slate-100 text-slate-600", borde: "border-l-slate-200", punto: "bg-slate-300" },
 ];
 
@@ -260,7 +260,7 @@ export default function PeticionesAreas() {
                 {p.estado === "pendiente" && esMecanico && (
                   <>
                     {p.vehiculo?.estado === "mantenimiento" && (
-                      <span className="mr-auto text-xs font-medium text-amber-700">La unidad ya está en el taller</span>
+                      <span className="mr-auto text-xs font-medium text-amber-900">La unidad ya está en el taller</span>
                     )}
                     <Boton
                       variante="secundario"

@@ -16,7 +16,7 @@ export default function KpiCard({
   const isPositive = trend && !String(trend).startsWith("-");
 
   const statusColorMap = {
-    warning: { dot: "bg-amber-500", text: "text-amber-700" },
+    warning: { dot: "bg-amber-500", text: "text-amber-900" },
     info:    { dot: "bg-blue-500",  text: "text-blue-700" },
     success: { dot: "bg-emerald-500", text: "text-emerald-700" },
     danger:  { dot: "bg-red-500",   text: "text-red-700" },
