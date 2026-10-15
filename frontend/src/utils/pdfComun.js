@@ -1,12 +1,11 @@
 // src/utils/pdfComun.js
 // Piezas comunes de los PDF (formatos y reporte de mantenimiento):
-// encabezado con los logotipos, firmas, pie y formatos de número/fecha.
+// logotipos con la línea amarilla, pie, carga de imágenes y formatos de número/fecha.
 
-export const GUINDA = [159, 34, 65];
 export const TINTA = [30, 41, 59];
 export const GRIS = [100, 116, 139];
-export const LINEA = [226, 232, 240];
 export const MARGEN = 15;
+export const AMARILLO = [242, 218, 150]; // amarillo crema: línea bajo los logotipos de todos los PDF
 
 const LOGOTIPO_MUNICIPAL = encodeURI("/Logotipo municipal de Atlacomulco.png");
 
@@ -38,7 +37,8 @@ export async function cargarImagen(src) {
   }
 }
 
-// Logotipo municipal a la izquierda y logo de Atlacomulco a la derecha
+// Logotipo municipal a la izquierda, logo de Atlacomulco a la derecha y,
+// debajo, la línea amarilla que comparten todos los formatos y el reporte
 export async function logos(doc) {
   const ancho = doc.internal.pageSize.getWidth();
   const [municipal, atlacomulco] = await Promise.all([
@@ -54,33 +54,9 @@ export async function logos(doc) {
     const w = altoLogo * atlacomulco.ratio;
     doc.addImage(atlacomulco.dataUrl, "PNG", ancho - MARGEN - w, 10, w, altoLogo);
   }
-}
-
-/**
- * Logotipos, línea guinda, título y folio. Devuelve la "y" donde sigue el contenido.
- */
-export async function encabezado(doc, { titulo, folio = "", subtitulo = "Coordinación de Parque Vehicular · Atlacomulco" }) {
-  const ancho = doc.internal.pageSize.getWidth();
-  await logos(doc);
-
-  const y = 36;
-  doc.setDrawColor(...GUINDA);
+  doc.setDrawColor(...AMARILLO);
   doc.setLineWidth(0.8);
-  doc.line(MARGEN, y - 4, ancho - MARGEN, y - 4);
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.setTextColor(...TINTA);
-  doc.text(titulo, MARGEN, y + 2);
-  doc.setFontSize(13);
-  doc.setTextColor(...GUINDA);
-  doc.text(folio, ancho - MARGEN, y + 2, { align: "right" });
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...GRIS);
-  doc.text(subtitulo, MARGEN, y + 8);
-  return y + 16;
+  doc.line(MARGEN, 30, ancho - MARGEN, 30);
 }
 
 // Pie en todas las hojas
@@ -106,31 +82,6 @@ export function pie(doc) {
       ancho - MARGEN, alto - 5.5, { align: "right" }
     );
   }
-}
-
-export function bloqueFirma(doc, { centro, y, anchoFirma, altoFirma, titulo, firma, nombre, leyenda }) {
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(...GUINDA);
-  doc.text(titulo, centro, y - 3, { align: "center" });
-  if (firma) {
-    try {
-      doc.addImage(firma, "PNG", centro - anchoFirma / 2, y, anchoFirma, altoFirma);
-    } catch {
-      // firma dañada: se deja la línea en blanco
-    }
-  }
-  const linea = y + altoFirma + 2;
-  doc.setDrawColor(...TINTA);
-  doc.setLineWidth(0.3);
-  doc.line(centro - anchoFirma / 2 - 4, linea, centro + anchoFirma / 2 + 4, linea);
-  doc.setFontSize(10);
-  doc.setTextColor(...TINTA);
-  doc.text(nombre || "", centro, linea + 5, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(...GRIS);
-  doc.text(doc.splitTextToSize(leyenda, anchoFirma + 8), centro, linea + 10, { align: "center" });
 }
 
 // El logotipo municipal trae un fondo gris con figuras: se vuelve transparente

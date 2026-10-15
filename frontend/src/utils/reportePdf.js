@@ -1,7 +1,7 @@
 // src/utils/reportePdf.js
 // Genera y descarga el PDF del reporte de mantenimiento. Pensado para
 // imprimirse en blanco y negro: texto negro, grises para fondos y líneas,
-// tablas con filetes (sin rellenos de color) y gráficas dibujadas en el PDF.
+// tablas con filetes (sin rellenos de color) y sin gráficas.
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { TIPO_LABEL } from "../config/solicitudes";
@@ -13,7 +13,6 @@ const TEXTO = [33, 33, 33];
 const GRIS = [100, 100, 100];
 const GRIS_CLARO = [200, 200, 200];
 const FONDO = [238, 238, 238];   // encabezados de tabla y recuadros
-const BARRA = [70, 70, 70];      // barras de las gráficas
 const FUENTE = "helvetica";
 
 /** @param {object} reporte  respuesta de /api/reportes */
@@ -39,9 +38,7 @@ export async function descargarReportePdf(reporte) {
   };
 
   // ─── Encabezado ───
-  await logos(doc);
-  linea(MARGEN, 30, der, 30, 0.6);
-  linea(MARGEN, 31, der, 31, 0.2);
+  await logos(doc); // incluye la línea amarilla bajo los logotipos
   texto("MUNICIPIO DE ATLACOMULCO", ancho / 2, 37.5, { negrita: true, tam: 10, alinear: "center" });
   texto("COORDINACIÓN DE PARQUE VEHICULAR", ancho / 2, 42.5, { tam: 9, color: GRIS, alinear: "center" });
   texto("REPORTE DE MANTENIMIENTO VEHICULAR", ancho / 2, 50, { negrita: true, tam: 14, color: NEGRO, alinear: "center" });
@@ -114,50 +111,7 @@ export async function descargarReportePdf(reporte) {
   }
   y += 5;
 
-  // ─── Gráficas de barras (vectoriales, en gris) ───
-  const grafica = (nombre, valores, etiquetas, formato) => {
-    const altoG = 52;
-    salto(altoG + 14);
-    titulo(nombre);
-    const maximo = Math.max(...valores, 0);
-    const tope = maximo > 0 ? escalaBonita(maximo) : 1;
-    const ejeX = MARGEN + 22; // espacio para las cantidades del eje
-    const anchoG = der - ejeX;
-    const base = y + altoG - 7;
-    const altura = altoG - 14;
-
-    // Líneas guía y escala
-    for (let i = 0; i <= 4; i++) {
-      const v = (tope / 4) * i;
-      const yy = base - (altura * i) / 4;
-      linea(ejeX, yy, der, yy, i === 0 ? 0.4 : 0.1, i === 0 ? NEGRO : GRIS_CLARO);
-      texto(formato(v, true), ejeX - 2, yy + 1, { tam: 7, color: GRIS, alinear: "right" });
-    }
-    // Barras con su valor arriba
-    const n = valores.length || 1;
-    const hueco = anchoG / n;
-    const wBarra = Math.min(16, hueco * 0.6);
-    valores.forEach((v, i) => {
-      const h = tope ? (altura * v) / tope : 0;
-      const x = ejeX + hueco * i + (hueco - wBarra) / 2;
-      if (h > 0) {
-        doc.setFillColor(...BARRA);
-        doc.rect(x, base - h, wBarra, h, "F");
-      }
-      if (v > 0) texto(formato(v), x + wBarra / 2, base - h - 1.5, { negrita: true, tam: 7, color: NEGRO, alinear: "center" });
-      texto(etiquetas[i], x + wBarra / 2, base + 4.5, { tam: 7.5, color: TEXTO, alinear: "center" });
-    });
-    y += altoG + 8;
-  };
-
   const meses = reporte.por_mes || [];
-  if (meses.length) {
-    const etiquetas = meses.map((m) => etiquetaMes(m.mes));
-    grafica("Gasto por mes", meses.map((m) => Number(m.gasto) || 0), etiquetas, (v, eje) => monedaCorta(v, eje));
-    grafica("Servicios ingresados por mes", meses.map((m) => Number(m.servicios) || 0), etiquetas, (v) =>
-      Number.isInteger(v) ? String(v) : v.toFixed(1)
-    );
-  }
 
   // ─── Tablas con filetes: encabezado gris claro, renglones separados por líneas finas ───
   const tabla = (nombre, head, body, { columnStyles = {}, total = null } = {}) => {
@@ -275,22 +229,6 @@ export async function descargarReportePdf(reporte) {
 
   const nombre = `reporte-mantenimiento_${periodo.desde}_${periodo.hasta}${periodo.area ? `_${periodo.area.replace(/\s+/g, "-")}` : ""}.pdf`;
   doc.save(nombre);
-}
-
-// Tope "redondo" del eje para que las líneas guía caigan en números cerrados
-function escalaBonita(maximo) {
-  const paso = maximo / 4;
-  const potencia = 10 ** Math.floor(Math.log10(paso));
-  const base = [1, 2, 2.5, 5, 10].find((b) => b * potencia >= paso);
-  return base * potencia * 4;
-}
-
-// $12,500 → "$12.5 mil" en el eje; en las barras, cantidad completa sin centavos
-function monedaCorta(v, eje = false) {
-  if (!eje) return moneda(v, 0);
-  if (v >= 1_000_000) return `$${(v / 1_000_000).toLocaleString("es-MX", { maximumFractionDigits: 1 })} M`;
-  if (v >= 1000) return `$${(v / 1000).toLocaleString("es-MX", { maximumFractionDigits: 1 })} mil`;
-  return moneda(v, 0);
 }
 
 function porcentaje(parte, total) {

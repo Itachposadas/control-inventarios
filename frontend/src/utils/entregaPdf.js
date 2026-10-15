@@ -23,7 +23,7 @@ export async function descargarEntregaPdf(s) {
   const nombre = s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario;
 
   // ─── Encabezado ───
-  await logos(doc);
+  await logos(doc); // incluye la línea amarilla bajo los logotipos
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...NEGRO);
   doc.setFontSize(11);

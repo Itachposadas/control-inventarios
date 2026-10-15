@@ -10,7 +10,6 @@ import { autoTable } from "jspdf-autotable";
 import { MARGEN, pesos, aFecha, cantidad, logos, pie } from "./pdfComun";
 
 const NEGRO = [0, 0, 0];
-const GRIS = [120, 120, 120];
 const SOMBRA = [215, 215, 215]; // encabezados grises como en el papel
 const RENGLONES = 14;
 const FUENTE = "times";
@@ -47,10 +46,7 @@ export async function descargarSolicitudPdf(p, ventana) {
   };
 
   // ─── Encabezado ───
-  await logos(doc);
-  doc.setDrawColor(...GRIS);
-  doc.setLineWidth(0.3);
-  doc.line(MARGEN, 30, der, 30);
+  await logos(doc); // incluye la línea amarilla bajo los logotipos
   texto("MUNICIPIO DE ATLACOMULCO", ancho / 2, 37, { tam: 12, alinear: "center" });
   texto("VALLE DE ALMACÉN DE", ancho / 2, 42.5, { tam: 12, alinear: "center" });
   texto("COMBUSTIBLE Y LUBRICANTES", ancho / 2, 48, { tam: 12, alinear: "center" });

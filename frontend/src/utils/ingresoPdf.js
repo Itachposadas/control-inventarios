@@ -54,10 +54,7 @@ export async function descargarIngresoPdf(s) {
   };
 
   // ─── Encabezado ───
-  await logos(doc);
-  doc.setDrawColor(...GRIS);
-  doc.setLineWidth(0.3);
-  doc.line(MARGEN, 30, der, 30);
+  await logos(doc); // incluye la línea amarilla bajo los logotipos
   const carro = await cargarImagen("/formato-ingreso-carro.png");
   if (carro) {
     const anchoCarro = 42;

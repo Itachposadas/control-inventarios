@@ -55,10 +55,7 @@ export async function descargarDiagnosticoPdf(s) {
   };
 
   // ─── Encabezado ───
-  await logos(doc);
-  doc.setDrawColor(...GRIS);
-  doc.setLineWidth(0.3);
-  doc.line(MARGEN, 30, der, 30);
+  await logos(doc); // incluye la línea amarilla bajo los logotipos
   texto("MUNICIPIO DE ATLACOMULCO", ancho / 2, 37, { tam: 12, alinear: "center" });
   texto("PARQUE VEHICULAR", ancho / 2, 42.5, { tam: 12, alinear: "center" });
   texto("“DICTAMEN”", ancho / 2, 48, { tam: 12, alinear: "center" });

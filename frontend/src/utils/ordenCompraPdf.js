@@ -10,7 +10,6 @@ import { MARGEN, pesos, aFecha, cantidad, logos, pie } from "./pdfComun";
 import { DATOS_CLIENTE, AUTORIZA } from "../config/ordenCompra";
 
 const NEGRO = [0, 0, 0];
-const GRIS = [120, 120, 120];
 const RENGLONES = 15; // renglones de la tabla (en papel son 17; así cabe todo en una hoja)
 const FUENTE = "times";
 
@@ -44,10 +43,7 @@ export async function descargarOrdenCompraPdf(o) {
   };
 
   // ─── Encabezado ───
-  await logos(doc);
-  doc.setDrawColor(...GRIS);
-  doc.setLineWidth(0.3);
-  doc.line(MARGEN, 30, der, 30);
+  await logos(doc); // incluye la línea amarilla bajo los logotipos
   texto("ORDEN DE COMPRA", ancho / 2, 40, { tam: 14, alinear: "center" });
 
   // Fecha (en recuadro), número de orden y hoja, alineados a la derecha
