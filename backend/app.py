@@ -203,8 +203,10 @@ def create_app():
         try:
             db.session.execute(db.text("SELECT 1"))
             return jsonify({"status": "ok", "db": "connected"})
-        except Exception:
-            # No exponemos el detalle del error (puede incluir datos de conexión)
+        except Exception as e:
+            # El detalle va solo al log del servidor (puede incluir datos de conexión)
+            app.logger.error("Sin conexión a la base de datos: %s", e)
+            db.session.rollback()
             return jsonify({
                 "status": "degraded",
                 "db": "disconnected",

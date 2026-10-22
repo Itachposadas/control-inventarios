@@ -41,8 +41,10 @@ class Config:
 
     # MySQL en la nube (Aiven) exige conexión cifrada: DB_SSL_CA es la ruta a su ca.pem
     DB_SSL_CA = os.getenv("DB_SSL_CA")
+    # connect_timeout: si la BD no responde, falla en 10 s en lugar de quedarse colgado
+    SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {"connect_timeout": 10}
     if DB_SSL_CA:
-        SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {"ssl": {"ca": DB_SSL_CA}}
+        SQLALCHEMY_ENGINE_OPTIONS["connect_args"]["ssl"] = {"ca": DB_SSL_CA}
 
     # Direcciones del frontend que pueden llamar a la API, separadas por coma
     CORS_ORIGINS = [
