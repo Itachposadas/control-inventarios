@@ -1,5 +1,6 @@
 // src/pages/dashboards/AdminDashboard.jsx
 import { useEffect, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../config/menus";
 import KpiCard from "../../components/dashboard/KpiCard";
@@ -42,6 +43,14 @@ export default function AdminDashboard() {
       .then(setPorAtender)
       .catch(() => setPorAtender([]));
   }, []);
+
+  // Se actualiza solo con lo que hacen los demás usuarios
+  useAutoActualizar(() =>
+    Promise.all([
+      dashboardApi.stats().then(setStats),
+      ordenesCompraApi.listar({ estado: "enviada" }).then(setPorAtender),
+    ]).catch(() => {})
+  );
 
   // Valores por defecto mientras carga
   const kpis = stats?.kpis || {

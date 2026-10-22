@@ -1,5 +1,6 @@
 // src/components/Topbar.jsx
 import { useEffect, useRef, useState } from "react";
+import { AUTO_ACTUALIZAR_MS } from "../hooks/useAutoActualizar";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ROLE_COLOR, ROLE_LABEL, ROLES, VEHICULOS_BASE } from "../config/roles";
@@ -303,7 +304,8 @@ function Resultado({ icon, titulo, detalle, extra, onClick }) {
 
 /* ═════════════ Notificaciones ═════════════ */
 
-const REFRESCO_MS = 60_000;
+// Mismo ritmo que las pantallas que se actualizan solas (hooks/useAutoActualizar)
+const REFRESCO_MS = AUTO_ACTUALIZAR_MS;
 
 // Último total visto. Vive fuera del componente porque la barra superior se
 // vuelve a montar en cada pantalla; así la campana solo "suena" si de verdad
@@ -320,7 +322,7 @@ function Notificaciones({ role }) {
   const ref = useRef(null);
   useClickFuera(ref, () => setOpen(false));
 
-  // Se actualiza al cambiar de pantalla y cada minuto
+  // Se actualiza al cambiar de pantalla y cada 20 segundos
   useEffect(() => {
     let cancel = false;
     const cargar = () =>

@@ -2,6 +2,7 @@
 // Inicio del mecánico: botones grandes para lo que más hace y, por cada
 // vehículo que tiene en el taller, qué le toca hacer ahora.
 import { useEffect, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
@@ -54,6 +55,9 @@ export default function MecanicoDashboard() {
       .catch((e) => setError(e.message || "No se pudieron cargar tus reparaciones"))
       .finally(() => setLoading(false));
   }, []);
+
+  // Se actualiza solo con lo que hacen los demás usuarios
+  useAutoActualizar(() => solicitudesApi.listar().then(setItems).catch(() => {}));
 
   const activas = items.filter((s) => ACTIVAS.includes(s.estado));
   const nombre = (user?.nombre_completo || user?.username || "").split(" ")[0];

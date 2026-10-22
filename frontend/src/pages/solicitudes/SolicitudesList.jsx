@@ -3,6 +3,7 @@
 //  - /mecanico/reparaciones  (las suyas)
 //  - /mecanico/historial     (las que ya terminó)
 import { useEffect, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import SolicitudesTable from "../../components/solicitudes/SolicitudesTable";
 import { inputClass, Alerta } from "../../components/ui";
@@ -43,6 +44,14 @@ export default function SolicitudesList({
       clearTimeout(timer);
     };
   }, [filters, estadoFijo]);
+
+  // Se actualiza solo con lo que hacen los demás usuarios
+  useAutoActualizar(() =>
+    solicitudesApi
+      .listar({ ...filters, estado: estadoFijo || filters.estado })
+      .then(setItems)
+      .catch(() => {})
+  );
 
   const set = (campo) => (e) => setFilters((f) => ({ ...f, [campo]: e.target.value }));
 

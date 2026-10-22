@@ -3,6 +3,7 @@
 // se anota a qué mecánico se le prestó qué, y al regresar las herramientas
 // se marcan como devueltas (el préstamo pasa al historial).
 import { useEffect, useMemo, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ConfirmModal from "../../components/ConfirmModal";
 import { inputClass, Field, Boton, Alerta, Modal, Insignia } from "../../components/ui";
@@ -86,6 +87,9 @@ function Prestamos({ estado }) {
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estado]);
+
+  // Préstamos y devoluciones de otros mecánicos aparecen sin recargar
+  useAutoActualizar(() => herramientasApi.prestamos({ estado }).then(setItems).catch(() => {}));
 
   // Préstamos donde coincide el mecánico o alguna herramienta (en Prestadas, solo las que siguen fuera)
   const q = normalizar(busqueda.trim());
@@ -635,6 +639,9 @@ function Catalogo() {
   useEffect(() => {
     cargar();
   }, []);
+
+  // Las piezas en uso cambian con los préstamos de otros mecánicos
+  useAutoActualizar(() => herramientasApi.listar().then(setItems).catch(() => {}));
 
   const texto = normalizar(q.trim());
   const filtrados = items.filter(

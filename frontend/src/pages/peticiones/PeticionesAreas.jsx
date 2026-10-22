@@ -8,6 +8,7 @@
 // Las pendientes se ordenan por tiempo de espera: las más antiguas son prioridad.
 // La búsqueda, los filtros y la paginación los resuelve el backend (10 por página).
 import { useCallback, useEffect, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { Boton, Alerta, Modal, Field, TextArea, Paginacion, inputClass } from "../../components/ui";
@@ -106,6 +107,14 @@ export default function PeticionesAreas() {
   }, [estado, pagina, buscar, area, prioridad, orden]);
 
   useEffect(cargar, [cargar]);
+
+  // Las solicitudes nuevas de las áreas aparecen sin recargar la página
+  useAutoActualizar(() =>
+    peticionesApi
+      .pagina({ estado, pagina, q: buscar, area, prioridad, orden })
+      .then(setDatos)
+      .catch(() => {})
+  );
 
   // Cada filtro nuevo empieza en la página 1
   const filtrar = (setter) => (valor) => {

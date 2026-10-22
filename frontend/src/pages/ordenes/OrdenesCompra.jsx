@@ -5,6 +5,7 @@
 // Reparación y su costo es el total de la orden. (La firma de quien autoriza la
 // pone parque vehicular al enviarla.)
 import { useEffect, useMemo, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { Boton, Alerta, Insignia, Modal, Field, TextArea, inputClass } from "../../components/ui";
@@ -45,6 +46,9 @@ export default function OrdenesCompra() {
   };
 
   useEffect(cargar, [estado]);
+
+  // Se actualiza solo con lo que hacen los demás usuarios
+  useAutoActualizar(() => ordenesCompraApi.listar({ estado }).then(setItems).catch(() => {}));
 
   return (
     <DashboardLayout

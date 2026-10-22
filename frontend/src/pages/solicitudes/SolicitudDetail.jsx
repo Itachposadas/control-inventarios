@@ -7,6 +7,7 @@
 //   5. Formato de entrega (con esto queda entregado)
 // El admin reasigna el mecánico, corrige el costo y puede regresar un paso.
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -115,6 +116,24 @@ export default function SolicitudDetail() {
   const dirty = useMemo(
     () => s && form && JSON.stringify(form) !== JSON.stringify(formDesdeSolicitud(s)),
     [s, form]
+  );
+
+  // Avances de otros usuarios (p. ej. la orden de compra atendida) aparecen solos.
+  // Se pausa mientras hay cambios sin guardar o se está guardando, para no
+  // borrar lo que el usuario está escribiendo.
+  const ocupado = !!dirty || saving || !!nota;
+  const ocupadoRef = useRef(ocupado);
+  useEffect(() => {
+    ocupadoRef.current = ocupado;
+  }, [ocupado]);
+  useAutoActualizar(
+    () =>
+      solicitudesApi
+        .obtener(id)
+        // Si empezó a escribir mientras llegaba la respuesta, no se toca el formulario
+        .then((data) => !ocupadoRef.current && cargar(data))
+        .catch(() => {}),
+    { activo: !!s && !ocupado }
   );
 
   if (loading || loadError || !s || !form) {

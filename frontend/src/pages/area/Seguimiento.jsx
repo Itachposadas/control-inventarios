@@ -6,6 +6,7 @@
 // el formato de solicitud con las dos firmas. Cuando la reparación termina (ya
 // tiene la foto final) se avisa que la unidad está lista para recogerse.
 import { useEffect, useMemo, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { useAuth } from "../../context/AuthContext";
@@ -80,6 +81,9 @@ export default function Seguimiento() {
         setLista([]);
       });
   }, []);
+
+  // El área ve el avance de su servicio sin recargar la página
+  useAutoActualizar(() => areaApi.peticiones().then(setLista).catch(() => {}));
 
   const filtradas = useMemo(() => {
     if (!lista) return [];

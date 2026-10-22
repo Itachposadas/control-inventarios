@@ -3,6 +3,7 @@
 // Mecánico: ve las suyas y genera nuevas a partir de un ingreso a taller.
 // Admin: consulta todas.
 import { useEffect, useState } from "react";
+import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { EstadoBadge } from "../../components/solicitudes/Badges";
@@ -45,6 +46,9 @@ export default function OrdenesForaneas() {
       clearTimeout(timer);
     };
   }, [q, entregadas]);
+
+  // Se actualiza solo con lo que hacen los demás usuarios
+  useAutoActualizar(() => foraneasApi.listar({ q, entregadas }).then(setItems).catch(() => {}));
 
   return (
     <DashboardLayout
