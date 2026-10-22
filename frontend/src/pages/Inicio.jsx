@@ -4,8 +4,9 @@
 // (la crea el administrador) y solo ve lo de su área.
 import { useNavigate } from "react-router-dom";
 import {
-  LogIn, KeyRound, ClipboardList, CarFront, ArrowRight, Building2, Sparkles,
+  LogIn, KeyRound, ClipboardList, CarFront, ArrowRight, Building2,
 } from "lucide-react";
+import { MarcaAgua } from "../components/ui";
 
 const PASOS = [
   {
@@ -57,38 +58,36 @@ export default function Inicio() {
 
       {/* ══════════ PORTADA ══════════ */}
       <section id="inicio" className="relative overflow-hidden text-white isolate">
-        {/* Fondo: degradado guinda, retícula de puntos y luces difuminadas */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#3B0B18] via-institucional-dark to-institucional" />
+        {/* Fondo: guinda sólido con sombreado suave y el logotipo municipal como
+            marca de agua (mismo estilo que el panel guinda del login) */}
+        <div className="absolute inset-0 -z-10 bg-institucional" />
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 opacity-[0.18]"
+          className="absolute inset-0 -z-10"
           style={{
-            backgroundImage: "radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-            maskImage: "radial-gradient(ellipse 70% 70% at 50% 40%, black 30%, transparent 75%)",
-            WebkitMaskImage: "radial-gradient(ellipse 70% 70% at 50% 40%, black 30%, transparent 75%)",
+            background:
+              "radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.42) 100%)",
           }}
         />
-        <div aria-hidden className="absolute -top-32 -left-24 w-[28rem] h-[28rem] -z-10 rounded-full bg-rose-400/25 blur-3xl" />
-        <div aria-hidden className="absolute top-10 -right-32 w-[24rem] h-[24rem] -z-10 rounded-full bg-rose-300/15 blur-3xl" />
-        <div aria-hidden className="absolute -bottom-40 right-0 w-[32rem] h-[32rem] -z-10 rounded-full bg-amber-300/20 blur-3xl" />
+        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
+          <MarcaAgua className="bg-white opacity-[0.07] h-[115%] -right-24 -bottom-16 rotate-[-8deg]
+                                sm:h-[130%] sm:right-[4%]" />
+        </div>
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-32 sm:pb-40 text-center">
           <div className="animate-fade-up">
             <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10
-                          backdrop-blur px-3.5 py-1.5 text-xs font-semibold tracking-wide">
-              <Sparkles size={14} className="text-amber-200" />
+                          px-3.5 py-1.5 text-xs font-semibold tracking-wide">
+              <Building2 size={14} className="text-white/80" />
               Gobierno Municipal de Atlacomulco
             </p>
 
             <h1 className="mt-6 text-4xl sm:text-5xl xl:text-6xl font-extrabold leading-[1.05] tracking-tight">
-              Bienvenido al Sistema de{" "}
-              <span className="bg-gradient-to-r from-amber-200 via-rose-100 to-white bg-clip-text text-transparent">
-                Control Vehicular
-              </span>
+              Bienvenido al Sistema de Control Vehicular
             </h1>
+            <div className="mx-auto mt-6 h-1 w-16 rounded-full bg-white/70" />
 
-            <p className="mt-6 text-lg sm:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-6 text-lg sm:text-xl text-white/85 max-w-2xl mx-auto leading-relaxed">
               Acceso exclusivo para el personal autorizado del H. Ayuntamiento de Atlacomulco.
             </p>
 
@@ -143,8 +142,8 @@ export default function Inicio() {
                              shadow-[0_12px_24px_-10px_rgba(159,34,65,0.7)] ring-8 ring-white"
                 >
                   {p.icono}
-                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-amber-400 text-[11px] font-bold
-                                   text-slate-900 flex items-center justify-center ring-2 ring-white">
+                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-800 text-[11px] font-bold
+                                   text-white flex items-center justify-center ring-2 ring-white">
                     {i + 1}
                   </span>
                 </span>
@@ -159,18 +158,16 @@ export default function Inicio() {
       <section className="py-20 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-[2rem] px-6 py-12 sm:px-14 sm:py-16 text-white isolate
-                          bg-gradient-to-br from-institucional-dark via-institucional to-institucional-light">
+                          bg-institucional">
             <div
               aria-hidden
-              className="absolute inset-0 -z-10 opacity-20"
+              className="absolute inset-0 -z-10"
               style={{
-                backgroundImage: "radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)",
-                backgroundSize: "20px 20px",
-                maskImage: "linear-gradient(to left, black, transparent 70%)",
-                WebkitMaskImage: "linear-gradient(to left, black, transparent 70%)",
+                background:
+                  "radial-gradient(120% 120% at 20% 0%, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.4) 100%)",
               }}
             />
-            <div aria-hidden className="absolute -right-16 -bottom-24 w-80 h-80 -z-10 rounded-full bg-amber-300/25 blur-3xl" />
+            <MarcaAgua className="-z-10 bg-white opacity-[0.07] h-[150%] -right-10 -bottom-20 rotate-[-8deg]" />
 
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
               <div className="max-w-xl">
