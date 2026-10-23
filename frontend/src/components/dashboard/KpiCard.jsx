@@ -63,7 +63,7 @@ export default function KpiCard({
             {!trend && status && (
               <>
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusColors.dot}`} />
-                <span className={`truncate ${statusColors.text}`}>{status}</span>
+                <span className={`min-w-0 leading-snug ${statusColors.text}`}>{status}</span>
               </>
             )}
           </div>

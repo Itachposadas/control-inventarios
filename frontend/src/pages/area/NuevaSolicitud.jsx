@@ -188,7 +188,7 @@ function ElegirVehiculo({ area, onElegir }) {
                     <CarFront size={21} />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-semibold text-slate-800 truncate">{v.nombre}</span>
+                    <span className="block text-sm font-semibold text-slate-800 leading-snug line-clamp-2">{v.nombre}</span>
                     <span className="block text-xs text-slate-500 truncate">
                       {[v.marca, v.modelo, v.placas && `Placas ${v.placas}`].filter(Boolean).join(" · ")}
                     </span>

@@ -74,17 +74,19 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
           </svg>
         </button>
 
-        {/* Título + subtítulo (desktop) */}
-        <div className="hidden lg:block min-w-0">
+        {/* Título + subtítulo. Ancho fijo en escritorio para que el buscador y
+            el usuario queden en el mismo lugar en todas las pantallas */}
+        <div className="min-w-0 flex-1 md:flex-none md:w-60 lg:w-72 xl:w-96">
           <h1 className="text-base font-semibold text-slate-800 leading-tight truncate">{title}</h1>
           {subtitle && (
-            <p className="text-xs text-slate-500 leading-tight mt-0.5 truncate">{subtitle}</p>
+            <p className="hidden sm:block text-xs text-slate-500 leading-tight mt-0.5 truncate">{subtitle}</p>
           )}
         </div>
 
-        {/* Buscador: solo el personal del taller. Notificaciones: todos */}
-        <div className="flex-1 max-w-md mx-auto lg:mx-6">
-          {esTaller && <Buscador role={role} />}
+        {/* Buscador: solo el personal del taller (en celular cada pantalla tiene
+            su propio buscador). Notificaciones: todos */}
+        <div className="hidden md:block flex-1 min-w-0">
+          {esTaller && <div className="max-w-md"><Buscador role={role} /></div>}
         </div>
         {role && <Notificaciones role={role} />}
 
@@ -98,8 +100,8 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
                             text-white text-sm font-semibold shrink-0`}>
               {user?.username?.charAt(0).toUpperCase()}
             </div>
-            <div className="hidden sm:block text-left">
-              <p className="text-sm font-semibold text-slate-800 leading-tight">{user?.username}</p>
+            <div className="hidden sm:block text-left w-36">
+              <p className="text-sm font-semibold text-slate-800 leading-tight truncate">{user?.username}</p>
               <p className="text-xs text-slate-500 leading-tight">{roleLabel}</p>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"

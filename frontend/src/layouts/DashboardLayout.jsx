@@ -19,7 +19,7 @@ export default function DashboardLayout({
     if (!item.to) return false;
     const current = location.pathname;
     if (current === item.to) return true;
-    const rootPaths = ["/admin", "/mecanico"];
+    const rootPaths = ["/admin", "/mecanico", "/area"];
     if (rootPaths.includes(item.to)) return false;
     return current.startsWith(item.to + "/");
   };
@@ -108,21 +108,30 @@ export default function DashboardLayout({
                 Sistema
               </p>
               <ul className="space-y-1 px-2">
-                {secondaryMenu.map((item) => (
-                  <li key={item.label}>
-                    <button
-                      onClick={() => item.to && navigate(item.to)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                                 text-sm text-slate-600 hover:bg-slate-100
-                                 hover:text-slate-800 transition text-left"
-                    >
-                      <span className="w-5 h-5 flex items-center justify-center text-slate-500">
-                        {item.icon}
-                      </span>
-                      <span className="flex-1">{item.label}</span>
-                    </button>
-                  </li>
-                ))}
+                {secondaryMenu.map((item) => {
+                  const active = isActive(item);
+                  return (
+                    <li key={item.label}>
+                      <button
+                        onClick={() => {
+                          if (item.to) navigate(item.to);
+                          setSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                                   text-sm transition text-left
+                                   ${active
+                                     ? "bg-slate-100 text-slate-900 font-semibold"
+                                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-800"}`}
+                      >
+                        <span className={`w-5 h-5 flex items-center justify-center
+                                          ${active ? "text-institucional" : "text-slate-500"}`}>
+                          {item.icon}
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </>
           )}

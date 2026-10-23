@@ -11,7 +11,6 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { MoreVertical } from "lucide-react";
 import { INSTITUCIONAL } from "../../config/colors";
 
 ChartJS.register(
@@ -53,7 +52,9 @@ export default function LineChartCard({ data = [], sinAnio = 0 }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 400 },
+    // Sin animación: la de entrada se quedaba a medias y amontonaba los
+    // puntos a la izquierda de la gráfica
+    animation: false,
     plugins: {
       legend: { display: false },
       tooltip: { backgroundColor: "#1e293b", padding: 10, cornerRadius: 8 },
@@ -74,18 +75,13 @@ export default function LineChartCard({ data = [], sinAnio = 0 }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200
                     shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-      <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800">
-            Vehículos por año (modelo)
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Distribución del parque vehicular por año
-          </p>
-        </div>
-        <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
-          <MoreVertical size={16} />
-        </button>
+      <div className="px-5 py-4 border-b border-slate-100">
+        <h3 className="text-sm font-semibold text-slate-800">
+          Vehículos por año (modelo)
+        </h3>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Distribución del parque vehicular por año
+        </p>
       </div>
 
       <div className="p-5">

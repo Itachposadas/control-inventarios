@@ -7,13 +7,15 @@ export default function FiltrosVehiculos({
   onClear,
   total = 0,
   areasFromApi = [],
+  accion = null, // botón opcional a la derecha de los filtros (ej. "Nuevo vehículo")
 }) {
   const hasFilters = filters.q || filters.area || filters.estado;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200
                     shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+      <div className="flex flex-col md:flex-row gap-3">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3">
         {/* Buscador */}
         <div className="md:col-span-6">
           <div className="relative">
@@ -70,6 +72,8 @@ export default function FiltrosVehiculos({
             <option value="baja">Baja</option>
           </select>
         </div>
+      </div>
+      {accion}
       </div>
 
       <div className="mt-3 flex items-center justify-between flex-wrap gap-2">

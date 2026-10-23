@@ -12,19 +12,23 @@ export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) 
   return (
     <button
       onClick={onClick}
-      className="text-left bg-white rounded-2xl border border-slate-200
+      className="text-left flex flex-col bg-white rounded-2xl border border-slate-200
                  shadow-[0_1px_3px_rgba(15,23,42,0.04)]
                  hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]
                  hover:border-institucional/30 hover:-translate-y-0.5
                  transition-all duration-200 overflow-hidden group"
     >
-      {/* Encabezado */}
-      <div className="px-5 pt-4 pb-3 border-b border-slate-100 flex items-start justify-between gap-2">
+      {/* Encabezado (crece para que el área y el estado queden alineados entre tarjetas) */}
+      <div className="flex-1 px-5 pt-4 pb-3 border-b border-slate-100 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-xs text-slate-500 font-mono truncate">
             {vehiculo.noInventario}
           </p>
-          <p className="mt-1 text-base font-bold text-slate-800 leading-tight truncate">
+          {/* Hasta dos renglones */}
+          <p
+            className="mt-1 text-base font-bold text-slate-800 leading-tight line-clamp-2"
+            title={vehiculo.numeroEconomico || vehiculo.unidad || undefined}
+          >
             {vehiculo.numeroEconomico || vehiculo.unidad || "Sin unidad"}
           </p>
           <p className="text-xs text-slate-500 truncate mt-0.5">

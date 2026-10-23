@@ -28,7 +28,7 @@ const BarrasPorMes = forwardRef(function BarrasPorMes({ labels, values, formato 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 300 },
+    animation: false,
     plugins: {
       legend: { display: false },
       tooltip: {

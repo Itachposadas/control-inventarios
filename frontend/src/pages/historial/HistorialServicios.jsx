@@ -97,7 +97,7 @@ export default function HistorialServicios() {
       menu={menu}
       secondaryMenu={secondaryMenu}
       title="Historial de servicios"
-      subtitle="Expediente de mantenimiento de las unidades que han tenido servicio"
+      subtitle="Expediente de mantenimiento de cada unidad"
     >
       {error && <Alerta className="mb-4">{error}</Alerta>}
 

@@ -14,7 +14,10 @@ import {
   CarFront, Loader2, Plus,
 } from "lucide-react";
 
-import { Boton, Alerta } from "../../../components/ui";
+import { Boton, Alerta, Paginacion } from "../../../components/ui";
+
+const POR_PAGINA = 24;
+
 export default function VehiculosList() {
   const navigate = useNavigate();
   const { role } = useAuth();
@@ -27,6 +30,7 @@ export default function VehiculosList() {
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pagina, setPagina] = useState(1);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [vehiculoEditando, setVehiculoEditando] = useState(null);
@@ -51,9 +55,10 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [searchParams]);
 
-  // Cargar vehículos cada vez que cambian los filtros
+  // Cargar vehículos cada vez que cambian los filtros (y volver a la página 1)
   useEffect(() => {
     let cancel = false;
+    setPagina(1);
     setLoading(true);
     setError("");
 
@@ -77,6 +82,14 @@ useEffect(() => {
       clearTimeout(timer);
     };
   }, [filters]);
+
+  // Paginación en pantalla: la lista ya viene completa y filtrada del servidor
+  const paginas = Math.max(1, Math.ceil(vehiculos.length / POR_PAGINA));
+  const paginaActual = Math.min(pagina, paginas);
+  const cambiarPagina = (n) => {
+    setPagina(n);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleNuevo = () => {
     setVehiculoEditando(null);
@@ -107,26 +120,19 @@ useEffect(() => {
       }
     >
       {/* Barra superior: filtros + botón nuevo */}
-      <div className="mb-5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-        <div className="flex-1">
-          <FiltrosVehiculos
-            filters={filters}
-            onChange={setFilters}
-            onClear={() => setFilters({ q: "", area: "", estado: "" })}
-            total={vehiculos.length}
-            areasFromApi={areas}
-          />
-        </div>
-
-        {esAdmin && (
-          <Boton
-            onClick={handleNuevo}
-            icono={<Plus size={16} />}
-            className="shrink-0 self-start sm:self-center"
-          >
-            Nuevo vehículo
-          </Boton>
-        )}
+      <div className="mb-5">
+        <FiltrosVehiculos
+          filters={filters}
+          onChange={setFilters}
+          onClear={() => setFilters({ q: "", area: "", estado: "" })}
+          total={vehiculos.length}
+          areasFromApi={areas}
+          accion={esAdmin && (
+            <Boton onClick={handleNuevo} icono={<Plus size={16} />} className="shrink-0 self-start">
+              Nuevo vehículo
+            </Boton>
+          )}
+        />
       </div>
 
       {error && (
@@ -146,16 +152,26 @@ useEffect(() => {
           </p>
         </div>
       ) : (
-        <div className="stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {vehiculos.map((v) => (
-            <VehiculoCard
-              key={v.id}
-              vehiculo={v}
-              serviciosCount={v.servicios || 0}
-              onClick={() => navigate(`${basePath}/${v.id}`)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {vehiculos.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA).map((v) => (
+              <VehiculoCard
+                key={v.id}
+                vehiculo={v}
+                serviciosCount={v.servicios || 0}
+                onClick={() => navigate(`${basePath}/${v.id}`)}
+              />
+            ))}
+          </div>
+          <Paginacion
+            className="mt-6"
+            pagina={paginaActual}
+            paginas={paginas}
+            total={vehiculos.length}
+            porPagina={POR_PAGINA}
+            onCambiar={cambiarPagina}
+          />
+        </>
       )}
 
       {/* Modal de crear/editar (solo admin) */}

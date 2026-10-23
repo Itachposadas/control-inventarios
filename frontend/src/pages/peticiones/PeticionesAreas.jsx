@@ -145,7 +145,7 @@ export default function PeticionesAreas() {
       menu={menu}
       secondaryMenu={secondaryMenu}
       title="Solicitudes"
-      subtitle="Lo que piden las áreas; se atienden al ingresar la unidad al taller"
+      subtitle="Lo que piden las áreas para sus vehículos"
     >
       <div className="mb-4 inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200">
         {PESTANAS.map((t) => (
@@ -161,11 +161,12 @@ export default function PeticionesAreas() {
         ))}
       </div>
 
-      {/* Filtros */}
+      {/* Filtros: prioridad en un renglón y búsqueda debajo (juntos no caben y
+          los botones de prioridad se apilaban) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 mb-5
-                      flex flex-col lg:flex-row lg:items-center gap-3">
+                      flex flex-col gap-3">
         {pendientes && (
-          <div className="flex flex-wrap gap-1.5 flex-1" role="group" aria-label="Prioridad">
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Prioridad">
             <Chip activo={!prioridad} onClick={() => filtrar(setPrioridad)("")}>
               Todas <Cuenta>{conteo.todas || 0}</Cuenta>
             </Chip>
@@ -181,8 +182,8 @@ export default function PeticionesAreas() {
             ))}
           </div>
         )}
-        <div className={`flex flex-col sm:flex-row gap-3 ${pendientes ? "" : "flex-1"}`}>
-          <div className="relative sm:w-64">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
             <input
               value={q}
@@ -403,10 +404,10 @@ function Solicitante({ p }) {
           <UserRound size={16} className="text-slate-500 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-[10px] uppercase tracking-wide text-slate-500">{f.titulo}</p>
-            <p className="text-sm font-semibold text-slate-800 truncate">{f.nombre || "—"}</p>
+            <p className="text-sm font-semibold text-slate-800 leading-snug break-words">{f.nombre || "—"}</p>
           </div>
           {f.firma && (
-            <img src={f.firma} alt={`Firma de ${f.nombre || f.titulo}`} className="h-10 w-auto max-w-[45%] object-contain shrink-0" />
+            <img src={f.firma} alt={`Firma de ${f.nombre || f.titulo}`} className="h-10 w-auto max-w-[35%] object-contain shrink-0" />
           )}
         </div>
       ))}

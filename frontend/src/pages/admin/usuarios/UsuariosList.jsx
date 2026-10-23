@@ -11,7 +11,10 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { Boton, Alerta } from "../../../components/ui";
+import { Boton, Alerta, Paginacion } from "../../../components/ui";
+
+const POR_PAGINA = 20;
+
 const ROLE_CONFIG = {
   admin:    { label: "Administrador", color: "bg-institucional/10 text-institucional", icon: <Shield size={14} /> },
   // Rol retirado; solo para mostrar cuentas antiguas
@@ -27,6 +30,7 @@ export default function UsuariosList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filters, setFilters] = useState({ q: "", role: "", activo: "" });
+  const [pagina, setPagina] = useState(1);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
@@ -46,10 +50,16 @@ export default function UsuariosList() {
   };
 
   useEffect(() => {
+    setPagina(1);
     const timer = setTimeout(cargarUsuarios, 250);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
+
+  // Paginación en pantalla: la lista ya viene completa y filtrada del servidor
+  const paginas = Math.max(1, Math.ceil(usuarios.length / POR_PAGINA));
+  const paginaActual = Math.min(pagina, paginas);
+  const visibles = usuarios.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA);
 
   const handleNuevo = () => {
     setUsuarioEditando(null);
@@ -148,7 +158,7 @@ useEffect(() => {
             </select>
 
             <Boton onClick={handleNuevo} icono={<Plus size={16} />} aria-label="Nuevo usuario" className="shrink-0">
-              <span className="hidden sm:inline">Nuevo</span>
+              <span className="hidden sm:inline">Nuevo usuario</span>
             </Boton>
           </div>
         </div>
@@ -193,22 +203,22 @@ useEffect(() => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
-                  <th className="text-left font-medium px-5 py-3">Usuario</th>
-                  <th className="text-left font-medium px-5 py-3">Email</th>
-                  <th className="text-left font-medium px-5 py-3">Rol</th>
-                  <th className="text-left font-medium px-5 py-3">Estado</th>
-                  <th className="text-right font-medium px-5 py-3">Acciones</th>
+                  <th className="text-left font-medium px-3 sm:px-5 py-3">Usuario</th>
+                  <th className="hidden lg:table-cell text-left font-medium px-5 py-3">Correo</th>
+                  <th className="hidden md:table-cell text-left font-medium px-5 py-3">Rol</th>
+                  <th className="hidden md:table-cell text-left font-medium px-5 py-3">Estado</th>
+                  <th className="text-right font-medium px-3 sm:px-5 py-3">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {usuarios.map((u) => {
+                {visibles.map((u) => {
                   const cfg = ROLE_CONFIG[u.role] || ROLE_CONFIG.mecanico;
                   return (
                     <tr key={u.id} className="hover:bg-slate-50 transition">
-                      <td className="px-5 py-3">
+                      <td className="px-3 sm:px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-institucional
-                                          flex items-center justify-center
+                          <div className="hidden sm:flex w-9 h-9 rounded-full bg-institucional
+                                          items-center justify-center
                                           text-white text-sm font-semibold shrink-0">
                             {u.username.charAt(0).toUpperCase()}
                           </div>
@@ -221,19 +231,32 @@ useEffect(() => {
                                 {u.nombre_completo}
                               </p>
                             )}
+                            {/* En celular el rol y el estado van aquí (sus columnas se ocultan) */}
+                            <p className="md:hidden mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ${cfg.color}`}>
+                                {cfg.icon}
+                                {u.rol_nombre || cfg.label}
+                              </span>
+                              <span className={u.activo ? "text-emerald-700" : "text-slate-500"}>
+                                {u.activo ? "Activo" : "Inactivo"}
+                              </span>
+                            </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-slate-600">{u.email || <span className="text-slate-400">Sin correo</span>}</td>
-                      <td className="px-5 py-3">
+                      <td className="hidden lg:table-cell px-5 py-3 text-slate-600">{u.email || <span className="text-slate-400">—</span>}</td>
+                      <td className="hidden md:table-cell px-5 py-3">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1
                                           rounded-full text-xs font-medium ${cfg.color}`}>
                           {cfg.icon}
                           {u.rol_nombre || cfg.label}
                         </span>
-                        {u.area && <p className="mt-1 text-xs text-slate-500">{u.area}</p>}
+                        {/* El área solo si no es ya el nombre de la cuenta */}
+                        {u.area && u.area !== u.nombre_completo && (
+                          <p className="mt-1 text-xs text-slate-500">{u.area}</p>
+                        )}
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="hidden md:table-cell px-5 py-3">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium
                           ${u.activo ? "text-emerald-700" : "text-slate-500"}`}>
                           <span className={`w-1.5 h-1.5 rounded-full
@@ -247,8 +270,8 @@ useEffect(() => {
                           <span className="block mt-1 text-[11px] text-amber-900">Contraseña temporal</span>
                         )}
                       </td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="px-3 sm:px-5 py-3">
+                        <div className="flex items-center justify-end sm:gap-1">
                           <button
                             onClick={() => navigate(`/admin/usuarios/${u.id}`)}
                             className="p-2 rounded-lg text-slate-500 hover:bg-slate-100
@@ -283,6 +306,14 @@ useEffect(() => {
               </tbody>
             </table>
           </div>
+          <Paginacion
+            className="px-5 py-3 border-t border-slate-100"
+            pagina={paginaActual}
+            paginas={paginas}
+            total={usuarios.length}
+            porPagina={POR_PAGINA}
+            onCambiar={setPagina}
+          />
         </div>
       )}
 
