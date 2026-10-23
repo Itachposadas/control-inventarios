@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 
 import Inicio from "./pages/Inicio";
 import Login from "./pages/Login";
+import AvisoPrivacidad from "./pages/AvisoPrivacidad";
 
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import MecanicoDashboard from "./pages/dashboards/MecanicoDashboard";
@@ -78,6 +79,7 @@ export default function App() {
           {/* Inicio: explica cómo pedir servicio; cada área entra con su cuenta */}
           <Route path="/" element={<Inicio />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/aviso-privacidad" element={<AvisoPrivacidad />} />
           {/* Contraseña temporal o débil: se cambia antes de entrar al sistema */}
           <Route path="/cambiar-password" element={<CambiarPassword />} />
 

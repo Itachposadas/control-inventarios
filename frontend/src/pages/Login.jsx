@@ -77,7 +77,8 @@ export default function Login() {
           </div>
 
           <div className="absolute bottom-6 right-14 xl:right-16 text-xs text-white/60">
-            © {new Date().getFullYear()} · Todos los derechos reservados
+            © {new Date().getFullYear()} H. Ayuntamiento de Atlacomulco ·{" "}
+            <Link to="/aviso-privacidad" className="hover:text-white hover:underline">Aviso de privacidad</Link>
           </div>
         </div>
       </aside>
@@ -252,7 +253,8 @@ export default function Login() {
 
           {/* Pie (solo celular; en escritorio está en el panel guinda) */}
           <p className="lg:hidden mt-8 text-center text-[11px] text-slate-500">
-            © {new Date().getFullYear()} · Coordinación de Parque Vehicular · Atlacomulco
+            © {new Date().getFullYear()} H. Ayuntamiento de Atlacomulco ·{" "}
+            <Link to="/aviso-privacidad" className="text-institucional hover:underline">Aviso de privacidad</Link>
           </p>
         </div>
       </main>
