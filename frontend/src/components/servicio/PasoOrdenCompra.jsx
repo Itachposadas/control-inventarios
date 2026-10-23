@@ -12,7 +12,7 @@ import { TablaRefacciones, BotonFormato } from "./PasoDiagnostico";
 import { solicitudesApi } from "../../api/solicitudes";
 import { ESTADO_ORDEN, ordenesCompraApi } from "../../api/ordenesCompra";
 import { AUTORIZA } from "../../config/ordenCompra";
-import { descargarOrdenCompraPdf } from "../../utils/ordenCompraPdf";
+import { descargarOrdenCompraPdf } from "../../utils/pdfs";
 import { formatFecha, formatMoneda } from "../../config/solicitudes";
 import { FileDown, Send, Loader2, Clock } from "lucide-react";
 
@@ -256,7 +256,7 @@ function Resumen({ o, esAdmin }) {
         {o.estado === "atendida" && esAdmin && (
           <p className="text-sm text-right text-slate-600">
             Subtotal {formatMoneda(o.subtotal)} · IVA {formatMoneda(o.iva)} ·{" "}
-            <span className="font-bold text-slate-800">Total {formatMoneda(o.total)}</span>
+            <span className="font-semibold text-slate-800">Total {formatMoneda(o.total)}</span>
           </p>
         )}
       </div>

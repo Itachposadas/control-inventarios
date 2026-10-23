@@ -13,7 +13,7 @@ import { useAuth } from "../../context/AuthContext";
 import { areaApi } from "../../api/area";
 import { AREA_MENU, AREA_SECONDARY_MENU } from "../../config/menus";
 import { Alerta, Boton, Insignia } from "../../components/ui";
-import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
+import { descargarSolicitudPdf } from "../../utils/pdfs";
 import {
   Search, Loader2, CarFront, Check, XCircle, AlertCircle, FileText, FileDown, Printer, CheckCircle2,
 } from "lucide-react";
@@ -172,7 +172,7 @@ function Tarjeta({ p }) {
       <div className="p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-mono font-bold text-institucional tracking-wide">{p.folio}</p>
+            <p className="font-mono font-semibold text-institucional tracking-wide">{p.folio}</p>
             <p className="text-xs text-slate-500">
               Enviada el {fechaHora(p.fecha)}
               {p.solicitante_nombre && <> · Solicitó: {p.solicitante_nombre}</>}
@@ -291,13 +291,13 @@ function Avance({ etapa }) {
               />
             )}
             <span
-              className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold
+              className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold
                 ${hecha ? "bg-emerald-600 text-white" : actual ? "bg-institucional text-white ring-4 ring-institucional/15" : "bg-slate-200 text-slate-500"}`}
             >
               {hecha ? <Check size={13} strokeWidth={3} /> : i + 1}
             </span>
             <span
-              className={`mt-1.5 text-[10px] sm:text-xs leading-tight
+              className={`mt-1.5 text-[11px] sm:text-xs leading-tight
                 ${actual ? "font-semibold text-slate-800" : hecha ? "text-slate-600" : "text-slate-500"}`}
             >
               {nombre}

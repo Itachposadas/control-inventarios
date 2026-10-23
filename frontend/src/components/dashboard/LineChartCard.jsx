@@ -76,9 +76,9 @@ export default function LineChartCard({ data = [], sinAnio = 0 }) {
     <div className="bg-white rounded-2xl border border-slate-200
                     shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
       <div className="px-5 py-4 border-b border-slate-100">
-        <h3 className="text-sm font-semibold text-slate-800">
+        <h2 className="text-base font-semibold text-slate-900">
           Vehículos por año (modelo)
-        </h3>
+        </h2>
         <p className="text-xs text-slate-500 mt-0.5">
           Distribución del parque vehicular por año
         </p>
@@ -99,15 +99,15 @@ export default function LineChartCard({ data = [], sinAnio = 0 }) {
                         grid grid-cols-3 gap-3 text-center">
           <div>
             <p className="text-xs text-slate-500">Total vehículos</p>
-            <p className="mt-1 text-lg font-bold text-slate-800">{total}</p>
+            <p className="mt-1 text-lg font-semibold text-slate-800">{total}</p>
           </div>
           <div className="border-x border-slate-100">
             <p className="text-xs text-slate-500">Promedio por año</p>
-            <p className="mt-1 text-lg font-bold text-slate-800">{promedio}</p>
+            <p className="mt-1 text-lg font-semibold text-slate-800">{promedio}</p>
           </div>
           <div>
             <p className="text-xs text-slate-500">Año más común</p>
-            <p className="mt-1 text-lg font-bold text-slate-800">{anioMax}</p>
+            <p className="mt-1 text-lg font-semibold text-slate-800">{anioMax}</p>
           </div>
         </div>
 

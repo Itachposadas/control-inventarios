@@ -1,48 +1,41 @@
 // src/components/dashboard/ActivityFeed.jsx
+// Últimos movimientos de los servicios. Lo que pasó va primero (acción y
+// folio); quién lo hizo y cuándo, debajo y en gris.
+//   items = [{ id, accion, folio, usuario, fecha, onClick }]
 export default function ActivityFeed({
   title = "Actividad reciente",
-  subtitle = "Últimos movimientos del sistema",
   items = [],
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200
-                    shadow-[0_1px_3px_rgba(15,23,42,0.04)] h-full">
+    <section className="bg-white rounded-2xl border border-slate-200">
       <div className="px-5 py-4 border-b border-slate-100">
-        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-        {subtitle && (
-          <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
-        )}
+        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
       </div>
 
-      {items.length === 0 && (
+      {items.length === 0 ? (
         <p className="p-5 text-sm text-slate-500">Sin movimientos todavía</p>
+      ) : (
+        <ul className="py-2">
+          {items.map((item) => (
+            <li key={item.id}>
+              <button
+                onClick={item.onClick}
+                disabled={!item.onClick}
+                className="w-full text-left px-5 py-2.5 hover:bg-slate-50 transition disabled:hover:bg-transparent
+                           focus-visible:outline-none focus-visible:bg-slate-50"
+              >
+                <span className="block text-sm text-slate-800 leading-snug">
+                  {item.accion}
+                  {item.folio && <span className="text-slate-500"> · <span className="font-mono text-[13px] whitespace-nowrap">{item.folio}</span></span>}
+                </span>
+                <span className="mt-0.5 block text-xs text-slate-500">
+                  {[item.fecha, item.usuario].filter(Boolean).join(" · ")}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
-
-      <ul className="p-5 space-y-4">
-        {items.map((item, i) => (
-          <li key={i} className="flex gap-3 relative">
-            {/* Línea vertical del timeline */}
-            {i < items.length - 1 && (
-              <span className="absolute left-[7px] top-5 bottom-[-16px] w-px bg-slate-200" />
-            )}
-
-            {/* Dot */}
-            <span
-              className={`relative z-10 mt-1.5 w-3.5 h-3.5 rounded-full
-                          border-2 border-white shadow-sm shrink-0
-                          ${item.dot || "bg-institucional"}`}
-            />
-
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-800 leading-tight">
-                {item.user}
-              </p>
-              <p className="text-xs text-slate-500 mt-1">{item.action}</p>
-              <p className="text-[11px] text-slate-500 mt-1">{item.time}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    </section>
   );
 }

@@ -16,7 +16,7 @@ export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) 
                  shadow-[0_1px_3px_rgba(15,23,42,0.04)]
                  hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]
                  hover:border-institucional/30 hover:-translate-y-0.5
-                 transition-all duration-200 overflow-hidden group"
+                 transition-[box-shadow,border-color,transform,scale] duration-200 ease-salida overflow-hidden group"
     >
       {/* Encabezado (crece para que el área y el estado queden alineados entre tarjetas) */}
       <div className="flex-1 px-5 pt-4 pb-3 border-b border-slate-100 flex items-start justify-between gap-2">
@@ -26,7 +26,7 @@ export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) 
           </p>
           {/* Hasta dos renglones */}
           <p
-            className="mt-1 text-base font-bold text-slate-800 leading-tight line-clamp-2"
+            className="mt-1 text-base font-semibold text-slate-800 leading-tight line-clamp-2"
             title={vehiculo.numeroEconomico || vehiculo.unidad || undefined}
           >
             {vehiculo.numeroEconomico || vehiculo.unidad || "Sin unidad"}
@@ -46,7 +46,7 @@ export default function VehiculoCard({ vehiculo, serviciosCount = 0, onClick }) 
       <div className="px-5 py-4 space-y-2.5">
         {/* Área */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+          <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
             Área
           </span>
           <span className="text-xs font-medium text-slate-700 truncate">

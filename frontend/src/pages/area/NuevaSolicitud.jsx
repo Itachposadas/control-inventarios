@@ -93,7 +93,7 @@ function Pasos({ actual }) {
               ${activo ? "border-institucional" : "border-transparent"}`}
           >
             <span
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition
                 ${hecho ? "bg-emerald-600 text-white" : activo ? "bg-institucional text-white" : "bg-slate-200 text-slate-500"}`}
             >
               {hecho ? <CheckCircle2 size={15} /> : i + 1}
@@ -354,10 +354,10 @@ function Enviada({ datos, onOtra }) {
   const navigate = useNavigate();
   return (
     <div className="px-5 py-12 sm:py-16 text-center animate-fade-in">
-      <span className="mx-auto w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+      <span className="mx-auto w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center animate-check">
         <CheckCircle2 size={34} />
       </span>
-      <h2 className="mt-5 text-2xl font-bold text-slate-800">¡Solicitud enviada!</h2>
+      <h2 className="mt-5 text-2xl font-semibold text-slate-800">¡Solicitud enviada!</h2>
       <p className="mt-2 text-sm text-slate-500">
         El taller ya tiene tu solicitud para{" "}
         <span className="font-semibold text-slate-700">{datos.vehiculo.nombre}</span>
@@ -366,7 +366,7 @@ function Enviada({ datos, onOtra }) {
 
       <div className="mt-6 inline-block rounded-xl border-2 border-dashed border-institucional/30 bg-institucional/[0.03] px-8 py-4">
         <p className="text-xs font-medium text-slate-500">Tu folio</p>
-        <p className="mt-0.5 text-2xl sm:text-3xl font-bold font-mono text-institucional tracking-wide">{datos.folio}</p>
+        <p className="mt-0.5 text-2xl sm:text-3xl font-semibold font-mono text-institucional tracking-wide">{datos.folio}</p>
       </div>
       <p className="mt-3 text-xs text-slate-500">
         Con este folio puedes consultar el avance en “Seguimiento”.

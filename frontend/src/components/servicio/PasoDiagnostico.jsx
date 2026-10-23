@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { Section, Field, TextArea, Boton, Alerta } from "../ui";
 import { solicitudesApi } from "../../api/solicitudes";
-import { descargarDiagnosticoPdf } from "../../utils/diagnosticoPdf";
+import { descargarDiagnosticoPdf } from "../../utils/pdfs";
 import { ArrowRight, FileDown, Loader2 } from "lucide-react";
 
 const cantidad = (n) => Number(n).toLocaleString("es-MX", { maximumFractionDigits: 2 });
@@ -148,7 +148,7 @@ export function TablaRefacciones({ refacciones, conPrecios = false }) {
     <div className="rounded-xl border border-slate-200 overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-wide">
+          <tr className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
             <th className="text-right font-medium px-3 py-2">Cant.</th>
             <th className="text-left font-medium px-3 py-2">Unidad</th>
             <th className="text-left font-medium px-3 py-2 w-full">Descripción</th>

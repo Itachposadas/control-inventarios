@@ -1,5 +1,5 @@
 // src/components/ConfirmModal.jsx
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { Modal, Boton } from "./ui";
 
 // tono "peligro" (eliminar, rojo) o "confirmar" (paso importante, color institucional)
@@ -33,7 +33,8 @@ export default function ConfirmModal({
   return (
     <Modal ancho="max-w-md">
       <div className="p-6 text-center">
-        <div className={`mx-auto w-14 h-14 rounded-full ${t.fondo} flex items-center justify-center`}>
+        {/* El ícono entra un instante después de la ventana */}
+        <div className={`mx-auto w-14 h-14 rounded-full ${t.fondo} flex items-center justify-center animate-check`}>
           {t.icono}
         </div>
         <h3 className="mt-4 text-lg font-semibold text-slate-800">{title}</h3>
@@ -44,7 +45,12 @@ export default function ConfirmModal({
         <Boton variante="fantasma" onClick={onClose} disabled={loading}>
           Cancelar
         </Boton>
-        <Boton variante={t.boton} onClick={onConfirm} disabled={loading}>
+        <Boton
+          variante={t.boton}
+          onClick={onConfirm}
+          disabled={loading}
+          icono={loading ? <Loader2 size={16} className="animate-spin" /> : null}
+        >
           {loading ? loadingLabel : confirmLabel}
         </Boton>
       </div>

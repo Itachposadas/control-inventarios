@@ -36,7 +36,7 @@ export default function SolicitudesTable({
           >
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2 flex-wrap">
-                <span className="text-base font-bold text-slate-800 truncate">{nombre(s)}</span>
+                <span className="text-base font-semibold text-slate-800 truncate">{nombre(s)}</span>
                 <EstadoBadge estado={s.estado} />
               </span>
               <span className="block text-xs text-slate-500 mt-1">

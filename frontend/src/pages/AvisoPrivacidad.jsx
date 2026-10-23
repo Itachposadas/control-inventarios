@@ -32,8 +32,7 @@ export default function AvisoPrivacidad() {
           </div>
 
           <div className="mt-8 bg-white rounded-lg border border-slate-200 p-6 sm:p-10">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-institucional">Protección de datos personales</p>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">Aviso de privacidad integral</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Aviso de privacidad integral</h1>
             <p className="mt-2 text-sm text-slate-500">Sistema de Control de Parque Vehicular · Última actualización: {ACTUALIZACION}</p>
 
             <div className="mt-8 space-y-8 text-[15px] leading-relaxed text-slate-700">
@@ -120,7 +119,7 @@ export default function AvisoPrivacidad() {
 function Seccion({ titulo, children }) {
   return (
     <section>
-      <h2 className="text-lg font-bold text-slate-900">{titulo}</h2>
+      <h2 className="text-lg font-semibold text-slate-900">{titulo}</h2>
       <div className="mt-2">{children}</div>
     </section>
   );

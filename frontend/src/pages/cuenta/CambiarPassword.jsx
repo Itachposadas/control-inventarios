@@ -43,7 +43,7 @@ export default function CambiarPassword() {
               <KeyRound size={22} />
             </span>
           </div>
-          <h1 className="text-xl font-bold text-slate-800">Crea una contraseña nueva</h1>
+          <h1 className="text-xl font-semibold text-slate-800">Crea una contraseña nueva</h1>
           <p className="mt-1.5 text-sm text-slate-600">
             Hola, <span className="font-semibold">{user.nombre_completo || user.username}</span>. Tu contraseña
             actual es temporal o ya no cumple los requisitos de seguridad. Cámbiala para continuar.

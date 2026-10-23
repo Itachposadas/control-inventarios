@@ -18,6 +18,7 @@ export default function Modal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 animate-fade-in"
+      // El fondo se oscurece mientras la caja crece desde el centro (las ventanas no se anclan a un botón)
       onClick={cerrarAlTocarFondo ? onClose : undefined}
     >
       <div
@@ -25,7 +26,7 @@ export default function Modal({
         aria-modal="true"
         aria-label={typeof titulo === "string" ? titulo : undefined}
         onClick={(e) => e.stopPropagation()}
-        className={`animate-pop bg-white rounded-2xl shadow-xl w-full ${ancho} max-h-[90vh] overflow-y-auto ${className}`}
+        className={`animate-modal bg-white rounded-2xl shadow-xl w-full ${ancho} max-h-[90vh] overflow-y-auto ${className}`}
       >
         {titulo && (
           <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-3 sticky top-0 bg-white z-10">

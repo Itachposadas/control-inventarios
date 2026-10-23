@@ -49,7 +49,7 @@ export default function FotosEvidencia({ solicitud, puedeSubir, onActualizada = 
     <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
       <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-800">Evidencia fotográfica</h3>
+          <h2 className="text-base font-semibold text-slate-900">Evidencia fotográfica</h2>
           <p className="text-xs text-slate-500 mt-0.5">Las 3 fotos son obligatorias para cerrar el servicio</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">

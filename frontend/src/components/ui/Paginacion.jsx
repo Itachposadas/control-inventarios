@@ -19,7 +19,7 @@ export default function Paginacion({ pagina, paginas, total, porPagina, onCambia
   if (!total) return null;
   const desde = (pagina - 1) * porPagina + 1;
   const hasta = Math.min(total, pagina * porPagina);
-  const boton = "min-w-[34px] h-[34px] px-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed";
+  const boton = "tactil min-w-[34px] h-[34px] px-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed";
 
   return (
     <nav

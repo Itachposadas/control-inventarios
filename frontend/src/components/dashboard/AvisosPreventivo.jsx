@@ -30,7 +30,7 @@ export default function AvisosPreventivo({ historial }) {
     <div className="mb-5 bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
       <div className="px-5 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-800">Mantenimiento preventivo</h3>
+          <h2 className="text-base font-semibold text-slate-900">Mantenimiento preventivo</h2>
           <p className="text-xs text-slate-500">
             Cada unidad debe revisarse {datos.meses} meses después de su último servicio entregado.
           </p>

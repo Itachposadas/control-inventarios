@@ -12,7 +12,7 @@ import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import Checklist from "../../components/solicitudes/Checklist";
 import { Section, Field, TextArea, inputClass, Boton } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
-import { descargarIngresoPdf } from "../../utils/ingresoPdf";
+import { descargarIngresoPdf } from "../../utils/pdfs";
 import { useAuth } from "../../context/AuthContext";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { CHECKLIST_ITEMS, conceptosSinMarcar } from "../../config/solicitudes";
@@ -141,7 +141,7 @@ export default function FormatoIngreso() {
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <img src="/logo-atlacomulco.png" alt="Municipio de Atlacomulco" className="h-14 w-auto object-contain shrink-0" />
               <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight leading-tight">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-800 tracking-tight leading-tight">
                   FORMATO DE INGRESO A TALLER
                 </h2>
                 <p className="text-sm font-medium text-institucional">

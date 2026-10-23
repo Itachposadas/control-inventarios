@@ -9,7 +9,7 @@ export default function TablaMateriales({ materiales = [] }) {
     <div className="rounded-xl border border-slate-200 overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-wide">
+          <tr className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
             <th className="text-right font-medium px-3 py-2">Cant.</th>
             <th className="text-left font-medium px-3 py-2">Unidad</th>
             <th className="text-left font-medium px-3 py-2 w-full">Concepto</th>

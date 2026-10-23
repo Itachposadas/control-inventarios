@@ -1,61 +1,64 @@
 // src/App.jsx
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ROLES } from "./config/roles";
 import RoleRoute from "./components/RoleRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 
+// Inicio y login cargan de inmediato; las demás pantallas se descargan al abrirlas
+// (una cuenta de área no baja las pantallas del admin ni las gráficas)
 import Inicio from "./pages/Inicio";
 import Login from "./pages/Login";
-import AvisoPrivacidad from "./pages/AvisoPrivacidad";
+const AvisoPrivacidad = lazy(() => import("./pages/AvisoPrivacidad"));
 
-import AdminDashboard from "./pages/dashboards/AdminDashboard";
-import MecanicoDashboard from "./pages/dashboards/MecanicoDashboard";
+const AdminDashboard = lazy(() => import("./pages/dashboards/AdminDashboard"));
+const MecanicoDashboard = lazy(() => import("./pages/dashboards/MecanicoDashboard"));
 
 // Módulo de vehículos (solo admin)
-import VehiculosList from "./pages/admin/vehiculos/VehiculosList";
-import VehiculoDetail from "./pages/admin/vehiculos/VehiculoDetail";
+const VehiculosList = lazy(() => import("./pages/admin/vehiculos/VehiculosList"));
+const VehiculoDetail = lazy(() => import("./pages/admin/vehiculos/VehiculoDetail"));
 
 // Módulo de usuarios (admin)
-import UsuariosList from "./pages/admin/usuarios/UsuariosList";
-import UsuarioDetail from "./pages/admin/usuarios/UsuarioDetail";
+const UsuariosList = lazy(() => import("./pages/admin/usuarios/UsuariosList"));
+const UsuarioDetail = lazy(() => import("./pages/admin/usuarios/UsuarioDetail"));
 
 // Módulo de solicitudes (admin y mecánico)
-import SolicitudesList from "./pages/solicitudes/SolicitudesList";
-import FormatoIngreso from "./pages/solicitudes/FormatoIngreso";
-import SolicitudDetail from "./pages/solicitudes/SolicitudDetail";
-import EvidenciaFotografica from "./pages/solicitudes/EvidenciaFotografica";
+const SolicitudesList = lazy(() => import("./pages/solicitudes/SolicitudesList"));
+const FormatoIngreso = lazy(() => import("./pages/solicitudes/FormatoIngreso"));
+const SolicitudDetail = lazy(() => import("./pages/solicitudes/SolicitudDetail"));
+const EvidenciaFotografica = lazy(() => import("./pages/solicitudes/EvidenciaFotografica"));
 
 // Órdenes de reparación en taller foráneo (mecánico genera, admin consulta)
-import OrdenesForaneas from "./pages/foraneas/OrdenesForaneas";
-import OrdenForanea from "./pages/foraneas/OrdenForanea";
+const OrdenesForaneas = lazy(() => import("./pages/foraneas/OrdenesForaneas"));
+const OrdenForanea = lazy(() => import("./pages/foraneas/OrdenForanea"));
 
 // Solicitudes que mandan las áreas desde la página de inicio
-import PeticionesAreas from "./pages/peticiones/PeticionesAreas";
+const PeticionesAreas = lazy(() => import("./pages/peticiones/PeticionesAreas"));
 
 // Órdenes de compra: las manda el mecánico, las atiende administración (admin)
-import OrdenesCompra from "./pages/ordenes/OrdenesCompra";
+const OrdenesCompra = lazy(() => import("./pages/ordenes/OrdenesCompra"));
 
 // Historial de servicios por vehículo (admin y parque vehicular)
-import HistorialServicios from "./pages/historial/HistorialServicios";
+const HistorialServicios = lazy(() => import("./pages/historial/HistorialServicios"));
 
 // Préstamo de herramientas (solo mecánico)
-import PrestamoHerramientas from "./pages/herramientas/PrestamoHerramientas";
+const PrestamoHerramientas = lazy(() => import("./pages/herramientas/PrestamoHerramientas"));
 
 // Reportes (solo admin)
-import Reportes from "./pages/reportes/Reportes";
+const Reportes = lazy(() => import("./pages/reportes/Reportes"));
 
 // Cuenta de un área: solo hace solicitudes
-import NuevaSolicitud from "./pages/area/NuevaSolicitud";
-import Seguimiento from "./pages/area/Seguimiento";
+const NuevaSolicitud = lazy(() => import("./pages/area/NuevaSolicitud"));
+const Seguimiento = lazy(() => import("./pages/area/Seguimiento"));
 
 // Mi cuenta y ayuda (todos los roles)
-import MiCuenta from "./pages/cuenta/MiCuenta";
-import CambiarPassword from "./pages/cuenta/CambiarPassword";
-import Ayuda from "./pages/ayuda/Ayuda";
+const MiCuenta = lazy(() => import("./pages/cuenta/MiCuenta"));
+const CambiarPassword = lazy(() => import("./pages/cuenta/CambiarPassword"));
+const Ayuda = lazy(() => import("./pages/ayuda/Ayuda"));
 
 // Placeholder para subrutas no implementadas aún
-import EnConstruccion from "./pages/admin/EnConstruccion";
+const EnConstruccion = lazy(() => import("./pages/admin/EnConstruccion"));
 
 const { ADMIN, MECANICO, AREA } = ROLES;
 
@@ -63,7 +66,12 @@ const { ADMIN, MECANICO, AREA } = ROLES;
 // Al cambiar de ruta se vuelve a intentar.
 function ProtegerPantallas({ children }) {
   const location = useLocation();
-  return <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>;
+  return (
+    <ErrorBoundary resetKey={location.pathname}>
+      {/* Mientras llega una pantalla: solo el fondo (suele tardar menos que un spinner en parpadear) */}
+      <Suspense fallback={<div className="min-h-screen bg-fondo" />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
 }
 
 // Atajo: <Route path=... element={solo([ADMIN], <Pagina />)} />

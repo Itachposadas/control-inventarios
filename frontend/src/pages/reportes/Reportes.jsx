@@ -8,6 +8,7 @@ import BarrasPorMes from "../../components/reportes/BarrasPorMes";
 import { inputClass, Boton, Alerta } from "../../components/ui";
 import { reportesApi } from "../../api/reportes";
 import { vehiculosApi } from "../../api/vehiculos";
+import { dashboardApi } from "../../api/dashboard";
 import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../config/menus";
 import { TIPO_LABEL } from "../../config/solicitudes";
 import { PERIODOS, rangoDePeriodo, etiquetaMes, moneda, fechaCorta } from "../../config/reportes";
@@ -193,11 +194,11 @@ export default function Reportes() {
               statusType="success"
             />
             <KpiCard
-              label="Tiempo promedio en taller"
+              label="Tiempo promedio"
               value={res.dias_promedio_taller == null ? "—" : `${res.dias_promedio_taller} días`}
               accent={COLORS.info}
               icon={<Timer size={20} />}
-              status="Del ingreso a completado"
+              status="En taller, del ingreso a completado"
               statusType="info"
             />
             <KpiCard
@@ -275,6 +276,9 @@ export default function Reportes() {
           )}
         </div>
       )}
+
+      {/* ─── Inventario (no depende del periodo ni del área elegidos) ─── */}
+      <InventarioParque />
     </DashboardLayout>
   );
 }
@@ -294,10 +298,76 @@ function Tarjeta({ titulo, subtitulo, children }) {
   return (
     <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
       <div className="px-5 py-4 border-b border-slate-100">
-        <h3 className="text-sm font-semibold text-slate-800">{titulo}</h3>
+        <h2 className="text-base font-semibold text-slate-900">{titulo}</h2>
         {subtitulo && <p className="text-xs text-slate-500 mt-0.5">{subtitulo}</p>}
       </div>
       <div className="p-5">{children}</div>
+    </section>
+  );
+}
+
+// Composición del parque vehicular: cuántas unidades hay por año de modelo y
+// por área. Antes estaba en el panel de control; aquí se consulta cuando hace falta.
+function InventarioParque() {
+  const [datos, setDatos] = useState(null);
+
+  useEffect(() => {
+    dashboardApi.stats().then(setDatos).catch(() => setDatos(null));
+  }, []);
+
+  if (!datos) return null;
+  const total = datos.kpis?.total_vehiculos || 0;
+  const areas = datos.vehiculos_por_area || [];
+  const max = Math.max(...areas.map((a) => a.total), 0);
+  const MOSTRAR = 10;
+
+  return (
+    <section className="mt-10">
+      <h2 className="text-base font-semibold text-slate-900">Inventario del parque vehicular</h2>
+      <p className="mt-0.5 mb-4 text-sm text-slate-500">
+        {total} vehículos registrados. Esta sección no depende del periodo ni del área elegidos arriba.
+      </p>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <Tarjeta
+          titulo="Vehículos por año de modelo"
+          subtitulo={datos.sin_anio
+            ? `${datos.sin_anio} ${datos.sin_anio === 1 ? "vehículo no tiene" : "vehículos no tienen"} año registrado y no aparecen en la gráfica`
+            : "Año que indica el modelo de cada unidad"}
+        >
+          <div className="h-64">
+            <BarrasPorMes
+              labels={datos.por_anio.map((a) => a.anio)}
+              values={datos.por_anio.map((a) => a.total)}
+            />
+          </div>
+        </Tarjeta>
+        <Tarjeta
+          titulo="Vehículos por área"
+          subtitulo={areas.length > MOSTRAR ? `Las ${MOSTRAR} áreas con más unidades de ${areas.length}` : undefined}
+        >
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-slate-500">
+                <th className="text-left font-semibold pb-2">Área</th>
+                <th className="text-right font-semibold pb-2 w-44">Vehículos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {areas.slice(0, MOSTRAR).map((a) => (
+                <tr key={a.area}>
+                  <td className="py-2 pr-3 text-slate-800">{a.area}</td>
+                  <td className="py-2 pl-3">
+                    <div className="text-right font-semibold text-slate-800 tabular-nums">{a.total}</div>
+                    <div className="mt-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-institucional" style={{ width: max ? `${(a.total / max) * 100}%` : 0 }} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Tarjeta>
+      </div>
     </section>
   );
 }

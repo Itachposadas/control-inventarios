@@ -13,7 +13,7 @@ import { TablaRefacciones } from "../../components/servicio/PasoDiagnostico";
 import { ordenesCompraApi, ESTADO_ORDEN } from "../../api/ordenesCompra";
 import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../config/menus";
 import { formatFecha, formatMoneda } from "../../config/solicitudes";
-import { descargarOrdenCompraPdf } from "../../utils/ordenCompraPdf";
+import { descargarOrdenCompraPdf } from "../../utils/pdfs";
 import { DATOS_CLIENTE } from "../../config/ordenCompra";
 import { Loader2, Inbox, CarFront, Building2, Wrench, FileDown, ClipboardCheck, Save } from "lucide-react";
 
@@ -116,7 +116,7 @@ export default function OrdenesCompra() {
                 </div>
 
                 <div className="mx-5 mb-3 rounded-xl bg-slate-50 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wide text-slate-500">Diagnóstico</p>
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Diagnóstico</p>
                   <p className="text-sm text-slate-700 whitespace-pre-line line-clamp-3">{o.servicio.fallas}</p>
                 </div>
 
@@ -124,7 +124,7 @@ export default function OrdenesCompra() {
                   <TablaRefacciones refacciones={o.piezas} conPrecios />
                   {o.estado === "atendida" && (
                     <p className="mt-2 text-xs text-right text-slate-600">
-                      {o.proveedor?.nombre} · <span className="font-bold text-slate-800">Total {formatMoneda(o.total)}</span>
+                      {o.proveedor?.nombre} · <span className="font-semibold text-slate-800">Total {formatMoneda(o.total)}</span>
                     </p>
                   )}
                 </div>
@@ -252,7 +252,7 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
           ].map(([titulo, nombre, firma]) => (
             <div key={titulo} className="rounded-xl border border-slate-200 px-3 py-2 flex items-center gap-3 min-w-0">
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-wide text-slate-500">{titulo}</p>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">{titulo}</p>
                 <p className="text-sm font-semibold text-slate-800 truncate">{nombre || "—"}</p>
               </div>
               {firma && <img src={firma} alt={`Firma de ${nombre}`} className="h-10 w-auto max-w-[45%] object-contain shrink-0" />}
@@ -327,7 +327,7 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
             <dl className="text-sm space-y-1">
               <div className="flex justify-between"><dt className="text-slate-500">Subtotal</dt><dd className="tabular-nums">{formatMoneda(totales.subtotal)}</dd></div>
               <div className="flex justify-between"><dt className="text-slate-500">I.V.A.</dt><dd className="tabular-nums">{formatMoneda(totales.iva)}</dd></div>
-              <div className="flex justify-between font-bold text-slate-800"><dt>Total</dt><dd className="tabular-nums">{formatMoneda(totales.total)}</dd></div>
+              <div className="flex justify-between font-semibold text-slate-800"><dt>Total</dt><dd className="tabular-nums">{formatMoneda(totales.total)}</dd></div>
             </dl>
           </div>
         </div>

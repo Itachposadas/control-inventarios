@@ -227,7 +227,7 @@ export default function HistorialServicios() {
                     <CarFront size={24} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-lg font-bold text-slate-800">{v.nombre}</h2>
+                    <h2 className="text-lg font-semibold text-slate-800">{v.nombre}</h2>
                     <p className="text-sm text-slate-500">
                       {[v.unidad, [v.marca, v.modelo].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}
                     </p>
@@ -246,7 +246,7 @@ export default function HistorialServicios() {
               <ResumenExpediente resumen={expediente.resumen} />
 
               <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-5">
-                <h3 className="text-sm font-semibold text-slate-800 mb-4">Servicios, del más reciente al más antiguo</h3>
+                <h2 className="text-base font-semibold text-slate-900 mb-4">Servicios, del más reciente al más antiguo</h2>
                 <ExpedienteServicios
                   servicios={expediente.servicios}
                   onAbrir={(s) => navigate(`${SOLICITUDES_BASE[role]}/${s.id}`)}

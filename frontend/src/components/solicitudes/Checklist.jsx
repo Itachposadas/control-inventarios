@@ -98,7 +98,7 @@ function Opcion({ etiqueta, activa, clases, onClick, disabled, borde = false }) 
       aria-checked={activa}
       onClick={onClick}
       disabled={disabled}
-      className={`w-14 py-2 text-sm font-bold transition-colors
+      className={`w-14 py-2 text-sm font-semibold transition-colors
         ${borde ? "border-l border-slate-200" : ""}
         ${activa ? clases : "bg-white text-slate-500"}
         ${disabled ? "cursor-default" : activa ? "" : "hover:bg-slate-50 hover:text-slate-600"}`}

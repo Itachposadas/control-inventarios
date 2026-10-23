@@ -24,11 +24,11 @@ export default function MiCuenta() {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-6 text-center">
             <div
               className={`w-20 h-20 mx-auto rounded-full ${ROLE_COLOR[role] || "bg-slate-500"}
-                          flex items-center justify-center text-white text-3xl font-bold`}
+                          flex items-center justify-center text-white text-3xl font-semibold`}
             >
               {(user?.username || "?").charAt(0).toUpperCase()}
             </div>
-            <h2 className="mt-4 text-lg font-bold text-slate-800">{nombre}</h2>
+            <h2 className="mt-4 text-lg font-semibold text-slate-800">{nombre}</h2>
             <p className="text-sm text-slate-500">{user?.rol_nombre || ROLE_LABEL[role]}</p>
           </div>
 

@@ -86,7 +86,7 @@ export default function MecanicoDashboard() {
               {a.icon}
             </span>
             <span className="min-w-0">
-              <span className="block text-lg font-bold leading-tight">{a.titulo}</span>
+              <span className="block text-lg font-semibold leading-tight">{a.titulo}</span>
               <span className={`block text-sm mt-0.5 ${a.principal ? "text-white/85" : "text-slate-500"}`}>
                 {a.texto}
               </span>
@@ -95,7 +95,7 @@ export default function MecanicoDashboard() {
         ))}
       </div>
 
-      <h3 className="text-base font-bold text-slate-800">Mis vehículos en el taller</h3>
+      <h2 className="text-base font-semibold text-slate-900">Mis vehículos en el taller</h2>
       <p className="text-sm text-slate-500 mb-3">Toca uno para seguir con su reparación</p>
 
       {loading ? (
@@ -127,7 +127,7 @@ export default function MecanicoDashboard() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 flex-wrap">
-                      <span className="text-base font-bold text-slate-800 truncate">
+                      <span className="text-base font-semibold text-slate-800 truncate">
                         {s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario}
                       </span>
                       <EstadoBadge estado={s.estado} />

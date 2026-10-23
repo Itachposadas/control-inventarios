@@ -4,8 +4,9 @@ from collections import Counter
 from flask import Blueprint, jsonify
 from sqlalchemy import func
 from extensions import db
-from models import Vehiculo, Solicitud, SolicitudEvento, OrdenCompra
-from auth_utils import role_required
+from models import Vehiculo, Solicitud, SolicitudEvento, OrdenCompra, PeticionServicio, utcnow, _iso
+from auth_utils import role_required, get_current_user
+from routes.reportes import calcular_reporte, _local
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
 
@@ -87,6 +88,32 @@ def stats():
     en_reparacion = Solicitud.query.filter(Solicitud.estado == "reparacion").count()
     ordenes_por_atender = OrdenCompra.query.filter(OrdenCompra.estado == "enviada").count()
 
+    # Servicios en taller por paso (diagnóstico, ingreso, compra, reparación)
+    en_taller_por_paso = dict(
+        db.session.query(Solicitud.estado, func.count(Solicitud.id))
+        .filter(Solicitud.estado != "entregada")
+        .group_by(Solicitud.estado)
+        .all()
+    )
+
+    # ─── Solicitudes de las áreas que esperan al taller (las más antiguas primero) ───
+    pendientes_q = PeticionServicio.query.filter_by(estado="pendiente")
+    pendientes = pendientes_q.order_by(PeticionServicio.created_at.asc()).limit(6).all()
+    fechas_pendientes = [f for (f,) in pendientes_q.with_entities(PeticionServicio.created_at).all()]
+
+    # ─── Resumen del mes en curso (mismo cálculo que Reportes → "Este mes") ───
+    # Los costos solo los ve el admin
+    mes = None
+    user = get_current_user()
+    if user and user.role == "admin":
+        hoy = _local(utcnow()).date()
+        resumen = calcular_reporte(hoy.replace(day=1), hoy)["resumen"]
+        mes = {
+            "servicios": resumen["servicios"],
+            "terminados": resumen["terminados"],
+            "gasto_total": resumen["gasto_total"],
+        }
+
     # ─── Actividad reciente (bitácora de solicitudes) ───
     eventos = (
         SolicitudEvento.query
@@ -104,7 +131,24 @@ def stats():
             "solicitudes_abiertas": solicitudes_abiertas,
             "en_reparacion": en_reparacion,
             "ordenes_por_atender": ordenes_por_atender,
+            "pendientes": len(fechas_pendientes),
         },
+        "en_taller_por_paso": en_taller_por_paso,
+        # Fechas de todas las pendientes: el panel calcula la prioridad por días de espera
+        "fechas_pendientes": [_iso(f) for f in fechas_pendientes],
+        "pendientes": [
+            {
+                "id": p.id,
+                "folio": p.folio,
+                "fecha": _iso(p.created_at),
+                "area": p.vehiculo.area if p.vehiculo else None,
+                "vehiculo": (p.vehiculo.numero_economico or p.vehiculo.unidad or p.vehiculo.no_inventario)
+                if p.vehiculo else None,
+                "materiales": len(p.materiales),
+            }
+            for p in pendientes
+        ],
+        "mes": mes,
         "actividad": [
             {**e.to_dict(), "folio": e.solicitud.folio, "solicitud_id": e.solicitud_id}
             for e in eventos

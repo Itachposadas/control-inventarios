@@ -8,11 +8,9 @@ import { Boton } from "../ui";
 import { peticionesApi } from "../../api/peticiones";
 import { ordenesCompraApi } from "../../api/ordenesCompra";
 import { solicitudesApi } from "../../api/solicitudes";
-import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
-import { descargarDiagnosticoPdf } from "../../utils/diagnosticoPdf";
-import { descargarIngresoPdf } from "../../utils/ingresoPdf";
-import { descargarOrdenCompraPdf } from "../../utils/ordenCompraPdf";
-import { descargarEntregaPdf } from "../../utils/entregaPdf";
+import {
+  descargarSolicitudPdf, descargarDiagnosticoPdf, descargarIngresoPdf, descargarOrdenCompraPdf, descargarEntregaPdf,
+} from "../../utils/pdfs";
 import { formatFecha, formatMoneda } from "../../config/solicitudes";
 import {
   Wrench, CheckCircle2, Clock, DollarSign, Timer, FileDown, ExternalLink, Loader2, Building2, UserRound,
@@ -43,7 +41,7 @@ export function ResumenExpediente({ resumen }) {
       {tarjetas.map((c) => (
         <div key={c.label} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.color} flex items-center justify-center`}>{c.icon}</div>
-          <p className="mt-3 text-xl font-bold text-slate-800 leading-none">{c.value}</p>
+          <p className="mt-3 text-xl font-semibold text-slate-800 leading-none">{c.value}</p>
           <p className="mt-1 text-xs text-slate-500">{c.label}</p>
         </div>
       ))}
@@ -114,10 +112,10 @@ function Servicio({ s, onAbrir }) {
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-sm font-bold text-institucional">{s.folio}</span>
+            <span className="font-mono text-sm font-semibold text-institucional">{s.folio}</span>
             <EstadoBadge estado={s.estado} />
           </div>
-          {s.costo != null && <span className="text-sm font-bold text-slate-800">{formatMoneda(s.costo)}</span>}
+          {s.costo != null && <span className="text-sm font-semibold text-slate-800">{formatMoneda(s.costo)}</span>}
         </div>
 
         <p className="mt-1 text-xs text-slate-500">
@@ -161,7 +159,7 @@ function Servicio({ s, onAbrir }) {
 function Dato({ titulo, texto, vacio = "—" }) {
   return (
     <div className="rounded-xl bg-slate-50 px-3 py-2 min-w-0">
-      <dt className="text-[10px] uppercase tracking-wide text-slate-500">{titulo}</dt>
+      <dt className="text-[11px] uppercase tracking-wide text-slate-500">{titulo}</dt>
       <dd className="mt-0.5 text-slate-800 whitespace-pre-line line-clamp-4">{texto || vacio}</dd>
     </div>
   );

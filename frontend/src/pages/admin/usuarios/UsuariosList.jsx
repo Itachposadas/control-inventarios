@@ -274,17 +274,19 @@ useEffect(() => {
                         <div className="flex items-center justify-end sm:gap-1">
                           <button
                             onClick={() => navigate(`/admin/usuarios/${u.id}`)}
-                            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100
+                            className="tactil p-2 rounded-lg text-slate-500 hover:bg-slate-100
                                        hover:text-institucional transition"
                             title="Ver detalle"
+                            aria-label={`Ver detalle de ${u.username}`}
                           >
                             <Eye size={16} />
                           </button>
                           <button
                             onClick={() => handleEditar(u)}
-                            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100
+                            className="tactil p-2 rounded-lg text-slate-500 hover:bg-slate-100
                                        hover:text-institucional transition"
                             title="Editar"
+                            aria-label={`Editar ${u.username}`}
                           >
                             <Pencil size={16} />
                           </button>
@@ -292,9 +294,10 @@ useEffect(() => {
                             onClick={() =>
                               setDeleteModal({ open: true, usuario: u, loading: false })
                             }
-                            className="p-2 rounded-lg text-slate-500 hover:bg-red-50
+                            className="tactil p-2 rounded-lg text-slate-500 hover:bg-red-50
                                        hover:text-red-600 transition"
                             title="Eliminar"
+                            aria-label={`Eliminar ${u.username}`}
                           >
                             <Trash2 size={16} />
                           </button>

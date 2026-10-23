@@ -55,7 +55,7 @@ export default function DashboardLayout({
 
         {/* Navegación principal */}
         <nav className="flex-1 overflow-y-auto py-3">
-          <p className="px-5 py-2 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
+          <p className="px-5 py-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
             Navegación
           </p>
 
@@ -104,7 +104,7 @@ export default function DashboardLayout({
           {/* Sección secundaria */}
           {secondaryMenu.length > 0 && (
             <>
-              <p className="px-5 pt-5 pb-2 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
+              <p className="px-5 pt-5 pb-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                 Sistema
               </p>
               <ul className="space-y-1 px-2">

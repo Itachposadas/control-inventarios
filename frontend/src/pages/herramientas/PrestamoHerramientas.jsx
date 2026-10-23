@@ -592,7 +592,7 @@ function NuevoPrestamo({ onClose, onGuardado }) {
                           type="button"
                           onClick={() => quitar(h.id)}
                           aria-label={`Quitar ${h.nombre}`}
-                          className="p-1 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600 shrink-0"
+                          className="tactil p-1 rounded-md text-slate-500 hover:bg-red-50 hover:text-red-600 shrink-0"
                         >
                           <X size={15} />
                         </button>

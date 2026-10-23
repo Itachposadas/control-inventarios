@@ -17,8 +17,9 @@ import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import { SOLICITUDES_BASE } from "../../config/solicitudes";
+import { PRIORIDADES_ESPERA, prioridadPorEspera, aFecha, tiempoEsperando } from "../../config/espera";
 import TablaMateriales from "../../components/peticiones/TablaMateriales";
-import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
+import { descargarSolicitudPdf } from "../../utils/pdfs";
 import PanelFirma from "../../components/peticiones/PanelFirma";
 import {
   Loader2, Inbox, CarFront, XCircle, Building2, Clock, FileDown, UserRound,
@@ -38,28 +39,8 @@ const VACIO = {
 };
 
 // Prioridad según cuánto lleva esperando una solicitud pendiente
-const PRIORIDADES = [
-  { valor: "alta", label: "Alta", desde: 3, chip: "bg-red-100 text-red-700", borde: "border-l-red-500", punto: "bg-red-500" },
-  { valor: "media", label: "Media", desde: 1, chip: "bg-amber-100 text-amber-900", borde: "border-l-amber-500", punto: "bg-amber-500" },
-  { valor: "baja", label: "Reciente", desde: 0, chip: "bg-slate-100 text-slate-600", borde: "border-l-slate-200", punto: "bg-slate-300" },
-];
-
-const aFecha = (iso) => new Date(iso.endsWith("Z") ? iso : `${iso}Z`);
-
-const diasEsperando = (iso) => Math.floor((Date.now() - aFecha(iso)) / 86400000);
-
-const prioridadDe = (p) => {
-  const dias = diasEsperando(p.fecha);
-  return PRIORIDADES.find((x) => dias >= x.desde);
-};
-
-function tiempoEsperando(iso) {
-  const horas = Math.floor((Date.now() - aFecha(iso)) / 3600000);
-  if (horas < 1) return "Hace menos de 1 hora";
-  if (horas < 24) return `Esperando ${horas} ${horas === 1 ? "hora" : "horas"}`;
-  const dias = Math.floor(horas / 24);
-  return `Esperando ${dias} ${dias === 1 ? "día" : "días"}`;
-}
+const PRIORIDADES = PRIORIDADES_ESPERA;
+const prioridadDe = (p) => prioridadPorEspera(p.fecha);
 
 function fechaHora(iso) {
   if (!iso) return "—";
@@ -403,7 +384,7 @@ function Solicitante({ p }) {
         <div key={f.titulo} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 min-w-0">
           <UserRound size={16} className="text-slate-500 shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-wide text-slate-500">{f.titulo}</p>
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">{f.titulo}</p>
             <p className="text-sm font-semibold text-slate-800 leading-snug break-words">{f.nombre || "—"}</p>
           </div>
           {f.firma && (
@@ -469,7 +450,7 @@ function Recibir({ peticion, nombreInicial, onClose, onRecibida, onContinuar }) 
     return (
       <Modal titulo="Solicitud recibida" subtitulo={`${recibida.folio} · ${v.nombre}`} onClose={onClose} ancho="max-w-xl">
         <div className="p-6 text-center">
-          <span className="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+          <span className="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center animate-check">
             <CheckCircle2 size={30} />
           </span>
           <p className="mt-4 text-sm text-slate-600">

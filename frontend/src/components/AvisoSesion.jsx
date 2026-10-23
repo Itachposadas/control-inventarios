@@ -32,7 +32,7 @@ export default function AvisoSesion({ vence, onSeguir, onSalir }) {
           Tu sesión está por cerrarse
         </h3>
         <p className="mt-1 text-sm text-slate-600">
-          No ha habido actividad. Se cerrará en <span className="font-bold tabular-nums">{texto}</span> para
+          No ha habido actividad. Se cerrará en <span className="font-semibold tabular-nums">{texto}</span> para
           proteger la información.
         </p>
         <div className="mt-5 flex flex-col-reverse sm:flex-row gap-2 justify-center">

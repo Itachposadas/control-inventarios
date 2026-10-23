@@ -14,11 +14,32 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ─── Tipografía ─── */
+
+/* Títulos con renglones parejos; párrafos sin una palabra suelta al final */
+h1, h2, h3, h4 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* En tablas, los números se alinean en columna (dígitos del mismo ancho) */
+td, th {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Selección de texto con el guinda institucional */
+::selection {
+  background: rgba(159, 34, 65, 0.16);
+  color: #1e293b;
+}
+
 /* ─── Animaciones ─── */
 
 /* Elementos que aparecen en cascada: <div className="stagger"> ... </div> */
 .stagger > * {
-  animation: fade-up 0.4s ease-out backwards;
+  animation: fade-up 0.3s cubic-bezier(0.23, 1, 0.32, 1) backwards;
 }
 .stagger > *:nth-child(2) { animation-delay: 50ms; }
 .stagger > *:nth-child(3) { animation-delay: 100ms; }
@@ -34,22 +55,55 @@ body {
   to   { opacity: 1; transform: none; }
 }
 
-/* Los botones se "hunden" un poco al presionarlos.
+/* Área táctil mínima de 44 × 44 px en pantallas táctiles (WCAG 2.5.8 y guías
+   de Apple/Google). En escritorio el botón conserva su tamaño visual. */
+@media (pointer: coarse) {
+  .tactil {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Los botones se "hunden" un poco al presionarlos (y regresan igual de suave).
    Se usa `scale` (no `transform`) para no mover botones que ya se
-   posicionan con transform, como el ojo de la contraseña. */
+   posicionan con transform, como el ojo de la contraseña. Los botones con
+   clase `transition` o `transition-colors` ya incluyen `scale` (tailwind.config). */
+button {
+  transition: scale 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
 button:not(:disabled):active {
   scale: 0.97;
 }
 
-/* Accesibilidad: si la persona pidió reducir movimiento, se desactivan */
+/* Accesibilidad: "reducir movimiento" pide menos movimiento, no ninguno.
+   Se quitan los desplazamientos, zooms y giros; los fundidos se quedan
+   (más cortos) porque ayudan a notar que algo apareció. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-modal,
+  .animate-pop,
+  .animate-alerta,
+  .animate-check,
+  .animate-fade-up,
+  .animate-page-in,
+  .stagger > * {
+    animation-name: fade-in !important;
+    animation-duration: 150ms !important;
     animation-delay: 0ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  }
+  .animate-ring,
+  .animate-grow-x {
+    animation: none !important;
+  }
+  button:not(:disabled):active {
+    scale: none;
+  }
+  [class*="hover:-translate-y"]:hover {
+    transform: none !important;
   }
 }

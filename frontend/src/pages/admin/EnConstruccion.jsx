@@ -23,7 +23,7 @@ export default function EnConstruccion() {
                           text-institucional mx-auto">
             <Construction size={32} />
           </div>
-          <h2 className="mt-5 text-xl font-bold text-slate-800">
+          <h2 className="mt-5 text-xl font-semibold text-slate-800">
             En construcción
           </h2>
           <p className="mt-2 text-sm text-slate-500">

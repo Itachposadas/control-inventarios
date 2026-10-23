@@ -14,7 +14,7 @@ export default function Alerta({ tipo = "error", icono = null, className = "", c
   return (
     <div
       role={tipo === "error" ? "alert" : "status"}
-      className={`border text-sm p-3 rounded-lg ${icono ? "flex items-start gap-2" : ""}
+      className={`animate-alerta border text-sm p-3 rounded-lg ${icono ? "flex items-start gap-2" : ""}
         ${TIPOS[tipo] || TIPOS.error} ${className}`}
     >
       {icono && <span className="shrink-0 mt-0.5">{icono}</span>}

@@ -151,7 +151,7 @@ export default function VehiculoDetail() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-bold text-slate-800">
+              <h2 className="text-xl font-semibold text-slate-800">
                 {vehiculo.numeroEconomico || vehiculo.unidad || "Sin unidad"}
               </h2>
               <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${estado.bg} ${estado.text}`}>
@@ -201,7 +201,7 @@ export default function VehiculoDetail() {
           <div className="bg-white rounded-2xl border border-slate-200
                           shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100">
-              <h3 className="text-sm font-semibold text-slate-800">Ficha técnica</h3>
+              <h2 className="text-base font-semibold text-slate-900">Ficha técnica</h2>
               <p className="text-xs text-slate-500 mt-0.5">
                 Datos de identificación del vehículo
               </p>
@@ -235,9 +235,9 @@ export default function VehiculoDetail() {
                           shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
               <div>
-                <h3 className="text-sm font-semibold text-slate-800">
+                <h2 className="text-base font-semibold text-slate-900">
                   Historial de servicios
-                </h3>
+                </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Del más reciente al más antiguo, con sus formatos en PDF
                 </p>

@@ -27,15 +27,13 @@ export default function KpiCard({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4
-                    shadow-[0_1px_3px_rgba(15,23,42,0.04)]
-                    hover:shadow-[0_6px_16px_rgba(15,23,42,0.08)] hover:-translate-y-0.5
-                    transition-all duration-200 relative overflow-hidden">
+                    shadow-[0_1px_3px_rgba(15,23,42,0.04)] relative overflow-hidden">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+          <p className="text-sm text-slate-600">
             {label}
           </p>
-          <p className="mt-1.5 text-2xl sm:text-3xl font-bold text-slate-800 leading-none">
+          <p className="mt-1.5 text-2xl sm:text-3xl font-semibold text-slate-900 leading-none tracking-tight tabular-nums">
             {valorMostrado}
           </p>
 

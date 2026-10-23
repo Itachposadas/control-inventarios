@@ -138,10 +138,10 @@ export default function UsuarioDetail() {
                           shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-6 text-center">
             <div className="w-20 h-20 mx-auto rounded-full bg-institucional
                             flex items-center justify-center
-                            text-white text-3xl font-bold">
+                            text-white text-3xl font-semibold">
               {inicial}
             </div>
-            <h2 className="mt-4 text-xl font-bold text-slate-800">
+            <h2 className="mt-4 text-xl font-semibold text-slate-800">
               {usuario.username}
             </h2>
             {usuario.nombre_completo && (
@@ -162,9 +162,9 @@ export default function UsuarioDetail() {
           <div className="bg-white rounded-2xl border border-slate-200
                           shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-800">
+              <h2 className="text-base font-semibold text-slate-900">
                 Información de la cuenta
-              </h3>
+              </h2>
               <Boton tamano="sm" onClick={() => setModalOpen(true)} icono={<Pencil size={12} />}>
                 Editar
               </Boton>

@@ -276,7 +276,7 @@ export default function Ayuda() {
                 <span className="w-10 h-10 rounded-xl bg-institucional/10 text-institucional flex items-center justify-center shrink-0">
                   {g.icon}
                 </span>
-                <h3 className="text-sm font-semibold text-slate-800">{g.titulo}</h3>
+                <h2 className="text-base font-semibold text-slate-900">{g.titulo}</h2>
               </div>
               <ol className="mt-3 space-y-1.5 text-sm text-slate-600 list-disc pl-5 marker:text-slate-300">
                 {g.pasos.map((p) => <li key={p}>{p}</li>)}
@@ -291,7 +291,7 @@ export default function Ayuda() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
             <LifeBuoy size={18} className="text-institucional" />
-            <h3 className="text-sm font-semibold text-slate-800">Preguntas frecuentes</h3>
+            <h2 className="text-base font-semibold text-slate-900">Preguntas frecuentes</h2>
           </div>
           <ul className="divide-y divide-slate-100">
             {PREGUNTAS.map((q) => <Pregunta key={q.p} {...q} />)}

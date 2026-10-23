@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Section, Field, TextArea, Boton, Alerta, inputClass } from "../ui";
 import ConfirmModal from "../ConfirmModal";
 import { solicitudesApi } from "../../api/solicitudes";
-import { descargarEntregaPdf } from "../../utils/entregaPdf";
+import { descargarEntregaPdf } from "../../utils/pdfs";
 import { BotonFormato } from "./PasoDiagnostico";
 import { formatFecha } from "../../config/solicitudes";
 import { CheckCircle2 } from "lucide-react";

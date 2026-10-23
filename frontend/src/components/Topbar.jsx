@@ -63,7 +63,7 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
       <div className="h-16 px-4 sm:px-6 flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden p-2 rounded-lg hover:bg-slate-100"
+          className="tactil lg:hidden p-2 rounded-lg hover:bg-slate-100"
           aria-label="Abrir menú"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -77,7 +77,7 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
         {/* Título + subtítulo. Ancho fijo en escritorio para que el buscador y
             el usuario queden en el mismo lugar en todas las pantallas */}
         <div className="min-w-0 flex-1 md:flex-none md:w-60 lg:w-72 xl:w-96">
-          <h1 className="text-base font-semibold text-slate-800 leading-tight truncate">{title}</h1>
+          <h1 className="text-lg font-semibold text-slate-900 leading-tight tracking-tight truncate">{title}</h1>
           {subtitle && (
             <p className="hidden sm:block text-xs text-slate-500 leading-tight mt-0.5 truncate">{subtitle}</p>
           )}
@@ -276,7 +276,7 @@ function Buscador({ role }) {
 function Grupo({ titulo, children }) {
   return (
     <div className="py-1">
-      <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">{titulo}</p>
+      <p className="px-4 pt-2 pb-1 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">{titulo}</p>
       {children}
     </div>
   );
@@ -357,7 +357,7 @@ function Notificaciones({ role }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative p-2 rounded-lg hover:bg-slate-100 text-slate-600"
+        className="tactil relative p-2 rounded-lg hover:bg-slate-100 text-slate-600"
         aria-label={`Notificaciones${data.total ? ` (${data.total})` : ""}`}
       >
         <Bell

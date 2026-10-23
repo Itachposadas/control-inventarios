@@ -73,7 +73,7 @@ export default function Inicio() {
               Gobierno Municipal de Atlacomulco
             </p>
 
-            <h1 className="mt-6 text-4xl sm:text-5xl font-extrabold leading-[1.1] tracking-tight">
+            <h1 className="mt-6 text-4xl sm:text-5xl font-bold leading-[1.1] tracking-tight">
               Sistema de Control de Parque Vehicular
             </h1>
             <div className="mx-auto mt-6 h-1 w-16 rounded-full bg-white/70" />
@@ -102,8 +102,7 @@ export default function Inicio() {
       <section id="como-funciona" className="scroll-mt-20 py-20 sm:py-24 bg-fondo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-institucional">Cómo funciona</p>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
               Del área al taller en cuatro pasos
             </h2>
             <p className="mt-4 text-base sm:text-lg text-slate-500">
@@ -118,9 +117,9 @@ export default function Inicio() {
                   <span className="w-12 h-12 rounded-lg flex items-center justify-center bg-institucional/10 text-institucional">
                     {p.icono}
                   </span>
-                  <span className="text-sm font-bold text-slate-400">Paso {i + 1}</span>
+                  <span className="text-sm font-semibold text-slate-500 tabular-nums">Paso {i + 1}</span>
                 </div>
-                <h3 className="mt-5 text-base font-bold text-slate-800">{p.titulo}</h3>
+                <h3 className="mt-5 text-base font-semibold text-slate-900">{p.titulo}</h3>
                 <p className="mt-2 text-sm text-slate-500 leading-relaxed">{p.texto}</p>
               </li>
             ))}

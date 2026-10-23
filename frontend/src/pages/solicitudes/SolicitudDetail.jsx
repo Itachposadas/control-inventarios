@@ -18,8 +18,7 @@ import { EstadoBadge, PrioridadBadge } from "../../components/solicitudes/Badges
 import PasoDiagnostico, { BotonFormato } from "../../components/servicio/PasoDiagnostico";
 import PasoOrdenCompra from "../../components/servicio/PasoOrdenCompra";
 import PasoEntrega from "../../components/servicio/PasoEntrega";
-import { descargarIngresoPdf } from "../../utils/ingresoPdf";
-import { descargarSolicitudPdf } from "../../utils/solicitudPdf";
+import { descargarIngresoPdf, descargarSolicitudPdf } from "../../utils/pdfs";
 import { peticionesApi } from "../../api/peticiones";
 import { Section, Field, inputClass, Boton, Alerta } from "../../components/ui";
 import { solicitudesApi } from "../../api/solicitudes";
@@ -263,7 +262,7 @@ export default function SolicitudDetail() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-slate-800">{nombreVehiculo}</h2>
+              <h2 className="text-lg font-semibold text-slate-800">{nombreVehiculo}</h2>
               <EstadoBadge estado={s.estado} />
               <PrioridadBadge prioridad={s.prioridad} />
             </div>
@@ -304,7 +303,7 @@ export default function SolicitudDetail() {
           }`}
         >
           <div className="flex-1 min-w-0">
-            <p className={`text-xs font-bold uppercase tracking-wide ${entregada ? "text-emerald-700" : "text-institucional"}`}>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${entregada ? "text-emerald-700" : "text-institucional"}`}>
               {entregada ? "Listo" : "¿Qué sigue?"}
             </p>
             <p className="mt-1 text-lg font-semibold text-slate-800 leading-snug">{paso.texto}</p>
