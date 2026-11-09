@@ -7,7 +7,8 @@ import { Field, inputClass, Boton, Alerta } from "../ui";
 import ReglasPassword from "../ui/ReglasPassword";
 import { authApi } from "../../api/auth";
 import { useAuth } from "../../context/AuthContext";
-import { errorPassword } from "../../config/password";
+import { errorPassword, LONGITUD_MAXIMA } from "../../config/password";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 import { Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 
 const VACIO = { actual: "", nueva: "", confirmar: "" };
@@ -19,11 +20,13 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
+  const { errores, validar, limpiar } = useCamposVacios();
 
   const set = (campo) => (e) => {
     setForm((f) => ({ ...f, [campo]: e.target.value }));
     setError("");
     setExito("");
+    limpiar(campo);
   };
 
   const handleSubmit = async (e) => {
@@ -31,10 +34,17 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
     setError("");
     setExito("");
 
-    const invalida = errorPassword(form.nueva, user?.username);
-    if (invalida) return setError(invalida);
-    if (form.nueva === form.actual) return setError("La nueva contraseña debe ser distinta a la actual");
-    if (form.nueva !== form.confirmar) return setError("La confirmación no coincide con la nueva contraseña");
+    const ok = validar({
+      actual: !form.actual && "Rellena este campo con tu contraseña de ahora",
+      nueva: !form.nueva
+        ? "Rellena este campo con tu nueva contraseña"
+        : errorPassword(form.nueva, user?.username) ||
+          (form.nueva === form.actual && "La nueva contraseña debe ser distinta a la actual"),
+      confirmar: !form.confirmar
+        ? "Vuelve a escribir la nueva contraseña"
+        : form.confirmar !== form.nueva && "No coincide con la nueva contraseña",
+    });
+    if (!ok) return;
 
     setSaving(true);
     try {
@@ -53,13 +63,14 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
   const tipoInput = ver ? "text" : "password";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4 max-w-md">
       {error && <Alerta icono={<AlertCircle size={18} />}>{error}</Alerta>}
       {exito && <Alerta tipo="exito" icono={<CheckCircle2 size={18} />}>{exito}</Alerta>}
 
-      <Field label="Contraseña actual" required>
+      <Field label="Contraseña actual" required error={errores.actual}>
         <input
           type={tipoInput}
+          maxLength={LONGITUD_MAXIMA}
           value={form.actual}
           onChange={set("actual")}
           autoComplete="current-password"
@@ -67,9 +78,10 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
           className={inputClass}
         />
       </Field>
-      <Field label="Nueva contraseña" required>
+      <Field label="Nueva contraseña" required error={errores.nueva}>
         <input
           type={tipoInput}
+          maxLength={LONGITUD_MAXIMA}
           value={form.nueva}
           onChange={set("nueva")}
           autoComplete="new-password"
@@ -81,16 +93,17 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
           <ReglasPassword password={form.nueva} usuario={user?.username} />
         </div>
       </Field>
-      <Field label="Confirmar nueva contraseña" required>
+      <Field label="Confirmar nueva contraseña" required error={errores.confirmar}>
         <input
           type={tipoInput}
+          maxLength={LONGITUD_MAXIMA}
           value={form.confirmar}
           onChange={set("confirmar")}
           autoComplete="new-password"
           required
           className={inputClass}
         />
-        {form.confirmar && form.confirmar !== form.nueva && (
+        {!errores.confirmar && form.confirmar && form.confirmar !== form.nueva && (
           <p className="mt-1 text-xs text-red-600">No coincide con la nueva contraseña</p>
         )}
       </Field>

@@ -8,4 +8,4 @@ export { default as Insignia } from "./Insignia";
 export { default as MarcaAgua } from "./MarcaAgua";
 export { default as Paginacion } from "./Paginacion";
 export { default as ReglasPassword } from "./ReglasPassword";
-export { inputClass, Section, Field, TextArea } from "./Formulario";
+export { inputClass, Section, Field, TextArea, AvisoCampo } from "./Formulario";

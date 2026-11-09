@@ -7,8 +7,10 @@
 //   <EditorMateriales materiales={materiales} onChange={setMateriales} />
 //   etiquetaConcepto: título de la columna del concepto (ej. "Descripción")
 //   minimo: cuántos deben quedar como mínimo (0 permite dejar la lista vacía)
-//   validarMateriales(materiales) → mensaje de error o null
-import { Boton, inputClass } from "../ui";
+//   nombre / plural: cómo se llama cada renglón (ej. "refacción" / "refacciones")
+//   erroresMateriales(materiales) → { "<id>:<campo>": aviso } de los campos vacíos;
+//   se pasan como `errores` para mostrar el aviso bajo cada campo
+import { Boton, AvisoCampo, inputClass } from "../ui";
 import { Plus, Trash2 } from "lucide-react";
 
 // Columnas de la tabla en escritorio
@@ -19,24 +21,29 @@ export const materialVacio = (datos = {}) => ({
   cantidad: "1", unidad_medida: "", concepto: "", ...datos, id: siguienteId++,
 });
 
-export function validarMateriales(materiales) {
-  if (!materiales.length) return "Agrega al menos un material";
-  for (const [i, m] of materiales.entries()) {
-    const n = materiales.length > 1 ? `Material ${i + 1}: ` : "";
-    if (!(Number(m.cantidad) > 0)) return `${n}la cantidad debe ser mayor a 0`;
-    if (!String(m.unidad_medida).trim()) return `${n}indica la unidad de medida`;
-    if (!m.concepto.trim()) return `${n}escribe el concepto`;
+export function erroresMateriales(materiales) {
+  const errores = {};
+  for (const m of materiales) {
+    if (!(Number(m.cantidad) > 0)) errores[`${m.id}:cantidad`] = "Escribe una cantidad mayor a 0";
+    if (!String(m.unidad_medida).trim()) errores[`${m.id}:unidad_medida`] = "Rellena la unidad de medida";
+    if (!m.concepto.trim()) errores[`${m.id}:concepto`] = "Rellena la descripción";
   }
-  return null;
+  return errores;
 }
 
 // Lo que se manda al backend (sin el id interno de la lista)
 export const paraEnviar = (materiales) =>
   materiales.map(({ cantidad, unidad_medida, concepto }) => ({ cantidad, unidad_medida, concepto }));
 
-export default function EditorMateriales({ materiales, onChange, etiquetaConcepto = "Concepto", minimo = 1 }) {
-  const cambiar = (id, campo, valor) =>
+export default function EditorMateriales({
+  materiales, onChange, etiquetaConcepto = "Concepto", minimo = 1, nombre = "material", plural = "materiales",
+  errores = {}, onLimpiar = () => {},
+}) {
+  const cambiar = (id, campo, valor) => {
     onChange(materiales.map((m) => (m.id === id ? { ...m, [campo]: valor } : m)));
+    onLimpiar(`${id}:${campo}`);
+  };
+  const Nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1);
   const quitar = (id) => onChange(materiales.filter((m) => m.id !== id));
   const agregar = () => onChange([...materiales, materialVacio()]);
 
@@ -58,8 +65,8 @@ export default function EditorMateriales({ materiales, onChange, etiquetaConcept
             className={`grid grid-cols-2 ${COLUMNAS} gap-2 md:items-center
                        p-3 md:p-1 rounded-xl border border-slate-200 md:border-0 animate-fade-in`}
           >
-            <p className="col-span-2 md:hidden text-xs font-semibold text-slate-500">Material {i + 1}</p>
-            <Celda etiqueta="Cantidad">
+            <p className="col-span-2 md:hidden text-xs font-semibold text-slate-500">{Nombre} {i + 1}</p>
+            <Celda etiqueta="Cantidad" error={errores[`${m.id}:cantidad`]}>
               <input
                 type="number"
                 min="0.01"
@@ -67,26 +74,24 @@ export default function EditorMateriales({ materiales, onChange, etiquetaConcept
                 inputMode="decimal"
                 value={m.cantidad}
                 onChange={(e) => cambiar(m.id, "cantidad", e.target.value)}
-                aria-label={`Cantidad del material ${i + 1}`}
+                aria-label={`Cantidad de ${nombre} ${i + 1}`}
                 className={`${inputClass} text-center`}
               />
             </Celda>
-            <Celda etiqueta="Unidad de medida">
+            <Celda etiqueta="Unidad de medida" error={errores[`${m.id}:unidad_medida`]}>
               <input
                 value={m.unidad_medida}
                 onChange={(e) => cambiar(m.id, "unidad_medida", e.target.value)}
                 maxLength={30}
-                placeholder="Ej. Litro, Juego, 4 L"
-                aria-label={`Unidad de medida del material ${i + 1}`}
+                aria-label={`Unidad de medida de ${nombre} ${i + 1}`}
                 className={inputClass}
               />
             </Celda>
-            <Celda etiqueta={etiquetaConcepto} className="col-span-2 md:col-span-1">
+            <Celda etiqueta={etiquetaConcepto} className="col-span-2 md:col-span-1" error={errores[`${m.id}:concepto`]}>
               <input
                 value={m.concepto}
                 onChange={(e) => cambiar(m.id, "concepto", e.target.value)}
                 maxLength={255}
-                placeholder="Ej. Aceite de motor 15W-40"
                 aria-label={`${etiquetaConcepto} ${i + 1}`}
                 className={inputClass}
                 autoFocus={i > 0 && i === materiales.length - 1 && !m.concepto}
@@ -97,7 +102,7 @@ export default function EditorMateriales({ materiales, onChange, etiquetaConcept
                 type="button"
                 onClick={() => quitar(m.id)}
                 disabled={materiales.length <= minimo}
-                aria-label={`Quitar material ${i + 1}`}
+                aria-label={`Quitar ${nombre} ${i + 1}`}
                 title="Quitar"
                 className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition
                            disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-500 disabled:cursor-not-allowed"
@@ -111,10 +116,10 @@ export default function EditorMateriales({ materiales, onChange, etiquetaConcept
 
       <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100 pt-4">
         <Boton variante="contorno" onClick={agregar} icono={<Plus size={16} />} className="self-start">
-          Agregar material
+          Agregar {nombre}
         </Boton>
         <p className="text-sm text-slate-600 sm:text-right">
-          {materiales.length} {materiales.length === 1 ? "material" : "materiales"}
+          {materiales.length} {materiales.length === 1 ? nombre : plural}
         </p>
       </div>
     </div>
@@ -122,11 +127,14 @@ export default function EditorMateriales({ materiales, onChange, etiquetaConcept
 }
 
 // En celular cada campo lleva su etiqueta; en escritorio la da el encabezado de la tabla
-function Celda({ etiqueta, className = "", children }) {
+function Celda({ etiqueta, className = "", error, children }) {
   return (
-    <label className={`block min-w-0 ${className}`}>
-      <span className="md:hidden block text-xs font-medium text-slate-600 mb-1">{etiqueta}</span>
-      {children}
-    </label>
+    <div className={`min-w-0 self-start ${className}`} data-error={error ? "" : undefined}>
+      <label className="block">
+        <span className="md:hidden block text-xs font-medium text-slate-600 mb-1">{etiqueta}</span>
+        {children}
+      </label>
+      {error && <AvisoCampo>{error}</AvisoCampo>}
+    </div>
   );
 }

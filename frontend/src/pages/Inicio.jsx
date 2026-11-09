@@ -20,12 +20,12 @@ const PASOS = [
   {
     icono: <ClipboardList size={22} />,
     titulo: "Solicitud del servicio",
-    texto: "Se elige el vehículo y se capturan los materiales requeridos, con nombre y firma de quien solicita.",
+    texto: "Se elige el vehículo y se describe la falla que presenta, con el nombre de quien solicita.",
   },
   {
     icono: <CarFront size={22} />,
     titulo: "Entrega de la unidad en el taller",
-    texto: "El taller firma de recibido y registra el diagnóstico y el ingreso de la unidad.",
+    texto: "El taller recibe la unidad y registra el diagnóstico y su ingreso.",
   },
   {
     icono: <Search size={22} />,

@@ -4,6 +4,7 @@
 // Admin: consulta todas.
 import { useEffect, useState } from "react";
 import { useAutoActualizar } from "../../hooks/useAutoActualizar";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { EstadoBadge } from "../../components/solicitudes/Badges";
@@ -31,24 +32,25 @@ export default function OrdenesForaneas() {
   const [error, setError] = useState("");
   const [eligiendo, setEligiendo] = useState(false);
 
+  // El texto espera a que se deje de escribir; "entregadas" va al instante
+  const buscar = useDebounce(q.trim());
+
   useEffect(() => {
     let cancel = false;
     setLoading(true);
-    const timer = setTimeout(() => {
-      foraneasApi
-        .listar({ q, entregadas })
-        .then((d) => !cancel && setItems(d))
-        .catch((e) => !cancel && setError(e.message || "No se pudieron cargar las órdenes"))
-        .finally(() => !cancel && setLoading(false));
-    }, 250);
+    foraneasApi
+      .listar({ q: buscar, entregadas })
+      .then((d) => !cancel && setItems(d))
+      .catch((e) => !cancel && setError(e.message || "No se pudieron cargar las órdenes"))
+      .finally(() => !cancel && setLoading(false));
+    // Si llega una respuesta de una búsqueda anterior, se ignora
     return () => {
       cancel = true;
-      clearTimeout(timer);
     };
-  }, [q, entregadas]);
+  }, [buscar, entregadas]);
 
   // Se actualiza solo con lo que hacen los demás usuarios
-  useAutoActualizar(() => foraneasApi.listar({ q, entregadas }).then(setItems).catch(() => {}));
+  useAutoActualizar(() => foraneasApi.listar({ q: buscar, entregadas }).then(setItems).catch(() => {}));
 
   return (
     <DashboardLayout

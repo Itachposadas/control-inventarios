@@ -1,6 +1,7 @@
 // src/components/Topbar.jsx
 import { useEffect, useRef, useState } from "react";
 import { AUTO_ACTUALIZAR_MS } from "../hooks/useAutoActualizar";
+import { useDebounce } from "../hooks/useDebounce";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ROLE_COLOR, ROLE_LABEL, ROLES, VEHICULOS_BASE } from "../config/roles";
@@ -8,7 +9,7 @@ import { ESTADO_LABEL, SOLICITUDES_BASE, formatFecha } from "../config/solicitud
 import { generalApi } from "../api/general";
 import {
   Bell, Search, Car, ClipboardList, Loader2, X, UserCog, LogOut, CheckCircle2, Wrench, ShoppingCart,
-  CarFront, XCircle,
+  CarFront, XCircle, Clock, CalendarX,
 } from "lucide-react";
 
 // Ícono y color de cada tipo de aviso de la campana
@@ -20,12 +21,15 @@ const TIPO_AVISO = {
   listo: { icono: <CheckCircle2 size={16} />, color: "bg-emerald-100 text-emerald-700" },
   entregada: { icono: <CarFront size={16} />, color: "bg-slate-100 text-slate-700" },
   descartada: { icono: <XCircle size={16} />, color: "bg-red-100 text-red-700" },
+  // Vigencia de la solicitud: falta llevar la unidad / se canceló por no llevarla
+  por_vencer: { icono: <Clock size={16} />, color: "bg-amber-100 text-amber-900" },
+  vencida: { icono: <CalendarX size={16} />, color: "bg-red-100 text-red-700" },
 };
 
 const TEXTOS_CAMPANA = {
   admin: { subtitulo: "Órdenes de compra por atender", vacio: "No hay órdenes de compra por atender" },
   mecanico: { subtitulo: "Tus servicios en el taller", vacio: "No tienes servicios en proceso" },
-  area: { subtitulo: "Tus vehículos en el taller", vacio: "No tienes vehículos en el taller" },
+  area: { subtitulo: "Tus solicitudes y vehículos", vacio: "No tienes avisos por ahora" },
 };
 
 // Cierra un menú al hacer clic fuera de él
@@ -148,32 +152,37 @@ export default function Topbar({ onToggleSidebar, title = "Panel", subtitle = ""
 function Buscador({ role }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [res, setRes] = useState({ vehiculos: [], solicitudes: [] });
+  // res.texto: lo que se buscó, para saber si los resultados son de lo que está escrito
+  const [res, setRes] = useState({ texto: "", vehiculos: [], solicitudes: [] });
   const [loading, setLoading] = useState(false);
+  // Las sugerencias se piden cuando se deja de escribir
+  const buscado = useDebounce(q.trim());
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useClickFuera(ref, () => setOpen(false));
 
+  const consultar = (texto) =>
+    generalApi
+      .buscar(texto)
+      .then((data) => ({ texto, ...data }))
+      .catch(() => ({ texto, vehiculos: [], solicitudes: [] }));
+
   useEffect(() => {
-    const texto = q.trim();
-    if (texto.length < 2) {
-      setRes({ vehiculos: [], solicitudes: [] });
-      return;
+    if (buscado.length < 2) {
+      setRes({ texto: buscado, vehiculos: [], solicitudes: [] });
+      setLoading(false);
+      return undefined;
     }
     let cancel = false;
     setLoading(true);
-    const timer = setTimeout(() => {
-      generalApi
-        .buscar(texto)
-        .then((data) => !cancel && setRes(data))
-        .catch(() => !cancel && setRes({ vehiculos: [], solicitudes: [] }))
-        .finally(() => !cancel && setLoading(false));
-    }, 250);
+    consultar(buscado)
+      .then((data) => !cancel && setRes(data))
+      .finally(() => !cancel && setLoading(false));
+    // Si llega la respuesta de una búsqueda anterior, se ignora
     return () => {
       cancel = true;
-      clearTimeout(timer);
     };
-  }, [q]);
+  }, [buscado]);
 
   const ir = (ruta) => {
     setOpen(false);
@@ -190,15 +199,24 @@ function Buscador({ role }) {
       e.currentTarget.blur();
     }
     if (e.key === "Enter") {
-      // Enter abre el primer resultado
-      if (res.solicitudes[0] && /^sol/i.test(q.trim())) irSolicitud(res.solicitudes[0]);
-      else if (res.vehiculos[0]) irVehiculo(res.vehiculos[0]);
-      else if (res.solicitudes[0]) irSolicitud(res.solicitudes[0]);
+      // Enter abre el primer resultado de lo que está escrito. Si todavía no
+      // llegan las sugerencias (se escribió y se dio Enter enseguida), se busca ya.
+      const texto = q.trim();
+      if (texto.length < 2) return;
+      const abrirPrimero = (r) => {
+        if (r.solicitudes[0] && /^sol/i.test(texto)) irSolicitud(r.solicitudes[0]);
+        else if (r.vehiculos[0]) irVehiculo(r.vehiculos[0]);
+        else if (r.solicitudes[0]) irSolicitud(r.solicitudes[0]);
+      };
+      if (res.texto === texto) abrirPrimero(res);
+      else consultar(texto).then(abrirPrimero);
     }
   };
 
   const hayTexto = q.trim().length >= 2;
-  const sinResultados = hayTexto && !loading && !res.vehiculos.length && !res.solicitudes.length;
+  // Mientras se escribe, las sugerencias anteriores se siguen viendo; "sin resultados" solo cuando ya se buscó
+  const esperando = loading || res.texto !== q.trim();
+  const sinResultados = hayTexto && !esperando && !res.vehiculos.length && !res.solicitudes.length;
 
   return (
     <div className="relative" ref={ref}>
@@ -216,7 +234,7 @@ function Buscador({ role }) {
                    focus:outline-none focus:bg-white focus:border-institucional/40
                    focus:ring-2 focus:ring-institucional/15 transition"
       />
-      {loading ? (
+      {hayTexto && esperando ? (
         <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 animate-spin" />
       ) : q && (
         <button

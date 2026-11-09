@@ -45,6 +45,9 @@ const HistorialServicios = lazy(() => import("./pages/historial/HistorialServici
 // Préstamo de herramientas (solo mecánico)
 const PrestamoHerramientas = lazy(() => import("./pages/herramientas/PrestamoHerramientas"));
 
+// Almacén: lo captura parque vehicular, el admin consulta
+const Almacen = lazy(() => import("./pages/almacen/Almacen"));
+
 // Reportes (solo admin)
 const Reportes = lazy(() => import("./pages/reportes/Reportes"));
 
@@ -116,6 +119,7 @@ export default function App() {
           <Route path="/admin/solicitudes-areas" element={solo([ADMIN], <PeticionesAreas />)} />
           <Route path="/admin/ordenes-compra" element={solo([ADMIN], <OrdenesCompra />)} />
           <Route path="/admin/historial" element={solo([ADMIN], <HistorialServicios />)} />
+          <Route path="/admin/almacen" element={solo([ADMIN], <Almacen />)} />
 
           <Route path="/admin/*" element={solo([ADMIN], <EnConstruccion />)} />
 
@@ -132,7 +136,7 @@ export default function App() {
             ))}
           />
           {/* El ingreso a taller solo se abre desde una solicitud: /nueva?peticion=ID */}
-          {/* El servicio se abre al firmar de recibido en Solicitudes; el ingreso es su paso 2 */}
+          {/* El servicio se abre al atender la solicitud en Solicitudes; el ingreso es su paso 2 */}
           <Route path="/mecanico/reparaciones/nueva" element={<Navigate to="/mecanico/solicitudes-areas" replace />} />
           <Route path="/mecanico/reparaciones/:id/ingreso" element={solo([MECANICO], <FormatoIngreso />)} />
           <Route path="/mecanico/reparaciones/:id" element={solo([MECANICO], <SolicitudDetail />)} />
@@ -141,6 +145,7 @@ export default function App() {
           <Route path="/mecanico/foraneo/:id" element={solo([MECANICO], <OrdenForanea />)} />
           <Route path="/mecanico/solicitudes-areas" element={solo([MECANICO], <PeticionesAreas />)} />
           <Route path="/mecanico/herramientas" element={solo([MECANICO], <PrestamoHerramientas />)} />
+          <Route path="/mecanico/almacen" element={solo([MECANICO], <Almacen />)} />
           <Route path="/mecanico/historial" element={solo([MECANICO], <HistorialServicios />)} />
           <Route path="/mecanico/mi-cuenta" element={solo([MECANICO], <MiCuenta />)} />
           <Route path="/mecanico/ayuda" element={solo([MECANICO], <Ayuda />)} />

@@ -8,7 +8,8 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import DashboardLayout from "../../layouts/DashboardLayout";
 import DatosVehiculo from "../../components/solicitudes/DatosVehiculo";
 import ConfirmModal from "../../components/ConfirmModal";
-import { Section, TextArea, inputClass, Boton } from "../../components/ui";
+import { Section, TextArea, AvisoCampo, inputClass, Boton } from "../../components/ui";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 import { foraneasApi } from "../../api/foraneas";
 import { solicitudesApi } from "../../api/solicitudes";
 import { useAuth } from "../../context/AuthContext";
@@ -52,6 +53,7 @@ export default function OrdenForanea() {
   const [orden, setOrden] = useState(null);        // orden guardada (ver/editar)
   const [servicio, setServicio] = useState(null);  // ingreso a taller del que sale
   const [form, setForm] = useState(VACIO);
+  const { errores, validar, limpiar } = useCamposVacios();
   const [loadError, setLoadError] = useState("");
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
@@ -95,16 +97,20 @@ export default function OrdenForanea() {
   const set = (campo, valor) => {
     setForm((f) => ({ ...f, [campo]: valor }));
     setAviso("");
+    limpiar(campo);
   };
   const setTaller = (key, valor) => set("talleres", { ...form.talleres, [key]: valor });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!form.diagnostico_inicial.trim()) return setError("Escribe el diagnóstico inicial");
-    if (!Object.values(form.talleres).some((t) => t.trim())) {
-      return setError("Escribe al menos un taller: muelles, llantas o transmisión");
-    }
+    const ok = validar({
+      diagnostico_inicial: !form.diagnostico_inicial.trim() &&
+        "Rellena este campo con la falla y por qué no se pudo reparar aquí",
+      talleres: !Object.values(form.talleres).some((t) => t.trim()) &&
+        "Escribe el nombre de al menos un taller: muelles, llantas o transmisión",
+    });
+    if (!ok) return;
     setSaving(true);
     try {
       if (esNueva) {
@@ -189,7 +195,7 @@ export default function OrdenForanea() {
         Volver
       </button>
 
-      <form onSubmit={handleSubmit} className={`space-y-5 ${puedeEditar ? "pb-24" : ""}`}>
+      <form onSubmit={handleSubmit} noValidate className={`space-y-5 ${puedeEditar ? "pb-24" : ""}`}>
         {/* ═════ ENCABEZADO ═════ */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
           <div className="h-1.5 bg-institucional" />
@@ -241,18 +247,20 @@ export default function OrdenForanea() {
           title="DIAGNÓSTICO INICIAL"
           subtitle="Describe la falla y el motivo por el que no se pudo reparar en el taller del área"
         >
-          <TextArea
-            value={form.diagnostico_inicial}
-            onChange={(v) => set("diagnostico_inicial", v)}
-            disabled={soloLectura}
-            placeholder="Ej. Muelle trasero izquierdo fracturado. En el taller no se cuenta con prensa hidráulica para el cambio de hojas de muelle..."
-            rows={8}
-          />
+          <div data-error={errores.diagnostico_inicial ? "" : undefined}>
+            <TextArea
+              value={form.diagnostico_inicial}
+              onChange={(v) => set("diagnostico_inicial", v)}
+              disabled={soloLectura}
+              rows={8}
+            />
+            {errores.diagnostico_inicial && <AvisoCampo>{errores.diagnostico_inicial}</AvisoCampo>}
+          </div>
         </Section>
 
         {/* ═════ TALLER AL QUE SE REMITE ═════ */}
         <Section title="TALLER AL QUE SE REMITE" subtitle="Llena solo la columna que corresponda según el tipo de reparación">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" data-error={errores.talleres ? "" : undefined}>
             {TALLERES_FORANEOS.map((t) => {
               const lleno = Boolean(form.talleres[t.key]?.trim());
               return (
@@ -276,7 +284,6 @@ export default function OrdenForanea() {
                       <input
                         value={form.talleres[t.key]}
                         onChange={(e) => setTaller(t.key, e.target.value)}
-                        placeholder="Nombre del taller"
                         aria-label={`Taller de ${t.label.toLowerCase()}`}
                         maxLength={150}
                         className={inputClass}
@@ -287,6 +294,7 @@ export default function OrdenForanea() {
               );
             })}
           </div>
+          {errores.talleres && <AvisoCampo>{errores.talleres}</AvisoCampo>}
         </Section>
 
         {orden?.creado_por && (

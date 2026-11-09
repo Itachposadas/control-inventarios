@@ -5,6 +5,7 @@ import re
 from datetime import timedelta
 
 LONGITUD_MINIMA = 8
+LONGITUD_MAXIMA = 128
 
 # Intentos fallidos seguidos antes de bloquear la cuenta, y por cuánto tiempo
 MAX_INTENTOS = 5
@@ -20,7 +21,8 @@ COMUNES = {
 
 def error_password(password, usuario=""):
     """Devuelve el motivo por el que la contraseña no es válida, o None si cumple."""
-    password = password or ""
+    if not isinstance(password, str):
+        return "La contraseña no es válida"
     if len(password) < LONGITUD_MINIMA:
         return f"La contraseña debe tener al menos {LONGITUD_MINIMA} caracteres"
     if not re.search(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]", password):
@@ -31,4 +33,6 @@ def error_password(password, usuario=""):
         return "Esa contraseña es muy común; elige otra"
     if usuario and usuario.lower() in password.lower():
         return "La contraseña no debe contener el nombre de usuario"
+    if len(password) > LONGITUD_MAXIMA:
+        return f"La contraseña no debe pasar de {LONGITUD_MAXIMA} caracteres"
     return None

@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { vehiculosApi } from "../../api/vehiculos";
-import { Modal, Boton, Alerta, inputClass } from "../ui";
+import { Modal, Boton, Alerta, AvisoCampo, inputClass } from "../ui";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 
 export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }) {
   const editando = Boolean(vehiculo);
+  const { errores, validar, limpiar, reiniciar } = useCamposVacios();
 
   const [form, setForm] = useState({
     np: "",
@@ -29,6 +31,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
 
   useEffect(() => {
     if (open) {
+      reiniciar();
       vehiculosApi.areas().then(setAreas).catch(() => setAreas([]));
       setNuevaArea(false);
       setForm({
@@ -49,25 +52,25 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
       setError("");
       setSaving(false);
     }
-  }, [open, vehiculo]);
+  }, [open, vehiculo, reiniciar]);
 
   if (!open) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
+    limpiar(name);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!form.no_inventario.trim()) {
-      return setError("El No. de Inventario es obligatorio");
-    }
-    if (!form.area.trim()) {
-      return setError("El Área es obligatoria");
-    }
+    const ok = validar({
+      no_inventario: !form.no_inventario.trim() && "Rellena este campo con el No. de inventario de la unidad",
+      area: !form.area.trim() && (nuevaArea ? "Escribe el nombre de la nueva área" : "Elige el área de la unidad"),
+    });
+    if (!ok) return;
 
     setSaving(true);
     try {
@@ -103,7 +106,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
       onClose={onClose}
       ancho="max-w-3xl"
     >
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
         {error && <Alerta>{error}</Alerta>}
 
         <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
@@ -112,24 +115,27 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <input
               name="np"
               type="number"
+              min={1}
+              max={999999}
+              step={1}
               value={form.np}
               onChange={handleChange}
-              placeholder="1"
               className={inputClass}
             />
           </div>
-          <div className="sm:col-span-3">
+          <div className="sm:col-span-3" data-error={errores.no_inventario ? "" : undefined}>
             <Label required>No. Inventario</Label>
             <input
               name="no_inventario"
+              maxLength={50}
               value={form.no_inventario}
               onChange={handleChange}
               required
-              placeholder="ATL024 A00100-27"
               className={inputClass}
             />
+            {errores.no_inventario && <AvisoCampo>{errores.no_inventario}</AvisoCampo>}
           </div>
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2" data-error={errores.area ? "" : undefined}>
             <div className="flex items-center justify-between">
               <Label required>Área</Label>
               <button
@@ -137,6 +143,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
                 onClick={() => {
                   setNuevaArea((v) => !v);
                   setForm((f) => ({ ...f, area: "" }));
+                  limpiar("area");
                 }}
                 className="mb-1 inline-flex items-center gap-1 text-xs font-medium
                            text-institucional hover:underline"
@@ -153,6 +160,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             {nuevaArea ? (
               <input
                 name="area"
+                maxLength={100}
                 value={form.area}
                 onChange={handleChange}
                 required
@@ -180,6 +188,7 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
                 ))}
               </select>
             )}
+            {errores.area && <AvisoCampo>{errores.area}</AvisoCampo>}
           </div>
         </div>
 
@@ -188,9 +197,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>Unidad</Label>
             <input
               name="unidad"
+              maxLength={150}
               value={form.unidad}
               onChange={handleChange}
-              placeholder="VW POLO"
               className={inputClass}
             />
           </div>
@@ -198,9 +207,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>Descripción</Label>
             <input
               name="descripcion"
+              maxLength={255}
               value={form.descripcion}
               onChange={handleChange}
-              placeholder="VW POLO"
               className={inputClass}
             />
           </div>
@@ -211,9 +220,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>Modelo</Label>
             <input
               name="modelo"
+              maxLength={30}
               value={form.modelo}
               onChange={handleChange}
-              placeholder="2003"
               className={inputClass}
             />
           </div>
@@ -221,9 +230,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>Marca</Label>
             <input
               name="marca"
+              maxLength={100}
               value={form.marca}
               onChange={handleChange}
-              placeholder="VW"
               className={inputClass}
             />
           </div>
@@ -234,9 +243,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>Serie</Label>
             <input
               name="serie"
+              maxLength={100}
               value={form.serie}
               onChange={handleChange}
-              placeholder="08RM-0004A3P043115"
               className={inputClass}
             />
           </div>
@@ -244,9 +253,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>No. Motor</Label>
             <input
               name="no_motor"
+              maxLength={100}
               value={form.no_motor}
               onChange={handleChange}
-              placeholder="SAH 000191"
               className={inputClass}
             />
           </div>
@@ -257,9 +266,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>Placas</Label>
             <input
               name="placas"
+              maxLength={30}
               value={form.placas}
               onChange={handleChange}
-              placeholder="LX33103"
               className={inputClass}
             />
           </div>
@@ -267,9 +276,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>Número Económico</Label>
             <input
               name="numero_economico"
+              maxLength={50}
               value={form.numero_economico}
               onChange={handleChange}
-              placeholder="PV-204"
               className={inputClass}
             />
           </div>
@@ -280,9 +289,9 @@ export default function VehiculoModal({ open, onClose, onSave, vehiculo = null }
             <Label>Color</Label>
             <input
               name="color"
+              maxLength={50}
               value={form.color}
               onChange={handleChange}
-              placeholder="Blanco"
               className={inputClass}
             />
           </div>

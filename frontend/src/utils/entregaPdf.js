@@ -1,10 +1,8 @@
 // src/utils/entregaPdf.js
 // Formato "COORDINACIÓN DEL PARQUE VEHICULAR · ENTREGA DE VEHÍCULO Y/O
 // MAQUINARIA REPARADA" (igual al de papel): datos de la unidad, trabajo
-// realizado, observaciones y las firmas:
-//   MECÁNICO (quien entrega) · ÁREA (quien recibe: el solicitante) · AUTORIZÓ
-// Las firmas se cargan de la solicitud y de la orden de compra; la que falte
-// queda en blanco para firmarla a mano al imprimir.
+// realizado, observaciones, quién solicitó el servicio y quién autoriza.
+// No lleva firmas.
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { TINTA, GRIS, MARGEN, fechaLarga, logos, pie } from "./pdfComun";
@@ -19,7 +17,6 @@ export async function descargarEntregaPdf(s) {
   const util = ancho - MARGEN * 2;
   const ing = s.ingreso || {};
   const p = s.peticion || {};
-  const o = s.orden_compra || {};
   const nombre = s.vehiculo?.numeroEconomico || s.vehiculo?.unidad || s.vehiculo?.noInventario;
 
   // ─── Encabezado ───
@@ -77,68 +74,24 @@ export async function descargarEntregaPdf(s) {
   renglones("TRABAJO REALIZADO:", s.acciones, 8);
   renglones("OBSERVACIONES", s.observaciones, 5);
 
-  // ─── Firmas: MECÁNICO · ÁREA · AUTORIZÓ ───
-  const firmas = [
-    {
-      titulo: "MECÁNICO",
-      firma: o.mecanico_firma || p.mecanico_firma,
-      nombre: o.mecanico_nombre || p.mecanico_nombre,
-      leyenda: ["Nombre y firma de quien entrega"],
-    },
-    {
-      titulo: "ÁREA",
-      firma: p.solicitante_firma,
-      nombre: p.solicitante_nombre,
-      leyenda: ["Nombre y firma de quien recibe"],
-    },
-    {
-      titulo: "AUTORIZÓ",
-      firma: o.autoriza_firma,
-      nombre: o.autoriza_nombre || AUTORIZA.nombre,
-      leyenda: [AUTORIZA.cargo],
-      negrita: true,
-    },
-  ];
-  const col = util / 3;
-  const altoTitulo = 8;
-  const altoCaja = 40;
-  if (y + altoTitulo + altoCaja > doc.internal.pageSize.getHeight() - 18) {
+  // ─── Área y autorización (sin firmas) ───
+  if (y + 18 > doc.internal.pageSize.getHeight() - 18) {
     doc.addPage();
     y = 20;
   }
-  doc.setDrawColor(...NEGRO);
-  doc.setLineWidth(0.25);
-  doc.rect(MARGEN, y, util, altoTitulo + altoCaja);
-  doc.line(MARGEN, y + altoTitulo, ancho - MARGEN, y + altoTitulo);
-  firmas.forEach((f, i) => {
-    const x = MARGEN + col * i;
-    const centro = x + col / 2;
-    if (i > 0) doc.line(x, y, x, y + altoTitulo + altoCaja);
+  y += 8;
+  const dato = (etiqueta, valor) => {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setTextColor(...NEGRO);
-    doc.text(f.titulo, centro, y + 5.5, { align: "center" });
-
-    const top = y + altoTitulo;
-    if (f.firma) {
-      try {
-        doc.addImage(f.firma, "PNG", centro - 24, top + 2, 48, 17);
-      } catch {
-        // firma dañada: el espacio queda para firmar a mano
-      }
-    }
-    doc.setDrawColor(...GRIS);
-    doc.line(x + 6, top + 21, x + col - 6, top + 21);
-    doc.setFont("helvetica", f.negrita ? "bold" : "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...NEGRO);
-    if (f.nombre) doc.text(doc.splitTextToSize(f.nombre, col - 8), centro, top + 25.5, { align: "center" });
+    doc.text(etiqueta, MARGEN, y);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
     doc.setTextColor(...TINTA);
-    doc.text(f.leyenda, centro, top + 33, { align: "center" });
-    doc.setDrawColor(...NEGRO);
-  });
+    doc.text(doc.splitTextToSize(valor || "—", util - 30), MARGEN + 30, y);
+    y += 6;
+  };
+  dato("Área (solicitó):", [p.solicitante_nombre, s.ingreso?.area || s.vehiculo?.area].filter(Boolean).join(" — "));
+  dato("Autorizó:", `${AUTORIZA.nombre}, ${AUTORIZA.cargo}`);
 
   pie(doc);
   doc.save(`entrega_${s.folio || s.id}.pdf`);

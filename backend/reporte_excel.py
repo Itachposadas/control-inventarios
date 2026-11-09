@@ -101,6 +101,8 @@ def generar_excel(reporte):
     ]
     if r.get("sin_costo"):
         indicadores.append(("Terminados sin costo capturado", r["sin_costo"], "0"))
+    indicadores.append(("Solicitudes de las áreas", r.get("solicitudes_enviadas", 0), "0"))
+    indicadores.append(("Vencidas (la unidad no llegó)", r.get("solicitudes_vencidas", 0), "0"))
     _tabla(ws, fila, ["Indicador", "Valor"], [(e, v) for e, v, _ in indicadores], [None, None], [38, 18])
     for i, (_, _, formato) in enumerate(indicadores):
         c = ws.cell(row=fila + 1 + i, column=2)
@@ -145,6 +147,14 @@ def generar_excel(reporte):
     columnas = ["#", "Vehículo", "No. inventario", "Área", "Servicios", "Gasto"]
     formatos = ["0", None, None, None, "0", MONEDA]
     anchos = [5, 34, 22, 30, 11, 16]
+    hoja(
+        "Solicitudes por área",
+        ["Área", "Enviadas", "Atendidas", "Vencidas", "Descartadas", "Pendientes", "% cumplimiento"],
+        [(x["area"], x["enviadas"], x["atendidas"], x["vencidas"], x["descartadas"], x["pendientes"], x["cumplimiento"])
+         for x in reporte.get("solicitudes_por_area", [])],
+        [None, "0", "0", "0", "0", "0", PORCENTAJE], [36, 11, 11, 11, 13, 12, 15],
+        ["Total", "suma", "suma", "suma", "suma", "suma", None],
+    )
     hoja("Mayor gasto", columnas, vehiculos(reporte["top_costo"]), formatos, anchos)
     hoja("Más ingresos al taller", columnas, vehiculos(reporte["top_ingresos"]), formatos, anchos)
 

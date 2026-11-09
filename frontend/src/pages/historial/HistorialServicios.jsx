@@ -6,6 +6,7 @@
 // La lista se pagina en el backend (25 por página).
 // Admin y parque vehicular; el gasto solo lo ve el admin.
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ExpedienteServicios, { ResumenExpediente } from "../../components/vehiculos/ExpedienteServicios";
@@ -50,19 +51,24 @@ export default function HistorialServicios() {
   const [cargandoExp, setCargandoExp] = useState(false);
   const panelRef = useRef(null);
 
-  // La búsqueda espera a que se deje de escribir
+  // La búsqueda espera a que se deje de escribir; los demás filtros van al instante
+  const buscar = useDebounce(q.trim());
+
   useEffect(() => {
-    const t = setTimeout(() => {
-      historialApi
-        .vehiculos({ q, area, orden, preventivo, pagina })
-        .then((d) => {
-          setDatos(d);
-          setError("");
-        })
-        .catch((e) => setError(e.message || "No se pudo cargar el historial"));
-    }, q ? 300 : 0);
-    return () => clearTimeout(t);
-  }, [q, area, orden, preventivo, pagina]);
+    let cancel = false;
+    historialApi
+      .vehiculos({ q: buscar, area, orden, preventivo, pagina })
+      .then((d) => {
+        if (cancel) return;
+        setDatos(d);
+        setError("");
+      })
+      .catch((e) => !cancel && setError(e.message || "No se pudo cargar el historial"));
+    // Si llega una respuesta de una búsqueda anterior, se ignora
+    return () => {
+      cancel = true;
+    };
+  }, [buscar, area, orden, preventivo, pagina]);
 
   // Cada búsqueda o filtro nuevo empieza en la página 1
   const filtrar = (setter) => (valor) => {

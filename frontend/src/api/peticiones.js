@@ -3,19 +3,18 @@
 import { request, toQuery } from "./client";
 
 export const peticionesApi = {
-  // estado: "pendiente" (por defecto) | "atendida" | "descartada" | "todas"
+  // estado: "pendiente" (por defecto) | "atendida" | "descartada" | "vencida" | "todas"
   listar: ({ estado = "" } = {}) => request(`/peticiones${toQuery({ estado })}`),
 
   // Página de la bandeja con búsqueda y filtros:
-  // { items, total, pagina, paginas, por_pagina, conteo: {todas, alta, media, baja} | null, areas }
-  pagina: ({ estado = "", pagina = 1, q = "", area = "", prioridad = "", orden = "" } = {}) =>
-    request(`/peticiones${toQuery({ estado, pagina, q, area, prioridad, orden })}`),
+  // { items, total, pagina, paginas, por_pagina, conteo: {todas, vigente, por_vencer} | null, areas }
+  pagina: ({ estado = "", pagina = 1, q = "", area = "", plazo = "", orden = "" } = {}) =>
+    request(`/peticiones${toQuery({ estado, pagina, q, area, plazo, orden })}`),
 
   obtener: (id) => request(`/peticiones/${id}`),
 
-  // Mecánico: firma de recibido (primer paso de "Atender")
-  recibir: (id, { mecanico_nombre, mecanico_firma }) =>
-    request(`/peticiones/${id}/recibir`, { method: "POST", body: { mecanico_nombre, mecanico_firma } }),
+  // Mecánico: "Atender" (recibe la unidad y abre su servicio)
+  recibir: (id) => request(`/peticiones/${id}/recibir`, { method: "POST", body: {} }),
 
   descartar: (id, motivo) =>
     request(`/peticiones/${id}/descartar`, { method: "POST", body: { motivo } }),

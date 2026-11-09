@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from auth_utils import role_required
 from extensions import db
 from models import Rol, ROLES_TALLER
+from validacion import una_linea
 
 roles_bp = Blueprint("roles", __name__, url_prefix="/api/roles")
 
@@ -25,7 +26,7 @@ def listar_roles():
 @role_required("admin")
 def crear_rol():
     data = request.get_json() or {}
-    nombre = " ".join((data.get("nombre") or "").split())
+    nombre = una_linea(data.get("nombre"))
     base = data.get("base")
 
     if not nombre:

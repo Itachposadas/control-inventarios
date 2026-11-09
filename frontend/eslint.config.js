@@ -29,7 +29,7 @@ export default [
       // Ayudantes que viven junto a su componente (no afectan la recarga en caliente)
       "react-refresh/only-export-components": ["warn", {
         allowConstantExport: true,
-        allowExportNames: ["useAuth", "materialVacio", "validarMateriales", "paraEnviar", "datosDesdeVehiculo", "FOTOS"],
+        allowExportNames: ["useAuth", "materialVacio", "erroresMateriales", "paraEnviar", "datosDesdeVehiculo", "FOTOS"],
       }],
       // Los argumentos que empiezan con _ son intencionalmente ignorados
       "no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],

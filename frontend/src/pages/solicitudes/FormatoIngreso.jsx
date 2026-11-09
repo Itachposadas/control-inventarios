@@ -17,6 +17,7 @@ import { useAuth } from "../../context/AuthContext";
 import { MECANICO_MENU, MECANICO_SECONDARY_MENU } from "../../config/menus";
 import { CHECKLIST_ITEMS, conceptosSinMarcar } from "../../config/solicitudes";
 import { ArrowLeft, CarFront, Loader2, Inbox, CalendarCheck, FileDown } from "lucide-react";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 
 export default function FormatoIngreso() {
   const { id } = useParams();
@@ -56,6 +57,7 @@ export default function FormatoIngreso() {
   }, [id, user?.id]);
 
   const sinMarcar = conceptosSinMarcar(form.checklist);
+  const { errores, validar, limpiar } = useCamposVacios();
   const marcados = CHECKLIST_ITEMS.length - sinMarcar.length;
 
   const handleSubmit = async (e) => {
@@ -64,7 +66,12 @@ export default function FormatoIngreso() {
 
     const hojaNo = Number(form.hoja_no);
     const hojaTotal = Number(form.hoja_total);
-    if (!hojaNo || !hojaTotal || hojaNo > hojaTotal) return setError("Revisa la hoja (ej. hoja 1 de 1)");
+    const hojaOk = validar({
+      hoja: !hojaNo || !hojaTotal
+        ? "Rellena el número de hoja y el total de hojas"
+        : hojaNo > hojaTotal && "El número de hoja no puede ser mayor que el total",
+    });
+    if (!hojaOk) return;
 
     if (sinMarcar.length) {
       setResaltarFaltantes(true);
@@ -133,7 +140,7 @@ export default function FormatoIngreso() {
           )}
         </div>
       ) : (
-      <form onSubmit={handleSubmit} className="space-y-5 pb-24">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5 pb-24">
         {/* ═════ ENCABEZADO ═════ */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
           <div className="h-1.5 bg-institucional" />
@@ -159,12 +166,15 @@ export default function FormatoIngreso() {
                 </div>
                 <p className="mt-1 text-[11px] text-slate-500">Se registra automáticamente al guardar.</p>
               </Field>
-              <Field label="Hoja no.">
+              <Field label="Hoja no." error={errores.hoja}>
                 <div className="flex items-center gap-2">
                   <input
                     type="number" min="1" max="99" inputMode="numeric"
                     value={form.hoja_no}
-                    onChange={(e) => set("hoja_no", e.target.value)}
+                    onChange={(e) => {
+                      set("hoja_no", e.target.value);
+                      limpiar("hoja");
+                    }}
                     aria-label="Hoja número"
                     className={`${inputClass} text-center`}
                   />
@@ -172,7 +182,10 @@ export default function FormatoIngreso() {
                   <input
                     type="number" min="1" max="99" inputMode="numeric"
                     value={form.hoja_total}
-                    onChange={(e) => set("hoja_total", e.target.value)}
+                    onChange={(e) => {
+                      set("hoja_total", e.target.value);
+                      limpiar("hoja");
+                    }}
                     aria-label="Total de hojas"
                     className={`${inputClass} text-center`}
                   />
@@ -227,7 +240,6 @@ export default function FormatoIngreso() {
           <TextArea
             value={form.observaciones_ingreso}
             onChange={(v) => set("observaciones_ingreso", v)}
-            placeholder="Ej. No trae faros delanteros"
             rows={4}
           />
         </Section>

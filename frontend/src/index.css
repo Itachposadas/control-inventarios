@@ -107,3 +107,11 @@ button:not(:disabled):active {
     transform: none !important;
   }
 }
+/* Campo obligatorio que se dejó vacío (Field con error): borde rojo hasta que se llene */
+[data-error] :is(input, textarea, select) {
+  border-color: rgb(220 38 38);
+}
+[data-error] :is(input, textarea, select):focus {
+  --tw-ring-color: rgb(220 38 38 / 0.15);
+  border-color: rgb(220 38 38);
+}

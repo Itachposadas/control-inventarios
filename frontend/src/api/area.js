@@ -10,6 +10,6 @@ export const areaApi = {
 
   peticiones: () => request("/area/peticiones"),
 
-  // Formato de solicitud con las firmas (cuando el taller ya la recibió)
+  // Datos de la carta de solicitud, para descargarla en PDF
   formato: (id) => request(`/area/peticiones/${id}/formato`),
 };

@@ -2,13 +2,13 @@
 // "Órdenes de compra" de administración. Llegan del mecánico con los datos de la
 // unidad, el diagnóstico y las refacciones a comprar. Administración captura el
 // proveedor, los precios unitarios y el IVA, y la atiende: el servicio sigue a
-// Reparación y su costo es el total de la orden. (La firma de quien autoriza la
-// pone parque vehicular al enviarla.)
+// Reparación y su costo es el total de la orden. No lleva firmas.
 import { useEffect, useMemo, useState } from "react";
 import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { Boton, Alerta, Insignia, Modal, Field, TextArea, inputClass } from "../../components/ui";
+import { Boton, Alerta, Insignia, Modal, Field, TextArea, AvisoCampo, inputClass } from "../../components/ui";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 import { TablaRefacciones } from "../../components/servicio/PasoDiagnostico";
 import { ordenesCompraApi, ESTADO_ORDEN } from "../../api/ordenesCompra";
 import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../config/menus";
@@ -110,7 +110,9 @@ export default function OrdenesCompra() {
                     </p>
                     <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
                       <span className="inline-flex items-center gap-1.5"><Building2 size={13} /> {v.area || "Sin área"}</span>
-                      <span className="inline-flex items-center gap-1.5"><Wrench size={13} /> {o.mecanico_nombre}</span>
+                      {o.servicio.mecanico && (
+                        <span className="inline-flex items-center gap-1.5"><Wrench size={13} /> {o.servicio.mecanico}</span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -184,6 +186,7 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
   const [adicionales, setAdicionales] = useState(orden.adicionales || "");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(null); // "guardar" | "atender"
+  const { errores, validar, limpiar } = useCamposVacios();
 
   const importe = (p) => (precios[p.id] === "" ? null : Number(p.cantidad) * Number(precios[p.id]));
   const totales = useMemo(() => {
@@ -198,9 +201,17 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
   const enviar = async (accion) => {
     setError("");
     if (accion === "atender") {
-      if (!proveedor.nombre.trim()) return setError("Escribe el nombre o razón social del proveedor");
-      const falta = orden.piezas.find((p) => precios[p.id] === "");
-      if (falta) return setError(`Falta el precio unitario de «${falta.concepto}»`);
+      const ok = validar({
+        proveedor_nombre: !proveedor.nombre.trim() && "Rellena este campo con el nombre o razón social del proveedor",
+        ...Object.fromEntries(orden.piezas.map((p) => [
+          `precio_${p.id}`,
+          String(precios[p.id]).trim() === ""
+            ? "Rellena el precio unitario"
+            : !(Number(precios[p.id]) >= 0) && "Escribe un precio válido",
+        ])),
+        iva: !(Number(iva) >= 0 && Number(iva) <= 100) && "Escribe un porcentaje entre 0 y 100",
+      });
+      if (!ok) return;
     }
     setGuardando(accion);
     try {
@@ -217,7 +228,10 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
     }
   };
 
-  const setProv = (campo) => (e) => setProveedor((p) => ({ ...p, [campo]: e.target.value }));
+  const setProv = (campo) => (e) => {
+    setProveedor((p) => ({ ...p, [campo]: e.target.value }));
+    limpiar(`proveedor_${campo}`);
+  };
 
   return (
     <Modal
@@ -232,7 +246,7 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
         <div>
           <h4 className="text-sm font-semibold text-slate-800 mb-3">Datos del proveedor</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Nombre / Razón social" required className="sm:col-span-2">
+            <Field label="Nombre / Razón social" required className="sm:col-span-2" error={errores.proveedor_nombre}>
               <input value={proveedor.nombre} onChange={setProv("nombre")} maxLength={200} className={inputClass} />
             </Field>
             <Field label="Dirección">
@@ -242,22 +256,6 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
               <input value={proveedor.telefono} onChange={setProv("telefono")} maxLength={50} inputMode="tel" className={inputClass} />
             </Field>
           </div>
-        </div>
-
-        {/* Firmas que ya trae la orden (las pone parque vehicular) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {[
-            ["Mecánico/Almacén", orden.mecanico_nombre, orden.mecanico_firma],
-            ["Autorizó", orden.autoriza_nombre, orden.autoriza_firma],
-          ].map(([titulo, nombre, firma]) => (
-            <div key={titulo} className="rounded-xl border border-slate-200 px-3 py-2 flex items-center gap-3 min-w-0">
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">{titulo}</p>
-                <p className="text-sm font-semibold text-slate-800 truncate">{nombre || "—"}</p>
-              </div>
-              {firma && <img src={firma} alt={`Firma de ${nombre}`} className="h-10 w-auto max-w-[45%] object-contain shrink-0" />}
-            </div>
-          ))}
         </div>
 
         {/* Siempre los mismos: los del municipio (no se editan) */}
@@ -291,16 +289,22 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
                       {Number(p.cantidad).toLocaleString("es-MX")} {p.unidad_medida}
                     </p>
                   </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 pointer-events-none">$</span>
-                    <input
-                      type="number" min="0" step="0.01" inputMode="decimal"
-                      value={precios[p.id]}
-                      onChange={(e) => setPrecios((pr) => ({ ...pr, [p.id]: e.target.value }))}
-                      placeholder="Precio unitario"
-                      aria-label={`Precio unitario de ${p.concepto}`}
-                      className={`${inputClass} pl-7`}
-                    />
+                  <div data-error={errores[`precio_${p.id}`] ? "" : undefined}>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 pointer-events-none">$</span>
+                      <input
+                        type="number" min="0" step="0.01" inputMode="decimal"
+                        value={precios[p.id]}
+                        onChange={(e) => {
+                          setPrecios((pr) => ({ ...pr, [p.id]: e.target.value }));
+                          limpiar(`precio_${p.id}`);
+                        }}
+                        placeholder="Precio unitario"
+                        aria-label={`Precio unitario de ${p.concepto}`}
+                        className={`${inputClass} pl-7`}
+                      />
+                    </div>
+                    {errores[`precio_${p.id}`] && <AvisoCampo>{errores[`precio_${p.id}`]}</AvisoCampo>}
                   </div>
                   <p className="text-sm sm:text-right font-semibold text-slate-800 tabular-nums">
                     {imp != null && !Number.isNaN(imp) ? formatMoneda(imp) : "—"}
@@ -313,14 +317,14 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_14rem] gap-5">
           <Field label="Adicionales">
-            <TextArea value={adicionales} onChange={setAdicionales} placeholder="Ej. Incluye envío" rows={3} />
+            <TextArea value={adicionales} onChange={setAdicionales} rows={3} />
           </Field>
           <div className="space-y-3">
-            <Field label="IVA (%)">
+            <Field label="IVA (%)" error={errores.iva}>
               <input
                 type="number" min="0" max="100" step="0.01" inputMode="decimal"
                 value={iva}
-                onChange={(e) => setIva(e.target.value)}
+                onChange={(e) => { setIva(e.target.value); limpiar("iva"); }}
                 className={inputClass}
               />
             </Field>

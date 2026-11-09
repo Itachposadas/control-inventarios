@@ -4,6 +4,7 @@
 //  - /mecanico/historial     (las que ya terminó)
 import { useEffect, useState } from "react";
 import { useAutoActualizar } from "../../hooks/useAutoActualizar";
+import { useBusquedaDiferida } from "../../hooks/useDebounce";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import SolicitudesTable from "../../components/solicitudes/SolicitudesTable";
 import { inputClass, Alerta } from "../../components/ui";
@@ -26,29 +27,30 @@ export default function SolicitudesList({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // El texto espera a que se deje de escribir; estado y prioridad van al instante
+  const consulta = useBusquedaDiferida(filters);
+
   useEffect(() => {
     let cancel = false;
     setLoading(true);
     setError("");
 
-    const timer = setTimeout(() => {
-      solicitudesApi
-        .listar({ ...filters, estado: estadoFijo || filters.estado })
-        .then((data) => !cancel && setItems(data))
-        .catch((e) => !cancel && setError(e.message || "Error al cargar solicitudes"))
-        .finally(() => !cancel && setLoading(false));
-    }, 250);
+    solicitudesApi
+      .listar({ ...consulta, estado: estadoFijo || consulta.estado })
+      .then((data) => !cancel && setItems(data))
+      .catch((e) => !cancel && setError(e.message || "Error al cargar solicitudes"))
+      .finally(() => !cancel && setLoading(false));
 
+    // Si llega una respuesta de una búsqueda anterior, se ignora
     return () => {
       cancel = true;
-      clearTimeout(timer);
     };
-  }, [filters, estadoFijo]);
+  }, [consulta, estadoFijo]);
 
   // Se actualiza solo con lo que hacen los demás usuarios
   useAutoActualizar(() =>
     solicitudesApi
-      .listar({ ...filters, estado: estadoFijo || filters.estado })
+      .listar({ ...consulta, estado: estadoFijo || consulta.estado })
       .then(setItems)
       .catch(() => {})
   );

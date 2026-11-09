@@ -7,7 +7,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import func
 from extensions import db
-from models import Vehiculo, Solicitud, PeticionServicio, _iso, _ve_costos
+from models import Vehiculo, Solicitud, PeticionServicio, _iso, _ve_costos, material_almacen_de
 from auth_utils import role_required
 from routes.solicitudes import EN_TALLER
 from paginacion import pide_pagina, paginar_lista
@@ -132,6 +132,7 @@ def vehiculo(vehiculo_id):
     ve_costos = _ve_costos()
 
     servicios = v.solicitudes.order_by(Solicitud.fecha_ingreso.desc(), Solicitud.id.desc()).all()
+    almacen = material_almacen_de([s.id for s in servicios])
     peticiones = {
         p.solicitud_id: p for p in
         PeticionServicio.query.filter(PeticionServicio.solicitud_id.in_([s.id for s in servicios])).all()
@@ -157,12 +158,13 @@ def vehiculo(vehiculo_id):
             "trabajo_realizado": s.acciones,
             "observaciones": s.observaciones,
             "refacciones": [r.to_dict() for r in s.piezas],
+            "material_almacen": almacen.get(s.id, []),
             "costo": float(s.costo) if ve_costos and s.costo is not None else None,
             "solicitud": {
                 "id": p.id,
                 "folio": p.folio,
                 "solicitante": p.solicitante_nombre,
-                "recibio": p.mecanico_nombre,
+                "descripcion_falla": p.descripcion_falla,
             } if p else None,
             "orden_compra": {"id": o.id, "folio": o.folio, "estado": o.estado} if o else None,
             "fotos": len(s.fotos),

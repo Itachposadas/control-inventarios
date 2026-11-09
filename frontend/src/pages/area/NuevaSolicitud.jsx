@@ -1,25 +1,26 @@
 // src/pages/area/NuevaSolicitud.jsx
 // NUEVA SOLICITUD de la cuenta de un área (ej. Seguridad Pública):
-//   1. Elige un vehículo de SU área   2. Agrega los materiales
-// La fecha y la hora se registran solas al enviar y el área es la de la cuenta.
-// Al final se captura el nombre y la firma de quien solicita (la cuenta es compartida).
+//   1. Elige un vehículo de SU área   2. Escribe la carta de solicitud
+// La carta va dirigida al Coordinador de Parque Vehicular: lleva fecha y hora
+// (se registran solas al enviar), los datos de la unidad, la descripción de la
+// falla y el nombre de quien solicita (la cuenta es compartida). No lleva firma.
 // Al enviar recibe un folio; el taller la atiende cuando llega la unidad.
 import { useEffect, useMemo, useState } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { useAuth } from "../../context/AuthContext";
 import { areaApi } from "../../api/area";
 import { AREA_MENU, AREA_SECONDARY_MENU } from "../../config/menus";
-import { Boton, Alerta, Field, inputClass } from "../../components/ui";
-import PanelFirma from "../../components/peticiones/PanelFirma";
-import EditorMateriales, {
-  materialVacio, validarMateriales, paraEnviar,
-} from "../../components/peticiones/EditorMateriales";
+import { Boton, Alerta, Field, TextArea, inputClass } from "../../components/ui";
+import { AUTORIZA } from "../../config/ordenCompra";
+import { DIAS_VIGENTE, DIAS_LIMITE, fechaLimite, fechaCorta } from "../../config/espera";
 import {
-  Search, Loader2, CarFront, ChevronRight, ArrowLeft, CheckCircle2, Send, AlertCircle,
+  Search, Loader2, CarFront, ChevronRight, ArrowLeft, CheckCircle2, Send, AlertCircle, Clock,
 } from "lucide-react";
 
-const PASOS = ["Vehículo", "Materiales"];
+const PASOS = ["Vehículo", "Carta de solicitud"];
 
 const normalizar = (t) =>
   (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -43,7 +44,7 @@ export default function NuevaSolicitud() {
       menu={AREA_MENU}
       secondaryMenu={AREA_SECONDARY_MENU}
       title="Nueva solicitud"
-      subtitle={`Materiales para un vehículo de ${area}`}
+      subtitle={`Servicio para un vehículo de ${area}`}
     >
       <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
         {enviada ? (
@@ -116,6 +117,7 @@ function ElegirVehiculo({ area, onElegir }) {
   const [lista, setLista] = useState(null);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
+  const buscar = useDebounce(q); // filtra cuando se deja de escribir
 
   useEffect(() => {
     areaApi
@@ -128,12 +130,12 @@ function ElegirVehiculo({ area, onElegir }) {
   }, []);
 
   const filtrados = useMemo(() => {
-    const palabras = normalizar(q).split(/\s+/).filter(Boolean);
+    const palabras = normalizar(buscar).split(/\s+/).filter(Boolean);
     return (lista || []).filter((v) => {
       const texto = normalizar([v.nombre, v.unidad, v.marca, v.modelo, v.placas, v.noInventario].join(" "));
       return palabras.every((p) => texto.includes(p));
     });
-  }, [lista, q]);
+  }, [lista, buscar]);
 
   return (
     <div>
@@ -217,36 +219,35 @@ function ElegirVehiculo({ area, onElegir }) {
   );
 }
 
-/* ───── Paso 2: materiales solicitados ───── */
+/* ───── Paso 2: carta de solicitud ───── */
+
+const MIN_FALLA = 10;
 
 function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
   const ahora = useReloj();
-  const [materiales, setMateriales] = useState(() => [materialVacio()]);
+  const [falla, setFalla] = useState("");
   const [solicitante, setSolicitante] = useState("");
-  const [firma, setFirma] = useState(null);
-  const [faltaFirma, setFaltaFirma] = useState(false);
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const { errores, validar, limpiar } = useCamposVacios();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    const errorMateriales = validarMateriales(materiales);
-    if (errorMateriales) return setError(errorMateriales);
-    if (solicitante.trim().length < 3) return setError("Escribe el nombre completo de quien solicita");
-    if (!firma) {
-      setFaltaFirma(true);
-      return setError("Falta la firma del solicitante");
-    }
+    const ok = validar({
+      falla: !falla.trim()
+        ? "Rellena este campo: describe qué le pasa a la unidad"
+        : falla.trim().length < MIN_FALLA && "Describe la falla con un poco más de detalle",
+      solicitante: solicitante.trim().length < 3 && "Rellena este campo con tu nombre completo",
+    });
+    if (!ok) return;
 
     setEnviando(true);
     try {
       const r = await areaApi.enviar({
         vehiculo_id: vehiculo.id,
-        // El precio unitario y el total los captura después el administrador
-        materiales: paraEnviar(materiales),
+        descripcion_falla: falla.trim(),
         solicitante_nombre: solicitante.trim(),
-        solicitante_firma: firma,
       });
       onEnviada(r);
     } catch (err) {
@@ -255,61 +256,86 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit}>
-      <Atras onClick={onAtras}>Cambiar vehículo</Atras>
-      <Encabezado titulo="Materiales solicitados" texto="Agrega uno o varios materiales para esta unidad." />
+  const fecha = ahora.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+  const hora = ahora.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
 
-      {/* Datos generales: se llenan solos */}
-      <dl className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-px rounded-xl border border-slate-200 bg-slate-200 overflow-hidden">
-        <DatoGeneral
-          etiqueta="Fecha"
-          valor={ahora.toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" })}
-        />
-        <DatoGeneral etiqueta="Hora" valor={ahora.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })} />
-        <DatoGeneral etiqueta="Área" valor={area} />
-        <DatoGeneral
-          etiqueta="Vehículo"
-          valor={vehiculo.nombre}
-          detalle={[vehiculo.placas, vehiculo.noInventario].filter(Boolean).join(" · ")}
-        />
-      </dl>
+  return (
+    <form onSubmit={handleSubmit} noValidate>
+      <Atras onClick={onAtras}>Cambiar vehículo</Atras>
+      <Encabezado
+        titulo="Carta de solicitud"
+        texto="Describe lo que falla la unidad. La fecha y la hora se registran al enviarla."
+      />
 
       {error && (
         <Alerta icono={<AlertCircle size={16} />} className="mt-4">{error}</Alerta>
       )}
 
-      <div className="mt-6">
-        <EditorMateriales materiales={materiales} onChange={setMateriales} />
-      </div>
+      {/* La carta, como se imprime */}
+      <article className="mt-5 rounded-xl border border-slate-200 bg-white px-5 py-6 sm:px-8 sm:py-8 text-sm text-slate-700 leading-relaxed">
+        <p className="text-right">
+          Atlacomulco, Méx., a {fecha} · {hora} h
+        </p>
 
-      {/* Responsable de la solicitud */}
-      <fieldset className="mt-8 border-t border-slate-100 pt-6">
-        <legend className="sr-only">Solicitante</legend>
-        <h3 className="text-base font-semibold text-slate-800">Nombre y firma del solicitante</h3>
-        <p className="mt-0.5 text-sm text-slate-500">Persona del área que hace la solicitud y se hace responsable de ella.</p>
-        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <Field label="Nombre completo" required>
-            <input
-              value={solicitante}
-              onChange={(e) => setSolicitante(e.target.value)}
-              maxLength={120}
-              autoComplete="off"
-              placeholder="Ej. Juan Pérez García"
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Firma" required>
-            <PanelFirma
-              invalido={faltaFirma && !firma}
-              onChange={(f) => {
-                setFirma(f);
-                if (f) setFaltaFirma(false);
+        <div className="mt-6">
+          <p className="font-semibold text-slate-900">{AUTORIZA.nombre}</p>
+          <p>{AUTORIZA.cargo}</p>
+          <p className="font-semibold tracking-wide">P R E S E N T E</p>
+        </div>
+
+        <p className="mt-6">
+          Por medio de la presente, el área de <span className="font-semibold text-slate-900">{area}</span> solicita
+          el servicio de mantenimiento para la siguiente unidad:
+        </p>
+
+        <dl className="mt-4 grid grid-cols-2 lg:grid-cols-3 gap-px rounded-lg border border-slate-200 bg-slate-200 overflow-hidden">
+          <DatoGeneral etiqueta="Unidad" valor={vehiculo.nombre} />
+          <DatoGeneral etiqueta="Marca" valor={vehiculo.marca} />
+          <DatoGeneral etiqueta="Modelo" valor={vehiculo.modelo} />
+          <DatoGeneral etiqueta="Placas" valor={vehiculo.placas} />
+          <DatoGeneral etiqueta="No. de inventario" valor={vehiculo.noInventario} />
+          <DatoGeneral etiqueta="Área" valor={area} />
+        </dl>
+
+        <div className="mt-5">
+          <Field label="Falla que presenta la unidad" required error={errores.falla}>
+            <TextArea
+              value={falla}
+              onChange={(v) => {
+                setFalla(v);
+                limpiar("falla");
               }}
+              rows={5}
+              maxLength={5000}
             />
           </Field>
         </div>
-      </fieldset>
+
+        <p className="mt-5">Sin otro particular, agradezco la atención a la presente.</p>
+
+        <div className="mt-6 max-w-sm">
+          <p className="font-semibold tracking-wide">A T E N T A M E N T E</p>
+          <Field label="Nombre completo de quien solicita" required error={errores.solicitante} className="mt-3">
+            <input
+              value={solicitante}
+              onChange={(e) => {
+                setSolicitante(e.target.value);
+                limpiar("solicitante");
+              }}
+              maxLength={120}
+              autoComplete="off"
+              className={inputClass}
+            />
+          </Field>
+        </div>
+      </article>
+
+      {/* Vigencia: si la unidad no llega a tiempo, la solicitud se cancela sola */}
+      <Alerta tipo="info" icono={<Clock size={16} />} className="mt-5">
+        <span className="font-semibold">Tienes {DIAS_LIMITE} días para llevar la unidad al taller.</span>{" "}
+        A partir del día {DIAS_VIGENTE} te avisaremos que está por vencer; si la unidad no llega en ese plazo, la
+        solicitud se cancela automáticamente y tendrías que enviar una nueva.
+      </Alerta>
 
       <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <Boton variante="fantasma" tamano="lg" onClick={onAtras}>
@@ -338,12 +364,11 @@ function useReloj() {
   return ahora;
 }
 
-function DatoGeneral({ etiqueta, valor, detalle }) {
+function DatoGeneral({ etiqueta, valor }) {
   return (
     <div className="bg-slate-50 px-4 py-3 min-w-0">
       <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{etiqueta}</dt>
       <dd className="mt-0.5 text-sm font-semibold text-slate-800 truncate">{valor || "—"}</dd>
-      {detalle && <dd className="text-[11px] text-slate-500 truncate">{detalle}</dd>}
     </div>
   );
 }
@@ -360,14 +385,19 @@ function Enviada({ datos, onOtra }) {
       <h2 className="mt-5 text-2xl font-semibold text-slate-800">¡Solicitud enviada!</h2>
       <p className="mt-2 text-sm text-slate-500">
         El taller ya tiene tu solicitud para{" "}
-        <span className="font-semibold text-slate-700">{datos.vehiculo.nombre}</span>
-        {" "}({datos.materiales.length} {datos.materiales.length === 1 ? "material" : "materiales"}).
+        <span className="font-semibold text-slate-700">{datos.vehiculo.nombre}</span>.
       </p>
 
       <div className="mt-6 inline-block rounded-xl border-2 border-dashed border-institucional/30 bg-institucional/[0.03] px-8 py-4">
         <p className="text-xs font-medium text-slate-500">Tu folio</p>
         <p className="mt-0.5 text-2xl sm:text-3xl font-semibold font-mono text-institucional tracking-wide">{datos.folio}</p>
       </div>
+      <p className="mt-5 text-sm text-slate-700">
+        Lleva la unidad al taller a más tardar el{" "}
+        <span className="font-semibold">{fechaCorta(fechaLimite(datos.fecha))}</span>.
+        <br />
+        <span className="text-xs text-slate-500">Si no llega en ese plazo, la solicitud se cancela automáticamente.</span>
+      </p>
       <p className="mt-3 text-xs text-slate-500">
         Con este folio puedes consultar el avance en “Seguimiento”.
       </p>

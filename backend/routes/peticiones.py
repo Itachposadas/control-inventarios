@@ -8,8 +8,9 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from models import PeticionServicio, PeticionMaterial, Vehiculo, Solicitud, utcnow, _iso
 from auth_utils import role_required, get_current_user
-from firmas import validar_firma, validar_nombre
+from validacion import validar_nombre
 from paginacion import pide_pagina, paginar
+from vigencia import DIAS_VIGENTE, DIAS_LIMITE, vencer_si_toca, vencer_solicitudes
 from routes.solicitudes import EN_TALLER, abrir_servicio
 
 area_bp = Blueprint("area", __name__, url_prefix="/api/area")
@@ -66,8 +67,8 @@ MAX_MATERIALES = 50
 
 
 def _materiales(lista, modelo=PeticionMaterial):
-    """Valida los materiales capturados. Devuelve (materiales, error).
-    `modelo`: PeticionMaterial (solicitud del área) o SolicitudCompraMaterial."""
+    """Valida una lista de {cantidad, unidad_medida, concepto}. Devuelve (registros, error).
+    `modelo`: RefaccionServicio (refacciones del diagnóstico) o PeticionMaterial."""
     if not isinstance(lista, list) or not lista:
         return None, "Agrega al menos un material"
     if len(lista) > MAX_MATERIALES:
@@ -121,10 +122,12 @@ def _para_area(p):
             {k: m[k] for k in ("id", "cantidad", "unidad_medida", "concepto")} for m in d["materiales"]
         ],
         "creado_por": d["creado_por"],
-        "solicitante_nombre": d["solicitante_nombre"],  # la firma no se regresa al área
+        "solicitante_nombre": d["solicitante_nombre"],
+        "descripcion_falla": d["descripcion_falla"],
         "motivo_descarte": d["motivo_descarte"],
+        "plazo": d["plazo"],
         "atendida_at": d["atendida_at"],
-        "recibida_at": d["recibida_at"],  # el mecánico ya firmó de recibido
+        "recibida_at": d["recibida_at"],  # parque vehicular ya la atendió
         # Avance del servicio en el taller (solo etapa y fechas, sin datos internos)
         "servicio": {
             "folio": p.solicitud.folio,
@@ -155,19 +158,13 @@ def mis_peticiones():
 @area_bp.route("/peticiones/<int:peticion_id>/formato", methods=["GET"])
 @role_required("area")
 def formato_peticion(peticion_id):
-    """Datos del formato de solicitud (con las dos firmas) para que el área lo
-    descargue o imprima. Solo existe cuando el mecánico ya firmó de recibido."""
+    """Datos de la carta de solicitud para que el área la descargue o imprima."""
     p = db.session.get(PeticionServicio, peticion_id)
     if not p or not p.vehiculo or p.vehiculo.area != get_current_user().area:
         return jsonify({"msg": "Solicitud no encontrada"}), 404
-    if not p.recibida_at or p.estado == "descartada":
-        return jsonify({"msg": "El formato estará disponible cuando el taller firme de recibido"}), 409
     d = _para_area(p)
     v = p.vehiculo
-    d["vehiculo"].update(numeroEconomico=v.numero_economico, area=v.area)
-    d["solicitante_firma"] = p.solicitante_firma
-    d["mecanico_nombre"] = p.mecanico_nombre
-    d["mecanico_firma"] = p.mecanico_firma
+    d["vehiculo"].update(numeroEconomico=v.numero_economico, area=v.area, serie=v.serie, color=v.color)
     return jsonify(d), 200
 
 
@@ -182,27 +179,27 @@ def crear_peticion():
     if not vehiculo or vehiculo.estado == "baja" or vehiculo.area != user.area:
         return jsonify({"msg": "Selecciona un vehículo de tu área"}), 400
 
-    materiales, error = _materiales(data.get("materiales"))
-    if error:
-        return jsonify({"msg": error}), 400
+    falla = _texto(data.get("descripcion_falla"), 5000)
+    if not falla or len(falla) < 10:
+        return jsonify({"msg": "Describe la falla que presenta la unidad (al menos 10 caracteres)"}), 400
 
     solicitante, error = validar_nombre(data.get("solicitante_nombre"), "de quien solicita")
-    if not error:
-        firma, error = validar_firma(data.get("solicitante_firma"), "del solicitante")
     if error:
         return jsonify({"msg": error}), 400
 
     en_taller = vehiculo.solicitudes.filter(Solicitud.estado.in_(EN_TALLER)).first()
     if en_taller:
         return jsonify({"msg": "Esta unidad ya tiene un servicio en proceso"}), 409
+    # Una solicitud vencida ya no bloquea a la unidad
+    vencer_solicitudes()
     pendiente = PeticionServicio.query.filter_by(vehiculo_id=vehiculo.id, estado="pendiente").first()
     if pendiente:
         return jsonify({"msg": f"Ya hay una solicitud pendiente para esta unidad ({pendiente.folio})"}), 409
 
     # Fecha, hora y área no se reciben: salen de created_at y del vehículo
     p = PeticionServicio(
-        vehiculo=vehiculo, materiales=materiales, creado_por_id=user.id,
-        solicitante_nombre=solicitante, solicitante_firma=firma,
+        vehiculo=vehiculo, creado_por_id=user.id,
+        solicitante_nombre=solicitante, descripcion_falla=falla,
     )
     db.session.add(p)
     db.session.flush()  # obtiene el id para armar el folio
@@ -221,25 +218,26 @@ def _to_int(valor):
 
 # ════════════════════ BANDEJA DEL TALLER ════════════════════
 
-# Prioridad de una pendiente según cuántos días lleva esperando (igual que el frontend)
-PRIORIDAD_DIAS = {"alta": (3, None), "media": (1, 3), "baja": (0, 1)}
+# Plazo de una pendiente (igual que vigencia.py y el frontend):
+# vigente = menos de DIAS_VIGENTE días; por_vencer = de DIAS_VIGENTE a DIAS_LIMITE
+PLAZOS = {"vigente": (0, DIAS_VIGENTE), "por_vencer": (DIAS_VIGENTE, DIAS_LIMITE)}
 
 
-def _filtro_prioridad(query, prioridad):
-    desde, hasta = PRIORIDAD_DIAS[prioridad]
+def _filtro_plazo(query, plazo):
+    desde, hasta = PLAZOS[plazo]
     ahora = utcnow()
-    query = query.filter(PeticionServicio.created_at <= ahora - timedelta(days=desde))
-    if hasta is not None:
-        query = query.filter(PeticionServicio.created_at > ahora - timedelta(days=hasta))
-    return query
+    return query.filter(
+        PeticionServicio.created_at <= ahora - timedelta(days=desde),
+        PeticionServicio.created_at > ahora - timedelta(days=hasta),
+    )
 
 
 @peticiones_bp.route("", methods=["GET"])
 @peticiones_bp.route("/", methods=["GET"])
 @role_required("admin", "mecanico")
 def listar():
-    """?estado=pendiente|atendida|descartada|todas &orden=antiguas|recientes
-    Con ?pagina=N además: &q= (folio, vehículo, placas, solicitante) &area= &prioridad=alta|media|baja
+    """?estado=pendiente|atendida|descartada|vencida|todas &orden=antiguas|recientes
+    Con ?pagina=N además: &q= (folio, vehículo, placas, solicitante, falla) &area= &plazo=vigente|por_vencer
     y responde {items, total, pagina, paginas, conteo, areas}."""
     estado = (request.args.get("estado") or "pendiente").strip()
     # Pendientes: las que llevan más tiempo esperando van primero (son prioridad)
@@ -266,19 +264,20 @@ def listar():
         like = f"%{q}%"
         query = query.filter(db.or_(
             PeticionServicio.folio.like(like), PeticionServicio.solicitante_nombre.like(like),
+            PeticionServicio.descripcion_falla.like(like),
             Vehiculo.numero_economico.like(like), Vehiculo.unidad.like(like),
             Vehiculo.placas.like(like), Vehiculo.no_inventario.like(like),
         ))
 
-    # Cuántas hay de cada prioridad (solo pendientes), antes de filtrar por prioridad
+    # Cuántas hay de cada plazo (solo pendientes), antes de filtrar por plazo
     conteo = None
     if estado == "pendiente":
         conteo = {"todas": query.order_by(None).count()}
-        for nombre in PRIORIDAD_DIAS:
-            conteo[nombre] = _filtro_prioridad(query, nombre).order_by(None).count()
-        prioridad = (request.args.get("prioridad") or "").strip()
-        if prioridad in PRIORIDAD_DIAS:
-            query = _filtro_prioridad(query, prioridad)
+        for nombre in PLAZOS:
+            conteo[nombre] = _filtro_plazo(query, nombre).order_by(None).count()
+        plazo = (request.args.get("plazo") or "").strip()
+        if plazo in PLAZOS:
+            query = _filtro_plazo(query, plazo)
 
     items, info = paginar(query, por_defecto=10)
     return jsonify({**info, "items": [p.to_dict() for p in items], "conteo": conteo, "areas": areas}), 200
@@ -296,25 +295,17 @@ def obtener(peticion_id):
 @peticiones_bp.route("/<int:peticion_id>/recibir", methods=["POST"])
 @role_required("mecanico")
 def recibir(peticion_id):
-    """"Atender": el mecánico responsable firma de recibido y se abre el servicio
-    (paso Diagnóstico). Con las dos firmas ya se puede ver el formato de la solicitud."""
+    """"Atender": parque vehicular recibe la solicitud y se abre el servicio (paso Diagnóstico)."""
     user = get_current_user()
     p = db.session.get(PeticionServicio, peticion_id)
     if not p:
         return jsonify({"msg": "Solicitud no encontrada"}), 404
+    if vencer_si_toca(p):
+        db.session.commit()
     if p.estado != "pendiente":
-        return jsonify({"msg": "Esta solicitud ya fue atendida"}), 409
+        return jsonify({"msg": _ya_no_pendiente(p)}), 409
 
-    # Si ya firmó antes (versión anterior del flujo) solo falta abrir el servicio
     if not p.recibida_at:
-        data = request.get_json() or {}
-        nombre, error = validar_nombre(data.get("mecanico_nombre"), "del mecánico responsable")
-        if not error:
-            firma, error = validar_firma(data.get("mecanico_firma"), "del mecánico responsable")
-        if error:
-            return jsonify({"msg": error}), 400
-        p.mecanico_nombre = nombre
-        p.mecanico_firma = firma
         p.recibida_at = utcnow()
 
     s, error = abrir_servicio(p, user)
@@ -329,6 +320,15 @@ def recibir(peticion_id):
     return jsonify(p.to_dict()), 200
 
 
+def _ya_no_pendiente(p):
+    if p.estado == "vencida":
+        return (f"Esta solicitud venció: pasaron más de {DIAS_LIMITE} días sin que llegara la unidad. "
+                "El área debe enviar una nueva solicitud.")
+    if p.estado == "descartada":
+        return "Esta solicitud ya fue descartada"
+    return "Esta solicitud ya fue atendida"
+
+
 @peticiones_bp.route("/<int:peticion_id>/descartar", methods=["POST"])
 @role_required("mecanico")
 def descartar(peticion_id):
@@ -336,8 +336,10 @@ def descartar(peticion_id):
     p = db.session.get(PeticionServicio, peticion_id)
     if not p:
         return jsonify({"msg": "Solicitud no encontrada"}), 404
+    if vencer_si_toca(p):
+        db.session.commit()
     if p.estado != "pendiente":
-        return jsonify({"msg": "Esta solicitud ya fue atendida"}), 409
+        return jsonify({"msg": _ya_no_pendiente(p)}), 409
 
     motivo = _texto((request.get_json() or {}).get("motivo"), 1000)
     if not motivo:

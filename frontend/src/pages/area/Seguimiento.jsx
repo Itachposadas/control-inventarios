@@ -2,20 +2,25 @@
 // SEGUIMIENTO de la cuenta de un área: sus solicitudes con el avance de cada una.
 // Se busca por folio (PET-… de la solicitud o SOL-… del servicio), vehículo o placas.
 // Solo muestra la etapa y las fechas; los datos internos del taller no salen aquí.
-// Cuando el mecánico firma de recibido, el área ya puede descargar o imprimir
-// el formato de solicitud con las dos firmas. Cuando la reparación termina (ya
-// tiene la foto final) se avisa que la unidad está lista para recogerse.
+// Mientras la unidad no llega al taller se muestra la vigencia de la solicitud:
+// vigente, por vencer (amarillo, con la fecha límite) o vencida (se canceló sola).
+// Cada solicitud trae su carta (dirigida al Coordinador de Parque Vehicular)
+// para descargarla o imprimirla. Cuando la reparación termina (ya tiene la
+// foto final) se avisa que la unidad está lista para recogerse.
 import { useEffect, useMemo, useState } from "react";
 import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useAuth } from "../../context/AuthContext";
 import { areaApi } from "../../api/area";
 import { AREA_MENU, AREA_SECONDARY_MENU } from "../../config/menus";
 import { Alerta, Boton, Insignia } from "../../components/ui";
 import { descargarSolicitudPdf } from "../../utils/pdfs";
+import { DIAS_LIMITE, plazoDe, textoVence, fechaCorta } from "../../config/espera";
 import {
   Search, Loader2, CarFront, Check, XCircle, AlertCircle, FileText, FileDown, Printer, CheckCircle2,
+  Clock, CalendarX,
 } from "lucide-react";
 
 // Etapas que ve el área, de la solicitud a la entrega
@@ -41,23 +46,29 @@ function fechaHora(iso) {
 const normalizar = (t) =>
   (t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-// Etapa actual (índice de ETAPAS) o null si la solicitud no procedió
+// Etapa actual (índice de ETAPAS) o null si la solicitud no procedió o venció
 function etapaDe(p) {
-  if (p.estado === "descartada") return null;
-  if (p.estado === "pendiente") return p.recibida_at ? 1 : 0;  // ya firmó de recibido el mecánico
+  if (p.estado === "descartada" || p.estado === "vencida") return null;
+  if (p.estado === "pendiente") return p.recibida_at ? 1 : 0;  // parque vehicular ya la recibió
   return p.servicio ? INDICE_SERVICIO[p.servicio.estado] ?? 1 : 1;
 }
 
 function situacion(p) {
   const i = etapaDe(p);
+  if (p.estado === "vencida") return { texto: "Vencida", tono: "rojo" };
   if (i === null) return { texto: "No procedió", tono: "rojo" };
-  if (i === 0) return { texto: "En espera", tono: "ambar" };
+  if (i === 0) {
+    return plazoDe(p.fecha).valor === "por_vencer"
+      ? { texto: "Por vencer", tono: "ambar" }
+      : { texto: "Esperando la unidad", tono: "azul" };
+  }
   if (i === 4) return { texto: "Entregada", tono: "verde" };
   if (p.servicio?.listo) return { texto: "Lista para entregar", tono: "verde" };
   return { texto: "En servicio", tono: "azul" };
 }
 
-const concluida = (p) => p.estado === "descartada" || p.servicio?.estado === "entregada";
+const concluida = (p) =>
+  p.estado === "descartada" || p.estado === "vencida" || p.servicio?.estado === "entregada";
 
 export default function Seguimiento() {
   const { user } = useAuth();
@@ -71,6 +82,7 @@ export default function Seguimiento() {
     if (folio) setQ(folio);
   }, [folio]);
   const [filtro, setFiltro] = useState("todas");
+  const buscar = useDebounce(q); // filtra cuando se deja de escribir
 
   useEffect(() => {
     areaApi
@@ -87,7 +99,7 @@ export default function Seguimiento() {
 
   const filtradas = useMemo(() => {
     if (!lista) return [];
-    const palabras = normalizar(q).split(/\s+/).filter(Boolean);
+    const palabras = normalizar(buscar).split(/\s+/).filter(Boolean);
     return lista.filter((p) => {
       if (filtro === "curso" && concluida(p)) return false;
       if (filtro === "concluidas" && !concluida(p)) return false;
@@ -97,7 +109,7 @@ export default function Seguimiento() {
       );
       return palabras.every((w) => texto.includes(w));
     });
-  }, [lista, q, filtro]);
+  }, [lista, buscar, filtro]);
 
   return (
     <DashboardLayout
@@ -200,7 +212,15 @@ function Tarjeta({ p }) {
           </Alerta>
         )}
 
-        {etapa === null ? (
+        {p.estado === "pendiente" && <Vigencia p={p} />}
+
+        {p.estado === "vencida" ? (
+          <Alerta className="mt-4" icono={<CalendarX size={16} />}>
+            <span className="font-semibold">La solicitud se canceló porque la unidad no llegó al taller a tiempo.</span>{" "}
+            Pasaron más de {DIAS_LIMITE} días desde que se envió. Si la unidad aún necesita servicio, haz una nueva
+            solicitud en “Nueva solicitud”.
+          </Alerta>
+        ) : etapa === null ? (
           <Alerta className="mt-4" icono={<XCircle size={16} />}>
             <span className="font-semibold">La solicitud no procedió.</span>
             {p.motivo_descarte && <> Motivo: {p.motivo_descarte}</>}
@@ -218,13 +238,35 @@ function Tarjeta({ p }) {
         )}
       </div>
 
-      {etapa !== null && p.recibida_at && <FormatoSolicitud p={p} />}
+      <FormatoSolicitud p={p} />
     </li>
   );
 }
 
-// Formato de solicitud firmado por el solicitante y el mecánico que la recibió.
-// Se pide al momento porque trae las firmas.
+// Plazo para llevar la unidad mientras la solicitud está en espera
+function Vigencia({ p }) {
+  const plazo = plazoDe(p.fecha);
+  const limite = fechaCorta(plazo.vence);
+  if (plazo.valor === "por_vencer") {
+    return (
+      <Alerta tipo="aviso" className="mt-4" icono={<Clock size={16} />}>
+        <span className="font-semibold">{textoVence(p.fecha)}.</span> Lleva la unidad al taller a más tardar el{" "}
+        <span className="font-semibold">{limite}</span>; si no llega, la solicitud se cancelará sola.
+      </Alerta>
+    );
+  }
+  return (
+    <p className="mt-4 flex items-start gap-2 text-sm text-slate-600">
+      <Clock size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+      <span>
+        Lleva la unidad al taller. Tienes hasta el <span className="font-semibold text-slate-800">{limite}</span>{" "}
+        ({textoVence(p.fecha).toLowerCase()}).
+      </span>
+    </p>
+  );
+}
+
+// Carta de solicitud que envió el área (se pide al momento con los datos de la unidad).
 function FormatoSolicitud({ p }) {
   const [ocupado, setOcupado] = useState(null);
   const [error, setError] = useState("");
@@ -238,7 +280,7 @@ function FormatoSolicitud({ p }) {
       await descargarSolicitudPdf(await areaApi.formato(p.id), ventana || undefined);
     } catch (e) {
       ventana?.close();
-      setError(e.message || "No se pudo generar el formato");
+      setError(e.message || "No se pudo generar la carta");
     } finally {
       setOcupado(null);
     }
@@ -254,9 +296,10 @@ function FormatoSolicitud({ p }) {
           <FileText size={16} />
         </span>
         <div className="min-w-0 mr-auto">
-          <p className="text-sm font-semibold text-slate-800">Formato de solicitud</p>
+          <p className="text-sm font-semibold text-slate-800">Carta de solicitud</p>
           <p className="text-xs text-slate-500">
-            Firmado por el taller el {fechaHora(p.recibida_at)}
+            Enviada el {fechaHora(p.fecha)}
+            {p.solicitante_nombre && <> · {p.solicitante_nombre}</>}
           </p>
         </div>
         <div className="flex gap-2">

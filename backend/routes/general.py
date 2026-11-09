@@ -7,6 +7,7 @@ from models import Vehiculo, Solicitud, SolicitudEvento, OrdenCompra, PeticionSe
 from auth_utils import role_required, get_current_user
 from routes.solicitudes import EN_TALLER
 from routes.peticiones import servicio_listo
+import vigencia
 
 general_bp = Blueprint("general", __name__, url_prefix="/api")
 
@@ -79,12 +80,13 @@ def buscar():
 
 
 def _notificaciones_area(user):
-    """Avisos de la cuenta de un área sobre sus solicitudes: listo para entregar,
-    en el taller, entregado o no procedió (estos dos, solo unos días)."""
+    """Avisos de la cuenta de un área sobre sus solicitudes: por vencer (falta
+    llevar la unidad), listo para entregar, en el taller, y entregado, no procedió
+    o vencida (estos tres, solo unos días)."""
     reciente = utcnow() - timedelta(days=DIAS_AVISO_CERRADO)
     peticiones = (
         PeticionServicio.query.join(Vehiculo, PeticionServicio.vehiculo_id == Vehiculo.id)
-        .filter(Vehiculo.area == user.area, PeticionServicio.estado != "pendiente")
+        .filter(Vehiculo.area == user.area)
         .order_by(PeticionServicio.created_at.desc())
         .limit(100)
         .all()
@@ -93,7 +95,19 @@ def _notificaciones_area(user):
     for p in peticiones:
         s = p.solicitud
         base = {"ruta": f"/area/seguimiento?folio={p.folio}", "texto": f"{p.folio} · {_nombre_vehiculo(p.vehiculo)}"}
-        if p.estado == "descartada":
+        if p.estado == "pendiente":
+            plazo = vigencia.plazo(p)
+            if plazo and plazo["estado"] == "por_vencer":
+                vence = (vigencia.limites(p)[1] - timedelta(hours=6)).strftime("%d/%m/%Y")
+                items.append({**base, "id": f"area-vence-{p.id}", "tipo": "por_vencer",
+                              "titulo": f"Lleva la unidad antes del {vence} o se cancelará",
+                              "fecha": plazo["aviso_at"]})
+        elif p.estado == "vencida":
+            if p.atendida_at and p.atendida_at >= reciente:
+                items.append({**base, "id": f"area-venc-{p.id}", "tipo": "vencida",
+                              "titulo": "Tu solicitud se canceló: la unidad no llegó a tiempo",
+                              "fecha": _iso_o_none(p.atendida_at)})
+        elif p.estado == "descartada":
             if p.atendida_at and p.atendida_at >= reciente:
                 items.append({**base, "id": f"area-desc-{p.id}", "tipo": "descartada",
                               "titulo": "Tu solicitud no procedió", "fecha": _iso_o_none(p.atendida_at)})
@@ -109,7 +123,7 @@ def _notificaciones_area(user):
                           "titulo": "Tu vehículo está en el taller", "estado": s.estado,
                           "fecha": _iso_o_none(s.updated_at)})
     # Primero lo que requiere que el área haga algo (recoger la unidad)
-    orden = {"listo": 0, "en_taller": 1, "entregada": 2, "descartada": 3}
+    orden = {"por_vencer": 0, "listo": 1, "en_taller": 2, "vencida": 3, "entregada": 4, "descartada": 5}
     items.sort(key=lambda n: orden[n["tipo"]])
     return items
 

@@ -207,6 +207,34 @@ export async function descargarReportePdf(reporte) {
     }
   );
 
+  // Rezago: qué pasó con las solicitudes que enviaron las áreas
+  const sols = reporte.solicitudes_por_area || [];
+  const cumplimiento = (x) => (x.cumplimiento == null ? "—" : `${Math.round(x.cumplimiento * 100)} %`);
+  tabla(
+    "Solicitudes de las áreas",
+    ["Área", "Enviadas", "Atendidas", "Vencidas", "Descartadas", "Pendientes", "Cumplimiento"],
+    sols.map((x) => [x.area, x.enviadas, x.atendidas, x.vencidas, x.descartadas, x.pendientes, cumplimiento(x)]),
+    {
+      columnStyles: { 1: der_, 2: der_, 3: der_, 4: der_, 5: der_, 6: { ...der_, cellWidth: 24 } },
+      total: [
+        "Total", suma(sols, "enviadas"), suma(sols, "atendidas"), suma(sols, "vencidas"),
+        suma(sols, "descartadas"), suma(sols, "pendientes"),
+        cumplimiento({
+          cumplimiento: suma(sols, "atendidas") + suma(sols, "vencidas")
+            ? suma(sols, "atendidas") / (suma(sols, "atendidas") + suma(sols, "vencidas"))
+            : null,
+        }),
+      ],
+    }
+  );
+  if (sols.length) {
+    texto(
+      "Vencidas: la unidad no llegó al taller en el plazo de la solicitud. Cumplimiento: atendidas entre atendidas y vencidas.",
+      MARGEN, y - 5, { tam: 7.5, color: GRIS }
+    );
+    y += 2;
+  }
+
   const vehiculos = (lista) =>
     lista.map((v, i) => [i + 1, v.nombre, v.no_inventario, v.area || "—", v.servicios, moneda(v.gasto)]);
   const colVehiculos = {

@@ -11,6 +11,7 @@ import { solicitudesApi } from "../../api/solicitudes";
 import {
   descargarSolicitudPdf, descargarDiagnosticoPdf, descargarIngresoPdf, descargarOrdenCompraPdf, descargarEntregaPdf,
 } from "../../utils/pdfs";
+import { cantidadTexto } from "../../api/almacen";
 import { formatFecha, formatMoneda } from "../../config/solicitudes";
 import {
   Wrench, CheckCircle2, Clock, DollarSign, Timer, FileDown, ExternalLink, Loader2, Building2, UserRound,
@@ -72,7 +73,7 @@ function Servicio({ s, onAbrir }) {
   const [descargando, setDescargando] = useState(null);
   const entregado = s.estado === "entregada";
 
-  // Cada formato se pide al momento (trae las firmas)
+  // Cada formato se pide al momento con sus datos completos
   const descargar = async (cual) => {
     setDescargando(cual);
     try {
@@ -126,7 +127,6 @@ function Servicio({ s, onAbrir }) {
         <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
           {s.area && <span className="inline-flex items-center gap-1"><Building2 size={12} /> {s.area}</span>}
           {s.solicitud?.solicitante && <span className="inline-flex items-center gap-1"><UserRound size={12} /> Solicitó: {s.solicitud.solicitante}</span>}
-          {s.solicitud?.recibio && <span className="inline-flex items-center gap-1"><Wrench size={12} /> Recibió: {s.solicitud.recibio}</span>}
         </p>
 
         <dl className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -138,6 +138,12 @@ function Servicio({ s, onAbrir }) {
           <p className="mt-3 text-xs text-slate-600">
             <span className="font-semibold">Refacciones:</span>{" "}
             {s.refacciones.map((r) => `${Number(r.cantidad).toLocaleString("es-MX")} ${r.unidad_medida} ${r.concepto}`).join(" · ")}
+          </p>
+        )}
+        {s.material_almacen?.length > 0 && (
+          <p className="mt-1.5 text-xs text-slate-600">
+            <span className="font-semibold">Del almacén:</span>{" "}
+            {s.material_almacen.map((m) => `${cantidadTexto(m.cantidad)} ${m.unidad_medida} ${m.nombre}`).join(" · ")}
           </p>
         )}
 

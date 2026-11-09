@@ -1,6 +1,7 @@
 // src/components/ui/Formulario.jsx
 // Piezas de formulario: estilo de los campos, campo con etiqueta, área de texto
 // y sección (tarjeta con título).
+import { AlertCircle } from "lucide-react";
 
 // Estilo único de inputs, selects y textareas de todo el sistema
 export const inputClass = `
@@ -28,18 +29,32 @@ export function Section({ title, subtitle, children, actions }) {
 }
 
 // Etiqueta + campo. "required" agrega el asterisco rojo.
-export function Field({ label, required = false, children, className = "" }) {
+// "error": aviso debajo del campo (ej. cuando se quiso guardar sin llenarlo);
+// el borde del campo se pone rojo mientras exista (ver index.css).
+export function Field({ label, required = false, error = "", children, className = "" }) {
   return (
-    <div className={className}>
+    <div className={className} data-error={error ? "" : undefined}>
       <label className="block text-sm font-medium text-slate-700 mb-1">
         {label} {required && <span className="text-red-600">*</span>}
       </label>
       {children}
+      {error && <AvisoCampo>{error}</AvisoCampo>}
     </div>
   );
 }
 
-export function TextArea({ value, onChange, disabled, placeholder, rows = 4 }) {
+// Mensaje rojo bajo un campo vacío o inválido
+export function AvisoCampo({ children }) {
+  return (
+    <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-red-700 animate-fade-in">
+      <AlertCircle size={14} className="shrink-0 mt-px" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+// maxLength: tope de lo que cabe en la columna TEXT de MySQL, con margen para acentos
+export function TextArea({ value, onChange, disabled, placeholder, rows = 4, maxLength = 10000 }) {
   return (
     <textarea
       value={value || ""}
@@ -47,6 +62,7 @@ export function TextArea({ value, onChange, disabled, placeholder, rows = 4 }) {
       disabled={disabled}
       placeholder={disabled ? "" : placeholder}
       rows={rows}
+      maxLength={maxLength}
       className={`${inputClass} resize-y`}
     />
   );

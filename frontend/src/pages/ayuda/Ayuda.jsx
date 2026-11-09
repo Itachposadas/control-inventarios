@@ -6,18 +6,18 @@ import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
-  ClipboardPlus, Stethoscope, CheckCircle2, History, Car, Camera, PenLine, ClipboardList,
-  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck, Hammer, ShoppingCart,
+  ClipboardPlus, Stethoscope, CheckCircle2, History, Car, Camera, ClipboardCheck, ClipboardList,
+  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck, Hammer, ShoppingCart, Package,
 } from "lucide-react";
 
 const GUIA_MECANICO = [
   {
-    icon: <PenLine size={20} />,
+    icon: <ClipboardCheck size={20} />,
     titulo: "1. Recibir la solicitud",
     pasos: [
-      "Las áreas piden servicio desde su cuenta. Entra a Solicitudes: las que llevan más tiempo esperando aparecen primero.",
-      "Cuando llegue la unidad, pulsa “Atender”, escribe tu nombre completo, firma en el recuadro y pulsa “Firmar de recibido”.",
-      "Se abre el servicio de la unidad y ya puedes ver el formato de la solicitud con las dos firmas (botón “Formato”, en PDF).",
+      "Las áreas piden servicio desde su cuenta. Entra a Solicitudes: las que están más cerca de vencer aparecen primero. Si la unidad no llega en 12 días, la solicitud se cancela sola.",
+      "Cada solicitud es una carta del área con la unidad, la falla que presenta y el nombre de quien la pide. Con “Carta” la descargas en PDF.",
+      "Cuando llegue la unidad, pulsa “Atender” y luego “Atender y abrir servicio”. Se abre el servicio de la unidad.",
       "Pulsa “Continuar con el diagnóstico”.",
     ],
     nota: "Si una solicitud no procede, pulsa “Descartar” y escribe el motivo. En cada servicio, el recuadro “¿Qué sigue?” te dice qué hacer y tiene el botón para hacerlo.",
@@ -28,10 +28,11 @@ const GUIA_MECANICO = [
     pasos: [
       "Escribe el diagnóstico de fallas presentadas: tu opinión o el estado actual del vehículo.",
       "Escribe las acciones a realizar / observaciones: qué trabajo de reparación o ajuste requiere.",
-      "En “Refacciones a utilizar” aparecen los materiales que pidió el solicitante (cantidad, unidad de medida y descripción). Son los que irán en la orden de compra; no se pueden agregar otros.",
+      "Arriba ves la falla que reportó el área, como referencia.",
+      "En “Refacciones a utilizar” agrega las piezas que hay que comprar (cantidad, unidad de medida y descripción) con “Agregar refacción”. Son las que irán en la orden de compra.",
       "Pulsa “Guardar diagnóstico y continuar”.",
     ],
-    nota: "Si el solicitante no pidió materiales, no se hace orden de compra.",
+    nota: "Si no se necesita comprar ninguna pieza, deja la lista vacía: no se hace orden de compra.",
   },
   {
     icon: <ClipboardList size={20} />,
@@ -47,8 +48,7 @@ const GUIA_MECANICO = [
     titulo: "4. Orden de compra",
     pasos: [
       "En el servicio aparece la orden de compra con las refacciones del diagnóstico.",
-      "Revisa la hoja y el nombre y la firma del mecánico/almacén (se proponen los de quien firmó de recibido).",
-      "En “Autorizó” firma el coordinador de parque vehicular (se propone su última firma) y pulsa “Enviar a administración”.",
+      "Revisa la hoja (ej. hoja 1 de 1) y pulsa “Enviar a administración”. El formato ya lleva el nombre del coordinador de parque vehicular en “Autorizó”.",
       "Administración captura el proveedor y los precios. Cuando la atiende, el servicio pasa a Reparación.",
     ],
     nota: "Con “Ver orden de compra” descargas el formato en PDF.",
@@ -70,7 +70,7 @@ const GUIA_MECANICO = [
       "Escribe el operador de la unidad (opcional), describe el trabajo realizado y escribe tus observaciones.",
       "Pulsa “Guardar y entregar vehículo” y confirma. El vehículo queda entregado y activo.",
     ],
-    nota: "Con “Ver formato de entrega” descargas el PDF para imprimir, con las firmas del mecánico, del área (el solicitante) y de quien autorizó. Si hay que corregir algo, pídele al administrador que regrese el servicio.",
+    nota: "Con “Ver formato de entrega” descargas el PDF para imprimir. Si hay que corregir algo, pídele al administrador que regrese el servicio.",
   },
   {
     icon: <Truck size={20} />,
@@ -96,6 +96,18 @@ const GUIA_MECANICO = [
     nota: "No se puede prestar más piezas de las disponibles; el catálogo muestra cuántas quedan.",
   },
   {
+    icon: <Package size={20} />,
+    titulo: "Almacén",
+    pasos: [
+      "En Almacén → Existencias ves lo que hay guardado (aceites, anticongelante, etc.) y cuánto queda de cada uno.",
+      "Para agregar un material, pulsa “Nuevo material”: escribe el nombre, la unidad (Litro, Barril, Pieza…) y, si quieres, lo que hay hoy como existencia inicial y la cantidad con la que debe avisar que se está acabando.",
+      "Cuando llegue material, pulsa “Registrar entrada” y escribe la cantidad (por ejemplo, un barril de 208 litros).",
+      "Cuando uses material en una unidad, ábrela en Mis reparaciones y, en “Material del almacén”, pulsa “Usar del almacén”. Si sobró, regrésalo con el botón de devolver.",
+      "Si al contar el almacén la cantidad no coincide, usa el botón de ajustar y escribe el motivo (conteo, derrame, merma).",
+    ],
+    nota: "Las piezas que se compran para un servicio siguen por la orden de compra; el almacén es para lo que ya está guardado en el taller.",
+  },
+  {
     icon: <History size={20} />,
     titulo: "Historial de servicios",
     pasos: [
@@ -115,17 +127,19 @@ const GUIA_AREA = [
     pasos: [
       "Al entrar ya estás en “Nueva solicitud”. Solo aparecen los vehículos de tu área.",
       "Elige el vehículo. Si dice “Solicitud pendiente” o “En servicio”, ya tiene una solicitud en curso y podrás hacer otra cuando concluya.",
-      "Agrega los materiales: cantidad, unidad de medida y concepto. El precio lo captura el administrador.",
-      "Con “Agregar material” sumas más conceptos.",
-      "Escribe el nombre completo de quien solicita y firma en el recuadro (con el mouse o el dedo). Pulsa “Enviar solicitud”.",
+      "Se arma una carta dirigida al Coordinador de Parque Vehicular con los datos de la unidad.",
+      "Describe la falla que presenta la unidad (ej. “hace ruido al frenar”).",
+      "Escribe el nombre completo de quien solicita y pulsa “Enviar solicitud”. No lleva firma.",
     ],
-    nota: "La fecha, la hora y el área se registran solas. Al enviar recibes un folio (ej. PET-2026-0001).",
+    nota: "La fecha, la hora y el área se registran solas. Al enviar recibes un folio (ej. PET-2026-0001). En “Seguimiento” puedes descargar o imprimir la carta.",
   },
   {
     icon: <History size={20} />,
     titulo: "2. Llevar la unidad",
     pasos: [
-      "Lleva la unidad al taller y menciona el folio.",
+      "Lleva la unidad al taller y menciona el folio. Tienes 12 días a partir de que envías la solicitud.",
+      "Del día 8 al 12 la solicitud aparece “Por vencer” (en amarillo) y la campana te avisa la fecha límite.",
+      "Si la unidad no llega en 12 días, la solicitud se cancela sola. Si aún necesita servicio, envía una nueva.",
       "El mecánico atiende tu solicitud al recibir la unidad.",
     ],
     nota: "Solo ves los vehículos de tu área. La cuenta es de toda el área: no compartas la contraseña fuera de ella.",
@@ -135,9 +149,9 @@ const GUIA_AREA = [
     titulo: "3. Consultar el seguimiento",
     pasos: [
       "Entra a “Seguimiento”: aparecen las solicitudes de tu área, la más reciente primero.",
-      "Escribe el folio (ej. PET-2026-0001), el vehículo o las placas para encontrarla.",
+      "Escribe el folio, el vehículo o las placas para encontrarla.",
       "La línea de etapas muestra el avance: Enviada, Recibida en taller, Diagnóstico, Reparación y Entregada.",
-      "Si una solicitud no procedió, se muestra el motivo.",
+      "Si una solicitud no procedió o se venció, se muestra el motivo.",
       "Cuando tu vehículo esté listo para recogerse, la campana de arriba te avisa y la solicitud lo marca en verde.",
     ],
     nota: "Con “En curso” y “Concluidas” filtras las solicitudes.",
@@ -160,9 +174,10 @@ const GUIA_ADMIN = [
     icon: <ClipboardPlus size={20} />,
     titulo: "Consultar las solicitudes",
     pasos: [
-      "En Solicitudes ves lo que piden las áreas: pendientes, atendidas y descartadas, con quién la pidió y los materiales.",
-      "Las pendientes se ordenan por tiempo de espera; las que llevan más días aparecen como prioridad alta.",
-      "Con “Formato” descargas la solicitud en PDF con las firmas, y en las atendidas puedes abrir su servicio.",
+      "En Solicitudes ves lo que piden las áreas: pendientes, atendidas, descartadas y vencidas, con quién la pidió y la falla que presenta la unidad.",
+      "Cada pendiente tiene 12 días para que el área lleve la unidad: verde (vigente) los primeros 8 días y amarillo (por vencer) del 8 al 12. Después se cancela sola y pasa a “Vencidas”.",
+      "En el Panel de control ves cuántas vencieron en los últimos 30 días: es el rezago de las áreas que no llevaron su unidad.",
+      "Con “Carta” descargas la solicitud en PDF, y en las atendidas puedes abrir su servicio.",
     ],
     nota: "Es solo de consulta: los precios se capturan en la orden de compra.",
   },
@@ -189,6 +204,15 @@ const GUIA_ADMIN = [
       "Da de alta, edita o cambia el estado de las unidades en Vehículos.",
       "Un vehículo con historial no se puede eliminar: cámbialo a estado “Baja”.",
       "El historial de cada unidad muestra todos sus servicios; haz clic en uno para ver el detalle.",
+    ],
+  },
+  {
+    icon: <Package size={20} />,
+    titulo: "Almacén",
+    pasos: [
+      "En Almacén puedes consultar las existencias del almacén del taller y todos sus movimientos: entradas, salidas a servicios, devoluciones y ajustes.",
+      "Los materiales que están en su mínimo aparecen en rojo como “Por acabarse”.",
+      "Lo captura parque vehicular; en cada servicio y en el historial de la unidad aparece el material que se le colocó.",
     ],
   },
   {

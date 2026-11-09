@@ -3,6 +3,7 @@
 // Se muestran como lista de requisitos mientras se escribe.
 
 export const LONGITUD_MINIMA = 8;
+export const LONGITUD_MAXIMA = 128;
 
 // Contraseñas demasiado comunes aunque cumplan las reglas
 const COMUNES = new Set([
@@ -32,5 +33,6 @@ export function errorPassword(password = "", usuario = "") {
   const falta = reglasPassword(password, usuario).find((r) => !r.cumple);
   if (falta) return `La contraseña no cumple: ${falta.texto.toLowerCase()}`;
   if (COMUNES.has(password.toLowerCase())) return "Esa contraseña es muy común; elige otra";
+  if (password.length > LONGITUD_MAXIMA) return `La contraseña no debe pasar de ${LONGITUD_MAXIMA} caracteres`;
   return null;
 }

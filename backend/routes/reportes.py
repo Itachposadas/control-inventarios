@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, send_file
 from sqlalchemy.orm import selectinload
-from models import Solicitud, Vehiculo, utcnow
+from models import Solicitud, Vehiculo, PeticionServicio, utcnow
 from auth_utils import role_required
 from routes.solicitudes import EN_TALLER
 
@@ -90,6 +90,40 @@ def reporte_excel():
     )
 
 
+def solicitudes_por_area(desde, hasta, area=""):
+    """Solicitudes que enviaron las áreas en el periodo y qué pasó con ellas.
+    cumplimiento = de las que ya se resolvieron por el área (atendidas o vencidas),
+    qué porcentaje sí llevó la unidad. Las más vencidas van primero (rezago)."""
+    query = (
+        PeticionServicio.query.join(Vehiculo, PeticionServicio.vehiculo_id == Vehiculo.id)
+        .with_entities(Vehiculo.area, PeticionServicio.estado)
+        .filter(
+            PeticionServicio.created_at >= _utc_desde_local(desde),
+            PeticionServicio.created_at < _utc_desde_local(hasta + timedelta(days=1)),
+        )
+    )
+    if area:
+        query = query.filter(Vehiculo.area == area)
+    filas = defaultdict(lambda: {"enviadas": 0, "atendida": 0, "vencida": 0, "descartada": 0, "pendiente": 0})
+    for area_v, estado in query.all():
+        f = filas[area_v or "Sin área"]
+        f["enviadas"] += 1
+        f[estado] = f.get(estado, 0) + 1
+    resultado = []
+    for nombre, f in filas.items():
+        resueltas = f["atendida"] + f["vencida"]
+        resultado.append({
+            "area": nombre,
+            "enviadas": f["enviadas"],
+            "atendidas": f["atendida"],
+            "vencidas": f["vencida"],
+            "descartadas": f["descartada"],
+            "pendientes": f["pendiente"],
+            "cumplimiento": round(f["atendida"] / resueltas, 4) if resueltas else None,
+        })
+    return sorted(resultado, key=lambda x: (-x["vencidas"], -x["enviadas"], x["area"]))
+
+
 def calcular_reporte(desde, hasta, area=""):
     """Resumen, gasto por mes/área/tipo y vehículos con más gasto e ingresos del periodo."""
     query = (
@@ -160,6 +194,7 @@ def calcular_reporte(desde, hasta, area=""):
         )
 
     vehiculos = list(por_vehiculo.values())
+    solicitudes = solicitudes_por_area(desde, hasta, area)
 
     return {
         "periodo": {"desde": desde.isoformat(), "hasta": hasta.isoformat(), "area": area or None},
@@ -172,10 +207,14 @@ def calcular_reporte(desde, hasta, area=""):
             "gasto_promedio": round(gasto_total / con_costo, 2) if con_costo else 0,
             "sin_costo": sin_costo,
             "dias_promedio_taller": round(sum(dias_taller) / len(dias_taller), 1) if dias_taller else None,
+            "solicitudes_enviadas": sum(x["enviadas"] for x in solicitudes),
+            "solicitudes_vencidas": sum(x["vencidas"] for x in solicitudes),
         },
         "por_mes": list(por_mes.values()),
         "por_area": ordenar(por_area, "area"),
         "por_tipo": ordenar(por_tipo, "tipo"),
         "top_costo": sorted(vehiculos, key=lambda x: (-x["gasto"], -x["servicios"]))[:TOP],
         "top_ingresos": sorted(vehiculos, key=lambda x: (-x["servicios"], -x["gasto"]))[:TOP],
+        # Rezago: solicitudes vencidas porque el área no llevó la unidad
+        "solicitudes_por_area": solicitudes,
     }

@@ -1,7 +1,7 @@
 // src/config/solicitudes.js
 import { ROLES } from "./roles";
 
-// Pasos del servicio (se abre cuando el mecánico firma de recibido la solicitud del área).
+// Pasos del servicio (se abre cuando parque vehicular atiende la solicitud del área).
 // "compra" (orden de compra) solo aplica si el diagnóstico tiene refacciones.
 export const ESTADOS = [
   { value: "diagnostico", label: "Diagnóstico" },

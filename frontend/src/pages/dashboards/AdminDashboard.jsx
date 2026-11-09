@@ -16,7 +16,7 @@ import AvisosPreventivo from "../../components/dashboard/AvisosPreventivo";
 import { dashboardApi } from "../../api/dashboard";
 import { ordenesCompraApi } from "../../api/ordenesCompra";
 import { ESTADOS, formatFecha } from "../../config/solicitudes";
-import { PRIORIDADES_ESPERA, prioridadPorEspera, tiempoEsperando } from "../../config/espera";
+import { PLAZOS, plazoDe, textoVence } from "../../config/espera";
 import { moneda } from "../../config/reportes";
 import { Alerta } from "../../components/ui";
 import { Loader2, ShoppingCart, ChevronRight, CheckCircle2 } from "lucide-react";
@@ -60,12 +60,13 @@ export default function AdminDashboard() {
   const pendientes = stats?.pendientes || [];
   const totalPendientes = kpis.pendientes || 0;
 
-  // Cuántas pendientes hay de cada prioridad (por días de espera)
-  const porPrioridad = {};
+  // Cuántas pendientes hay de cada plazo (vigentes / por vencer)
+  const porPlazo = {};
   (stats?.fechas_pendientes || []).forEach((f) => {
-    const p = prioridadPorEspera(f);
-    porPrioridad[p.valor] = (porPrioridad[p.valor] || 0) + 1;
+    const p = plazoDe(f);
+    porPlazo[p.valor] = (porPlazo[p.valor] || 0) + 1;
   });
+  const vencidas30 = kpis.vencidas_30 || 0;
 
   const pasos = stats?.en_taller_por_paso || {};
   const mes = stats?.mes;
@@ -95,16 +96,21 @@ export default function AdminDashboard() {
               valor={totalPendientes}
               onClick={() => navigate("/admin/solicitudes-areas")}
               detalle={
-                totalPendientes === 0 ? "Ninguna en espera" : (
-                  <span className="flex flex-wrap gap-x-3 gap-y-1">
-                    {PRIORIDADES_ESPERA.filter((p) => porPrioridad[p.valor]).map((p) => (
-                      <span key={p.valor} className="inline-flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${p.punto}`} />
-                        {porPrioridad[p.valor]} {p.label.toLowerCase()}
-                      </span>
-                    ))}
-                  </span>
-                )
+                <span className="flex flex-wrap gap-x-3 gap-y-1">
+                  {totalPendientes === 0 && <span>Ninguna en espera</span>}
+                  {PLAZOS.filter((p) => porPlazo[p.valor]).map((p) => (
+                    <span key={p.valor} className="inline-flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${p.punto}`} />
+                      {porPlazo[p.valor]} {p.label.toLowerCase()}
+                    </span>
+                  ))}
+                  {vencidas30 > 0 && (
+                    <span className="inline-flex items-center gap-1.5" title="Se cancelaron porque el área no llevó la unidad">
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                      {vencidas30} {vencidas30 === 1 ? "vencida" : "vencidas"} en 30 días
+                    </span>
+                  )}
+                </span>
               }
             />
             <Cifra
@@ -166,18 +172,18 @@ export default function AdminDashboard() {
                       </li>
                     ))}
                     {pendientes.map((p) => {
-                      const prio = prioridadPorEspera(p.fecha);
+                      const prio = plazoDe(p.fecha);
                       return (
                         <li key={`pet-${p.id}`}>
                           <Fila
                             onClick={() => navigate("/admin/solicitudes-areas")}
                             marca={<span className={`w-2.5 h-2.5 rounded-full ${prio.punto}`} aria-hidden />}
                             titulo={<><span className="font-mono text-[13px]">{p.folio}</span> · {p.vehiculo}</>}
-                            detalle={`Solicitud · ${p.area || ""} · ${p.materiales} ${p.materiales === 1 ? "material" : "materiales"}`}
+                            detalle={`Solicitud · ${p.area || ""}${p.falla ? ` · ${p.falla}` : ""}`}
                             lado={
-                              <span className={prio.valor === "alta" ? "text-red-700" : prio.valor === "media" ? "text-amber-900" : "text-slate-500"}>
-                                {tiempoEsperando(p.fecha)}
-                                <span className="sr-only"> · prioridad {prio.label.toLowerCase()}</span>
+                              <span className={prio.valor === "por_vencer" ? "text-amber-900 font-medium" : "text-slate-500"}>
+                                {textoVence(p.fecha)}
+                                <span className="sr-only"> · {prio.label.toLowerCase()}</span>
                               </span>
                             }
                           />

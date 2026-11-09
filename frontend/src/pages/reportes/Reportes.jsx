@@ -264,6 +264,13 @@ export default function Reportes() {
                 </Tarjeta>
               </div>
 
+              <Tarjeta
+                titulo="Solicitudes de las áreas"
+                subtitulo="Qué pasó con lo que enviaron en el periodo. Vencidas: la unidad no llegó al taller a tiempo."
+              >
+                <TablaSolicitudes filas={reporte.solicitudes_por_area || []} />
+              </Tarjeta>
+
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                 <Tarjeta titulo="Vehículos con mayor gasto" subtitulo="Los 10 que más han costado en el periodo">
                   <TablaVehiculos filas={reporte.top_costo} />
@@ -284,6 +291,44 @@ export default function Reportes() {
 }
 
 /* ───── Sub-componentes ───── */
+
+// Cumplimiento por área: de las solicitudes resueltas (atendidas o vencidas), cuántas sí llevaron la unidad
+function TablaSolicitudes({ filas }) {
+  if (!filas.length) return <p className="text-sm text-slate-500">Ninguna área envió solicitudes en el periodo.</p>;
+  const num = "px-3 py-2 text-right tabular-nums";
+  return (
+    <div className="overflow-x-auto -mx-5">
+      <table className="w-full text-sm min-w-[640px]">
+        <thead>
+          <tr className="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">
+            <th className="px-5 py-2 text-left font-medium">Área</th>
+            <th className="px-3 py-2 text-right font-medium">Enviadas</th>
+            <th className="px-3 py-2 text-right font-medium">Atendidas</th>
+            <th className="px-3 py-2 text-right font-medium">Vencidas</th>
+            <th className="px-3 py-2 text-right font-medium">Descartadas</th>
+            <th className="px-3 py-2 text-right font-medium">Pendientes</th>
+            <th className="px-5 py-2 text-right font-medium">Cumplimiento</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 text-slate-700">
+          {filas.map((x) => (
+            <tr key={x.area}>
+              <td className="px-5 py-2 font-medium text-slate-800">{x.area}</td>
+              <td className={num}>{x.enviadas}</td>
+              <td className={num}>{x.atendidas}</td>
+              <td className={`${num} ${x.vencidas ? "font-semibold text-red-700" : ""}`}>{x.vencidas}</td>
+              <td className={num}>{x.descartadas}</td>
+              <td className={num}>{x.pendientes}</td>
+              <td className="px-5 py-2 text-right tabular-nums font-medium">
+                {x.cumplimiento == null ? "—" : `${Math.round(x.cumplimiento * 100)} %`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 function Filtro({ label, children }) {
   return (

@@ -12,7 +12,7 @@ export const solicitudesApi = {
   diagnostico: (id, payload) => request(`/solicitudes/${id}/diagnostico`, { method: "POST", body: payload }),
   // { hoja_no, hoja_total, checklist, observaciones_ingreso }
   ingreso: (id, payload) => request(`/solicitudes/${id}/ingreso`, { method: "POST", body: payload }),
-  // { hoja_no, hoja_total, mecanico_nombre, mecanico_firma }
+  // { hoja_no, hoja_total } (sale con las refacciones del diagnóstico)
   enviarOrdenCompra: (id, payload) => request(`/solicitudes/${id}/orden-compra`, { method: "POST", body: payload }),
   // { acciones (trabajo realizado), observaciones } → queda entregado
   entrega: (id, payload) => request(`/solicitudes/${id}/entrega`, { method: "POST", body: payload }),

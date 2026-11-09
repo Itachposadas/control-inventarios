@@ -1,14 +1,17 @@
 // src/pages/peticiones/PeticionesAreas.jsx
 // "Solicitudes": lo que piden las áreas desde la página de inicio.
-// Mecánico: cuando llega la unidad pulsa "Atender" y firma de recibido (nombre y
-// firma del mecánico responsable). Con eso se abre el servicio (diagnóstico,
-// formato de ingreso, orden de compra, evidencia y entrega) y ya se puede ver
-// el formato de la solicitud (PDF). También puede descartarla con un motivo.
+// Cada solicitud es una carta del área dirigida al Coordinador de Parque
+// Vehicular: unidad, falla que presenta y nombre de quien solicita (sin firmas).
+// Mecánico: cuando llega la unidad pulsa "Atender" y se abre el servicio
+// (diagnóstico, formato de ingreso, orden de compra, evidencia y entrega).
+// También puede descartarla con un motivo. La carta se descarga en PDF.
 // Admin: solo consulta (los precios se capturan en la orden de compra).
-// Las pendientes se ordenan por tiempo de espera: las más antiguas son prioridad.
+// Cada pendiente tiene vigencia (config/espera.js): vigente, por vencer (amarillo)
+// y, pasado el límite, se cancela sola y pasa a "Vencidas" con el motivo.
 // La búsqueda, los filtros y la paginación los resuelve el backend (10 por página).
 import { useCallback, useEffect, useState } from "react";
 import { useAutoActualizar } from "../../hooks/useAutoActualizar";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { Boton, Alerta, Modal, Field, TextArea, Paginacion, inputClass } from "../../components/ui";
@@ -17,30 +20,28 @@ import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import { SOLICITUDES_BASE } from "../../config/solicitudes";
-import { PRIORIDADES_ESPERA, prioridadPorEspera, aFecha, tiempoEsperando } from "../../config/espera";
+import { PLAZOS, DIAS_LIMITE, plazoDe, textoVence, fechaCorta, aFecha, tiempoEsperando } from "../../config/espera";
 import TablaMateriales from "../../components/peticiones/TablaMateriales";
 import { descargarSolicitudPdf } from "../../utils/pdfs";
-import PanelFirma from "../../components/peticiones/PanelFirma";
 import {
   Loader2, Inbox, CarFront, XCircle, Building2, Clock, FileDown, UserRound,
-  PenLine, CheckCircle2, ArrowRight, Search,
+  CheckCircle2, ArrowRight, Search,
 } from "lucide-react";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 
 const PESTANAS = [
   { valor: "pendiente", label: "Pendientes" },
   { valor: "atendida", label: "Atendidas" },
   { valor: "descartada", label: "Descartadas" },
+  { valor: "vencida", label: "Vencidas" },
 ];
 
 const VACIO = {
   pendiente: "No hay solicitudes pendientes",
   atendida: "Aún no se ha atendido ninguna solicitud",
   descartada: "No hay solicitudes descartadas",
+  vencida: "Ninguna solicitud ha vencido",
 };
-
-// Prioridad según cuánto lleva esperando una solicitud pendiente
-const PRIORIDADES = PRIORIDADES_ESPERA;
-const prioridadDe = (p) => prioridadPorEspera(p.fecha);
 
 function fechaHora(iso) {
   if (!iso) return "—";
@@ -65,15 +66,11 @@ export default function PeticionesAreas() {
   // Filtros (las pendientes llegan del backend de la más antigua a la más reciente)
   const [pagina, setPagina] = useState(1);
   const [q, setQ] = useState("");
-  const [buscar, setBuscar] = useState(""); // lo escrito, cuando se deja de escribir
-  const [prioridad, setPrioridad] = useState("");
+  const [plazo, setPlazo] = useState("");
   const [area, setArea] = useState("");
   const [orden, setOrden] = useState("antiguas");
 
-  useEffect(() => {
-    const t = setTimeout(() => setBuscar(q.trim()), 350);
-    return () => clearTimeout(t);
-  }, [q]);
+  const buscar = useDebounce(q.trim()); // lo escrito, cuando se deja de escribir
   // Una búsqueda nueva empieza en la página 1
   useEffect(() => setPagina(1), [buscar]);
 
@@ -81,18 +78,18 @@ export default function PeticionesAreas() {
     setLoading(true);
     setError("");
     peticionesApi
-      .pagina({ estado, pagina, q: buscar, area, prioridad, orden })
+      .pagina({ estado, pagina, q: buscar, area, plazo, orden })
       .then(setDatos)
       .catch((e) => setError(e.message || "No se pudieron cargar las solicitudes"))
       .finally(() => setLoading(false));
-  }, [estado, pagina, buscar, area, prioridad, orden]);
+  }, [estado, pagina, buscar, area, plazo, orden]);
 
   useEffect(cargar, [cargar]);
 
   // Las solicitudes nuevas de las áreas aparecen sin recargar la página
   useAutoActualizar(() =>
     peticionesApi
-      .pagina({ estado, pagina, q: buscar, area, prioridad, orden })
+      .pagina({ estado, pagina, q: buscar, area, plazo, orden })
       .then(setDatos)
       .catch(() => {})
   );
@@ -106,7 +103,7 @@ export default function PeticionesAreas() {
   const cambiarPestana = (valor) => {
     setEstado(valor);
     setPagina(1);
-    setPrioridad("");
+    setPlazo("");
     setArea("");
     setOrden(valor === "pendiente" ? "antiguas" : "recientes");
   };
@@ -115,7 +112,7 @@ export default function PeticionesAreas() {
   const visibles = datos?.items || [];
   const areas = datos?.areas || [];
   const conteo = datos?.conteo || {};
-  const hayFiltro = Boolean(buscar || area || prioridad);
+  const hayFiltro = Boolean(buscar || area || plazo);
 
   const irAlServicio = (p) => navigate(`${SOLICITUDES_BASE[role]}/${p.solicitud.id}`);
   const actualizar = (p) =>
@@ -142,25 +139,27 @@ export default function PeticionesAreas() {
         ))}
       </div>
 
-      {/* Filtros: prioridad en un renglón y búsqueda debajo (juntos no caben y
-          los botones de prioridad se apilaban) */}
+      {/* Filtros: plazo en un renglón y búsqueda debajo */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4 mb-5
                       flex flex-col gap-3">
         {pendientes && (
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Prioridad">
-            <Chip activo={!prioridad} onClick={() => filtrar(setPrioridad)("")}>
-              Todas <Cuenta>{conteo.todas || 0}</Cuenta>
-            </Chip>
-            {PRIORIDADES.map((x) => (
-              <Chip key={x.valor} activo={prioridad === x.valor} onClick={() => filtrar(setPrioridad)(x.valor)}>
-                <span className={`w-2 h-2 rounded-full ${x.punto}`} />
-                {x.label}
-                <span className="hidden sm:inline text-slate-500 font-normal">
-                  {x.desde === 0 ? "(menos de 1 día)" : x.desde === 1 ? "(1–2 días)" : `(${x.desde}+ días)`}
-                </span>
-                <Cuenta>{conteo[x.valor] || 0}</Cuenta>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Vigencia">
+              <Chip activo={!plazo} onClick={() => filtrar(setPlazo)("")}>
+                Todas <Cuenta>{conteo.todas || 0}</Cuenta>
               </Chip>
-            ))}
+              {PLAZOS.map((x) => (
+                <Chip key={x.valor} activo={plazo === x.valor} onClick={() => filtrar(setPlazo)(x.valor)}>
+                  <span className={`w-2 h-2 rounded-full ${x.punto}`} />
+                  {x.label}
+                  <span className="hidden sm:inline text-slate-500 font-normal">({x.rango})</span>
+                  <Cuenta>{conteo[x.valor] || 0}</Cuenta>
+                </Chip>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500">
+              Si la unidad no llega en {DIAS_LIMITE} días, la solicitud se cancela sola y pasa a “Vencidas”.
+            </p>
           </div>
         )}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -212,7 +211,7 @@ export default function PeticionesAreas() {
         <>
         <ul className={`grid grid-cols-1 xl:grid-cols-2 gap-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
           {visibles.map((p) => {
-            const prio = pendientes ? prioridadDe(p) : null;
+            const prio = pendientes ? plazoDe(p.fecha) : null;
             return (
             <li
               key={p.id}
@@ -224,8 +223,16 @@ export default function PeticionesAreas() {
                 <span className="flex items-center gap-2">
                   <span className="font-mono text-xs font-semibold text-institucional">{p.folio}</span>
                   {prio && (
-                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${prio.chip}`}>
-                      Prioridad {prio.label.toLowerCase()}
+                    <span
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${prio.chip}`}
+                      title={`Fecha límite: ${fechaCorta(prio.vence)}`}
+                    >
+                      {prio.label} · {textoVence(p.fecha).toLowerCase()}
+                    </span>
+                  )}
+                  {p.estado === "vencida" && (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                      Vencida
                     </span>
                   )}
                 </span>
@@ -257,9 +264,7 @@ export default function PeticionesAreas() {
                 </div>
               </div>
 
-              <div className="mx-5 mb-4">
-                <TablaMateriales materiales={p.materiales} />
-              </div>
+              <Falla p={p} />
 
               <Solicitante p={p} />
 
@@ -279,10 +284,10 @@ export default function PeticionesAreas() {
                     </Boton>
                     <Boton
                       tamano="sm"
-                      icono={<PenLine size={14} />}
+                      icono={<CheckCircle2 size={14} />}
                       onClick={() => setRecibiendo(p)}
                       disabled={p.vehiculo?.estado === "mantenimiento"}
-                      title="Recibe la solicitud con tu nombre y firma"
+                      title="Recibe la unidad y abre su servicio"
                     >
                       Atender
                     </Boton>
@@ -309,24 +314,27 @@ export default function PeticionesAreas() {
                     {p.atendida_por && ` · ${p.atendida_por}`} · {fechaHora(p.atendida_at)}
                   </p>
                 )}
+                {p.estado === "vencida" && (
+                  <p className="mr-auto text-xs text-slate-500">
+                    <span className="font-semibold text-red-700">La unidad no llegó.</span> Se canceló sola el{" "}
+                    {fechaHora(p.atendida_at)}
+                  </p>
+                )}
                 {p.estado === "descartada" && (
                   <p className="mr-auto text-xs text-slate-500">
                     <span className="font-semibold text-slate-600">Motivo:</span> {p.motivo_descarte}
                     {p.atendida_por && ` · ${p.atendida_por}`}
                   </p>
                 )}
-                {/* El formato sale cuando ya firmaron quien solicita y el mecánico que recibe */}
-                {p.estado !== "descartada" && p.solicitante_firma && p.mecanico_firma && (
-                  <Boton
-                    variante="fantasma"
-                    tamano="sm"
-                    icono={<FileDown size={14} />}
-                    onClick={() => descargarSolicitudPdf(p)}
-                    title="Descarga el formato con las firmas del solicitante y del mecánico responsable"
-                  >
-                    Formato
-                  </Boton>
-                )}
+                <Boton
+                  variante="fantasma"
+                  tamano="sm"
+                  icono={<FileDown size={14} />}
+                  onClick={() => descargarSolicitudPdf(p)}
+                  title="Descarga la carta de solicitud en PDF"
+                >
+                  Carta
+                </Boton>
               </div>
             </li>
             );
@@ -349,7 +357,6 @@ export default function PeticionesAreas() {
       {recibiendo && (
         <Recibir
           peticion={recibiendo}
-          nombreInicial=""
           onClose={() => setRecibiendo(null)}
           onRecibida={actualizar}
           onContinuar={irAlServicio}
@@ -370,29 +377,36 @@ export default function PeticionesAreas() {
   );
 }
 
-// Firmas de la solicitud: quien la hace (área) y el mecánico que recibe la unidad.
-// Las solicitudes anteriores a este cambio no las tienen.
+// Lo que el área escribió en su carta. Las solicitudes anteriores al cambio no
+// tienen descripción: muestran los materiales que pidieron.
+function Falla({ p }) {
+  if (p.descripcion_falla) {
+    return (
+      <div className="mx-5 mb-4 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Falla que presenta</p>
+        <p className="mt-1 text-sm text-slate-700 whitespace-pre-line break-words line-clamp-6">{p.descripcion_falla}</p>
+      </div>
+    );
+  }
+  if (p.materiales?.length) {
+    return (
+      <div className="mx-5 mb-4">
+        <TablaMateriales materiales={p.materiales} />
+      </div>
+    );
+  }
+  return null;
+}
+
+// Quién hace la solicitud (la cuenta del área la usan varias personas)
 function Solicitante({ p }) {
-  const firmas = [
-    { titulo: "Solicitante", nombre: p.solicitante_nombre, firma: p.solicitante_firma },
-    { titulo: "Mecánico responsable", nombre: p.mecanico_nombre, firma: p.mecanico_firma },
-  ].filter((f) => f.nombre || f.firma);
-  if (!firmas.length) return null;
+  if (!p.solicitante_nombre) return null;
   return (
-    <div className="mx-5 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-      {firmas.map((f) => (
-        <div key={f.titulo} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 min-w-0">
-          <UserRound size={16} className="text-slate-500 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] uppercase tracking-wide text-slate-500">{f.titulo}</p>
-            <p className="text-sm font-semibold text-slate-800 leading-snug break-words">{f.nombre || "—"}</p>
-          </div>
-          {f.firma && (
-            <img src={f.firma} alt={`Firma de ${f.nombre || f.titulo}`} className="h-10 w-auto max-w-[35%] object-contain shrink-0" />
-          )}
-        </div>
-      ))}
-    </div>
+    <p className="mx-5 mb-4 inline-flex items-center gap-2 text-sm text-slate-600 min-w-0">
+      <UserRound size={15} className="text-slate-500 shrink-0" />
+      <span className="text-slate-500">Solicita:</span>
+      <span className="font-semibold text-slate-800 break-words">{p.solicitante_nombre}</span>
+    </p>
   );
 }
 
@@ -416,30 +430,21 @@ function Cuenta({ children }) {
   return <span className="ml-0.5 px-1.5 rounded-full bg-slate-100 text-slate-600 tabular-nums">{children}</span>;
 }
 
-// "Atender": el mecánico responsable firma de recibido y se abre el servicio.
-// Después puede ver el formato de la solicitud y seguir con el diagnóstico.
-function Recibir({ peticion, nombreInicial, onClose, onRecibida, onContinuar }) {
-  const [nombre, setNombre] = useState(nombreInicial);
-  const [firma, setFirma] = useState(null);
-  const [faltaFirma, setFaltaFirma] = useState(false);
+// "Atender": parque vehicular recibe la unidad y se abre su servicio (paso Diagnóstico).
+function Recibir({ peticion, onClose, onRecibida, onContinuar }) {
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [recibida, setRecibida] = useState(null);
 
-  const firmar = async () => {
+  const atender = async () => {
     setError("");
-    if (nombre.trim().length < 3) return setError("Escribe el nombre completo del mecánico responsable");
-    if (!firma) {
-      setFaltaFirma(true);
-      return setError("Falta la firma del mecánico responsable");
-    }
     setGuardando(true);
     try {
-      const p = await peticionesApi.recibir(peticion.id, { mecanico_nombre: nombre.trim(), mecanico_firma: firma });
+      const p = await peticionesApi.recibir(peticion.id);
       setRecibida(p);
       onRecibida(p);
     } catch (e) {
-      setError(e.message || "No se pudo registrar la firma");
+      setError(e.message || "No se pudo atender la solicitud");
       setGuardando(false);
     }
   };
@@ -448,18 +453,18 @@ function Recibir({ peticion, nombreInicial, onClose, onRecibida, onContinuar }) 
 
   if (recibida) {
     return (
-      <Modal titulo="Solicitud recibida" subtitulo={`${recibida.folio} · ${v.nombre}`} onClose={onClose} ancho="max-w-xl">
+      <Modal titulo="Solicitud atendida" subtitulo={`${recibida.folio} · ${v.nombre}`} onClose={onClose} ancho="max-w-xl">
         <div className="p-6 text-center">
           <span className="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center animate-check">
             <CheckCircle2 size={30} />
           </span>
           <p className="mt-4 text-sm text-slate-600">
-            Quedó firmada por <span className="font-semibold text-slate-800">{recibida.mecanico_nombre}</span>.
-            Ya puedes ver el formato de la solicitud con las dos firmas.
+            Se abrió el servicio <span className="font-mono font-semibold text-slate-800">{recibida.solicitud?.folio}</span>.
+            Sigue el diagnóstico de la unidad.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row justify-center gap-2">
             <Boton variante="contorno" icono={<FileDown size={16} />} onClick={() => descargarSolicitudPdf(recibida)}>
-              Ver formato de solicitud
+              Ver carta de solicitud
             </Boton>
             <Boton icono={<ArrowRight size={16} />} onClick={() => onContinuar(recibida)}>
               Continuar con el diagnóstico
@@ -482,34 +487,23 @@ function Recibir({ peticion, nombreInicial, onClose, onRecibida, onContinuar }) 
             </dd>
           </div>
           <div className="rounded-lg bg-slate-50 px-3 py-2 min-w-0">
-            <dt className="text-slate-500">Solicitante</dt>
+            <dt className="text-slate-500">Solicita</dt>
             <dd className="mt-0.5 font-semibold text-slate-800 truncate">{peticion.solicitante_nombre || "—"}</dd>
           </div>
         </dl>
-        <p className="text-sm text-slate-600">Como mecánico responsable, recibe la solicitud con tu nombre y firma.</p>
-        <Field label="Nombre completo" required>
-          <input
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            maxLength={120}
-            autoComplete="off"
-            placeholder="Ej. José Martínez López"
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Firma" required>
-          <PanelFirma
-            invalido={faltaFirma && !firma}
-            onChange={(f) => {
-              setFirma(f);
-              if (f) setFaltaFirma(false);
-            }}
-          />
-        </Field>
+        {peticion.descripcion_falla && (
+          <div className="rounded-lg border border-slate-200 px-3 py-2">
+            <p className="text-xs text-slate-500">Falla que presenta</p>
+            <p className="mt-0.5 text-sm text-slate-700 whitespace-pre-line break-words">{peticion.descripcion_falla}</p>
+          </div>
+        )}
+        <p className="text-sm text-slate-600">
+          Al atenderla, la unidad queda en el taller y se abre su servicio en el paso de diagnóstico.
+        </p>
         <div className="flex justify-end gap-2">
           <Boton variante="fantasma" onClick={onClose}>Cancelar</Boton>
-          <Boton icono={<PenLine size={16} />} onClick={firmar} disabled={guardando}>
-            {guardando ? "Guardando..." : "Firmar de recibido"}
+          <Boton icono={<CheckCircle2 size={16} />} onClick={atender} disabled={guardando}>
+            {guardando ? "Guardando..." : "Atender y abrir servicio"}
           </Boton>
         </div>
       </div>
@@ -521,9 +515,10 @@ function Descartar({ peticion, onClose, onListo }) {
   const [motivo, setMotivo] = useState("");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const { errores, validar, limpiar } = useCamposVacios();
 
   const confirmar = async () => {
-    if (!motivo.trim()) return setError("Escribe el motivo");
+    if (!validar({ motivo: !motivo.trim() && "Rellena este campo con el motivo por el que no procede" })) return;
     setGuardando(true);
     try {
       await peticionesApi.descartar(peticion.id, motivo);
@@ -538,11 +533,13 @@ function Descartar({ peticion, onClose, onListo }) {
     <Modal titulo="Descartar solicitud" subtitulo={`${peticion.folio} · ${peticion.vehiculo?.nombre}`} onClose={onClose}>
       <div className="p-6 space-y-4">
         {error && <Alerta>{error}</Alerta>}
-        <Field label="Motivo" required>
+        <Field label="Motivo" required error={errores.motivo}>
           <TextArea
             value={motivo}
-            onChange={setMotivo}
-            placeholder="Ej. Solicitud duplicada / la unidad no se presentó"
+            onChange={(v) => {
+              setMotivo(v);
+              limpiar("motivo");
+            }}
             rows={3}
           />
         </Field>

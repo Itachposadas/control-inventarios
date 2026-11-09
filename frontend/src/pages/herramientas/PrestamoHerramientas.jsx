@@ -3,6 +3,8 @@
 // se anota a qué mecánico se le prestó qué, y al regresar las herramientas
 // se marcan como devueltas (el préstamo pasa al historial).
 import { useEffect, useMemo, useState } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -92,7 +94,8 @@ function Prestamos({ estado }) {
   useAutoActualizar(() => herramientasApi.prestamos({ estado }).then(setItems).catch(() => {}));
 
   // Préstamos donde coincide el mecánico o alguna herramienta (en Prestadas, solo las que siguen fuera)
-  const q = normalizar(busqueda.trim());
+  // Filtra cuando se deja de escribir
+  const q = normalizar(useDebounce(busqueda.trim()));
   const coincide = (i) => q && normalizar(i.herramienta).includes(q) && (!activos || !i.devuelto_at);
   const visibles = q
     ? items.filter((p) => normalizar(p.mecanico).includes(q) || p.items.some(coincide))
@@ -130,7 +133,7 @@ function Prestamos({ estado }) {
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder={
                 activos
-                  ? "Buscar herramienta o mecánico (ej. gato, Luis)..."
+                  ? "Buscar herramienta o mecánico..."
                   : "Buscar en el historial por herramienta o mecánico..."
               }
               className={`${inputClass} pl-9`}
@@ -391,6 +394,7 @@ function TarjetaPrestamo({ prestamo: p, activo, resaltar, ocupado, onDevolver })
 function NuevoPrestamo({ onClose, onGuardado }) {
   const [catalogo, setCatalogo] = useState(null);
   const [mecanico, setMecanico] = useState("");
+  const { errores, validar, limpiar } = useCamposVacios();
   const [busqueda, setBusqueda] = useState("");
   // { herramienta_id: piezas } — cada clic en una herramienta suma una pieza
   const [seleccion, setSeleccion] = useState({});
@@ -406,10 +410,12 @@ function NuevoPrestamo({ onClose, onGuardado }) {
     [catalogo]
   );
 
+  // Filtra cuando se deja de escribir
+  const buscar = useDebounce(busqueda.trim());
   const filtradas = useMemo(() => {
-    const q = normalizar(busqueda.trim());
+    const q = normalizar(buscar);
     return (catalogo || []).filter((h) => !q || normalizar(h.nombre).includes(q));
-  }, [catalogo, busqueda]);
+  }, [catalogo, buscar]);
 
   const elegidas = Object.entries(seleccion).map(([id, cantidad]) => ({ h: porId[id], cantidad }));
   const totalPiezas = elegidas.reduce((t, e) => t + e.cantidad, 0);
@@ -435,7 +441,7 @@ function NuevoPrestamo({ onClose, onGuardado }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!mecanico.trim()) return setError("Escribe el nombre del mecánico que recibe las herramientas");
+    if (!validar({ mecanico: !mecanico.trim() && "Rellena este campo con el nombre de quien se lleva las herramientas" })) return;
     if (elegidas.length === 0) return setError("Da clic en las herramientas que se van a prestar");
 
     setSaving(true);
@@ -458,16 +464,18 @@ function NuevoPrestamo({ onClose, onGuardado }) {
       onClose={onClose}
       ancho="max-w-3xl"
     >
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
         {error && <Alerta>{error}</Alerta>}
 
-        <Field label="Nombre del mecánico" required>
+        <Field label="Nombre del mecánico" required error={errores.mecanico}>
           <input
             value={mecanico}
-            onChange={(e) => setMecanico(e.target.value)}
+            onChange={(e) => {
+              setMecanico(e.target.value);
+              limpiar("mecanico");
+            }}
             autoFocus
             maxLength={150}
-            placeholder="Luis Hernández"
             className={inputClass}
           />
         </Field>
@@ -490,7 +498,7 @@ function NuevoPrestamo({ onClose, onGuardado }) {
                 <input
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar por nombre (llave, dado, gato...)"
+                  placeholder="Buscar por nombre..."
                   className={`${inputClass} pl-9`}
                 />
               </div>
@@ -623,6 +631,7 @@ function NuevoPrestamo({ onClose, onGuardado }) {
 function Catalogo() {
   const [items, setItems] = useState([]);
   const [q, setQ] = useState("");
+  const buscar = useDebounce(q.trim());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editando, setEditando] = useState(null); // {} = nueva, objeto = editar
@@ -643,7 +652,8 @@ function Catalogo() {
   // Las piezas en uso cambian con los préstamos de otros mecánicos
   useAutoActualizar(() => herramientasApi.listar().then(setItems).catch(() => {}));
 
-  const texto = normalizar(q.trim());
+  // Filtra cuando se deja de escribir
+  const texto = normalizar(buscar);
   const filtrados = items.filter(
     (h) => normalizar(h.nombre).includes(texto) || h.en_uso.some((e) => normalizar(e.mecanico).includes(texto))
   );
@@ -786,12 +796,24 @@ function HerramientaModal({ herramienta, onClose, onGuardado }) {
   const [cantidad, setCantidad] = useState(herramienta?.cantidad ?? 1);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const { errores, validar, limpiar } = useCamposVacios();
+  const minimo = Math.max(herramienta?.prestadas || 0, 1);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!nombre.trim()) return setError("Escribe el nombre de la herramienta");
-    if (!(Number(cantidad) >= 1)) return setError("La cantidad debe ser al menos 1");
+    const n = Number(cantidad);
+    const ok = validar({
+      nombre: !nombre.trim() && "Rellena este campo con el nombre de la herramienta",
+      cantidad: String(cantidad).trim() === ""
+        ? "Rellena este campo con cuántas piezas hay"
+        : !Number.isInteger(n) || n < 1
+          ? "Escribe un número entero mayor a 0"
+          : n < minimo
+            ? `Hay ${minimo} prestadas: la cantidad no puede ser menor`
+            : n > 9999 && "La cantidad no debe pasar de 9999",
+    });
+    if (!ok) return;
 
     setSaving(true);
     try {
@@ -811,24 +833,31 @@ function HerramientaModal({ herramienta, onClose, onGuardado }) {
       onClose={onClose}
       ancho="max-w-md"
     >
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
         {error && <Alerta>{error}</Alerta>}
-        <Field label="Nombre" required>
+        <Field label="Nombre" required error={errores.nombre}>
           <input
             value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+            onChange={(e) => {
+              setNombre(e.target.value);
+              limpiar("nombre");
+            }}
             autoFocus
             maxLength={120}
-            placeholder="Gato hidráulico"
             className={inputClass}
           />
         </Field>
-        <Field label="Cantidad (piezas en el taller)" required>
+        <Field label="Cantidad (piezas en el taller)" required error={errores.cantidad}>
           <input
             type="number"
-            min={Math.max(herramienta?.prestadas || 0, 1)}
+            min={minimo}
+            max={9999}
+            step={1}
             value={cantidad}
-            onChange={(e) => setCantidad(e.target.value)}
+            onChange={(e) => {
+              setCantidad(e.target.value);
+              limpiar("cantidad");
+            }}
             className={inputClass}
           />
         </Field>

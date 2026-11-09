@@ -1,5 +1,5 @@
 # backend/routes/solicitudes.py
-# Servicios del taller. Se abren cuando el mecánico firma de recibido la
+# Servicios del taller. Se abren cuando parque vehicular atiende la
 # solicitud del área (abrir_servicio) y avanzan por pasos:
 #   diagnostico → ingreso → compra (solo si hay refacciones) → reparacion → entregada
 # Cada paso tiene su formato y su endpoint; el admin solo puede regresar un paso.
@@ -11,7 +11,6 @@ from models import (
     ESTADOS_SOLICITUD, TIPOS_SOLICITUD, PRIORIDADES, utcnow,
 )
 from auth_utils import role_required, get_current_user
-from firmas import validar_firma, validar_nombre
 
 solicitudes_bp = Blueprint("solicitudes", __name__, url_prefix="/api/solicitudes")
 
@@ -52,7 +51,7 @@ UTC_OFFSET = timedelta(hours=6)
 def _to_int(valor):
     try:
         return int(valor)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return 0
 
 
@@ -100,6 +99,8 @@ def _aplicar_campos_mecanico(s, data):
         checklist = data["checklist"]
         if not isinstance(checklist, dict) or not all(isinstance(v, bool) for v in checklist.values()):
             return "Accesorios inválidos: cada concepto debe ser SI o NO"
+        if len(checklist) > 100:
+            return "Demasiados conceptos en accesorios y herramientas"
         s.checklist = {str(k)[:60]: v for k, v in checklist.items()}
 
     if "total_birlos" in data:
@@ -140,8 +141,13 @@ def _aplicar_campos_admin(s, data):
                 costo = float(costo)
             except (TypeError, ValueError):
                 return "Costo inválido"
+            if costo != costo or costo in (float("inf"), float("-inf")):
+                return "Costo inválido"
             if costo < 0:
                 return "El costo no puede ser negativo"
+            if costo > 9_999_999_999:
+                return "El costo es demasiado grande"
+            costo = round(costo, 2)
             s.costo = costo
 
     if "mecanico_id" in data:
@@ -217,7 +223,7 @@ def obtener(solicitud_id):
     return jsonify(s.to_dict(detalle=True)), 200
 
 
-# ─── Abrir el servicio: al firmar de recibido la solicitud del área ───
+# ─── Abrir el servicio: al atender la solicitud del área ───
 def abrir_servicio(peticion, user):
     """Crea el servicio (paso Diagnóstico) de una solicitud del área.
     Devuelve (servicio, error); el error es (mensaje, código)."""
@@ -228,7 +234,7 @@ def abrir_servicio(peticion, user):
     if en_taller:
         return None, (f"Este vehículo ya está en el taller ({en_taller.folio})", 409)
 
-    # La fecha de recepción es el momento en que el mecánico firma de recibido
+    # La fecha de recepción es el momento en que parque vehicular la atiende
     s = Solicitud(vehiculo=vehiculo, creado_por_id=user.id, estado="diagnostico", fecha_ingreso=utcnow())
     # Datos del vehículo: se copian del catálogo tal como están al recibirlo
     # (quedan como registro histórico; el mecánico solo los ve)
@@ -278,8 +284,8 @@ def _avanzar(s, user, nuevo, nota=None):
 @solicitudes_bp.route("/<int:solicitud_id>/diagnostico", methods=["POST"])
 @role_required("mecanico")
 def diagnostico(solicitud_id):
-    """{fallas, acciones_a_realizar}. Las refacciones a utilizar son los materiales
-    que pidió el área en su solicitud: el mecánico no agrega ni cambia ninguno."""
+    """{fallas, acciones_a_realizar, refacciones: [{cantidad, unidad_medida, concepto}]}.
+    Las refacciones las captura parque vehicular; si hay, sigue la orden de compra."""
     user, s, error = _servicio_del_mecanico(solicitud_id, "diagnostico")
     if error:
         return error
@@ -291,12 +297,14 @@ def diagnostico(solicitud_id):
     if not acciones:
         return jsonify({"msg": "Escribe las acciones a realizar"}), 400
 
-    # Se copian de la solicitud del área (si no tiene materiales, no hay orden de compra)
-    peticion = PeticionServicio.query.filter_by(solicitud_id=s.id).first()
-    piezas = [
-        RefaccionServicio(cantidad=m.cantidad, unidad_medida=m.unidad_medida, concepto=m.concepto)
-        for m in (peticion.materiales if peticion else [])
-    ]
+    # Refacciones a utilizar (opcional): sin refacciones no hay orden de compra
+    from routes.peticiones import _materiales  # import local: peticiones importa este módulo
+    lista = data.get("refacciones") or []
+    piezas = []
+    if lista:
+        piezas, error = _materiales(lista, modelo=RefaccionServicio)
+        if error:
+            return jsonify({"msg": error.replace("Material", "Refacción").replace("material", "refacción")}), 400
 
     s.fallas = fallas
     s.acciones_a_realizar = acciones
@@ -335,9 +343,7 @@ def ingreso(solicitud_id):
 @solicitudes_bp.route("/<int:solicitud_id>/orden-compra", methods=["POST"])
 @role_required("mecanico")
 def enviar_orden_compra(solicitud_id):
-    """{hoja_no, hoja_total, mecanico_nombre, mecanico_firma, autoriza_nombre, autoriza_firma}
-    Parque vehicular la llena con la firma del mecánico/almacén y la de quien
-    autoriza (coordinador de parque vehicular)."""
+    """{hoja_no, hoja_total}. Sale con las refacciones del diagnóstico; ya no lleva firmas."""
     user, s, error = _servicio_del_mecanico(solicitud_id, "compra")
     if error:
         return error
@@ -351,20 +357,8 @@ def enviar_orden_compra(solicitud_id):
     hoja_total = _to_int(data.get("hoja_total") or 1)
     if hoja_no < 1 or hoja_total < 1 or hoja_no > hoja_total or hoja_total > 99:
         return jsonify({"msg": "La hoja debe ser válida (ej. hoja 1 de 1)"}), 400
-    nombre, error = validar_nombre(data.get("mecanico_nombre"), "del mecánico")
-    if not error:
-        firma, error = validar_firma(data.get("mecanico_firma"), "del mecánico")
-    if not error:
-        autoriza, error = validar_nombre(data.get("autoriza_nombre"), "de quien autoriza")
-    if not error:
-        firma_autoriza, error = validar_firma(data.get("autoriza_firma"), "de quien autoriza")
-    if error:
-        return jsonify({"msg": error}), 400
-
     o = OrdenCompra(
-        solicitud=s, creado_por_id=user.id, hoja_no=hoja_no, hoja_total=hoja_total,
-        mecanico_nombre=nombre, mecanico_firma=firma,
-        autoriza_nombre=autoriza, autoriza_firma=firma_autoriza, iva_porcentaje=16,
+        solicitud=s, creado_por_id=user.id, hoja_no=hoja_no, hoja_total=hoja_total, iva_porcentaje=16,
     )
     db.session.add(o)
     db.session.flush()

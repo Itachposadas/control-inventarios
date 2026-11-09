@@ -3,9 +3,14 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff, Plus } from "lucide-react";
 import { rolesApi } from "../../api/roles";
 import { vehiculosApi } from "../../api/vehiculos";
-import { Modal, Boton, Alerta, Field, inputClass } from "../ui";
+import { Modal, Boton, Alerta, Field, AvisoCampo, inputClass } from "../ui";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 import ReglasPassword from "../ui/ReglasPassword";
-import { errorPassword } from "../../config/password";
+import { errorPassword, LONGITUD_MAXIMA } from "../../config/password";
+
+// Las mismas reglas que valida el backend (backend/validacion.py)
+const USUARIO_VALIDO = /^[A-Za-z0-9._-]{3,50}$/;
+const EMAIL_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 // Roles base: definen los permisos. Los roles creados heredan de uno de ellos.
 const ROLES = [
@@ -20,6 +25,7 @@ const ROL_AREA = { value: "area", label: "Área (hace solicitudes)" };
 const valorRol = (u) => (u?.rol_id ? `rol:${u.rol_id}` : u?.role || "mecanico");
 
 export default function UsuarioModal({ open, onClose, onSave, usuario = null }) {
+  const { errores, validar, limpiar, reiniciar } = useCamposVacios();
   const editando = Boolean(usuario);
 
   const [form, setForm] = useState({
@@ -43,6 +49,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
   // Reset cada vez que se abre el modal
   useEffect(() => {
     if (open) {
+      reiniciar();
       setForm({
         username: usuario?.username || "",
         email: usuario?.email || "",
@@ -61,7 +68,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
       rolesApi.listar().then(setRoles).catch(() => setRoles([]));
       vehiculosApi.areas().then(setAreas).catch(() => setAreas([]));
     }
-  }, [open, usuario]);
+  }, [open, usuario, reiniciar]);
 
   if (!open) return null;
 
@@ -69,6 +76,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    limpiar(name);
     setForm((f) => ({
       ...f,
       [name]: type === "checkbox" ? checked : value,
@@ -79,21 +87,25 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
     e.preventDefault();
     setError("");
 
-    // Validaciones frontend
-    if (!form.username.trim()) return setError("El usuario es obligatorio");
+    // Validaciones frontend: el aviso sale debajo de cada campo
+    const usuarioTxt = form.username.trim();
+    const correo = form.email.trim();
     const esArea = !nuevoRol && form.role === ROL_AREA.value;
-    if (!form.email.trim() && !esArea) return setError("El email es obligatorio");
-    if (!editando && !form.password) return setError("La contraseña es obligatoria");
-    if (form.password) {
-      const invalida = errorPassword(form.password, form.username.trim());
-      if (invalida) return setError(invalida);
-    }
-    if (nuevoRol && !rolNombre.trim()) {
-      return setError("Escribe el nombre del nuevo rol");
-    }
-    if (!nuevoRol && form.role === ROL_AREA.value && !form.area) {
-      return setError("Elige el área de la cuenta");
-    }
+    const ok = validar({
+      username: !usuarioTxt
+        ? "Rellena este campo con el nombre de usuario"
+        : usuarioTxt !== (usuario?.username || "") && !USUARIO_VALIDO.test(usuarioTxt) &&
+          "De 3 a 50 caracteres: letras sin acentos, números, punto, guion o guion bajo, sin espacios",
+      email: !correo
+        ? !esArea && "Rellena este campo con el correo de la persona"
+        : !EMAIL_VALIDO.test(correo) && "Revisa el correo: debe tener @ y un dominio",
+      password: !form.password
+        ? !editando && "Rellena este campo con una contraseña temporal"
+        : errorPassword(form.password, usuarioTxt),
+      rolNombre: nuevoRol && !rolNombre.trim() && "Escribe el nombre del nuevo rol",
+      area: esArea && !form.area && "Elige el área de la cuenta",
+    });
+    if (!ok) return;
 
     setSaving(true);
     try {
@@ -137,27 +149,28 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
       subtitulo={editando ? "Modifica los datos del usuario" : "Registra una nueva cuenta en el sistema"}
       onClose={onClose}
     >
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
         {error && <Alerta>{error}</Alerta>}
 
         <Field label="Nombre completo">
           <input
             name="nombre_completo"
+            maxLength={150}
             value={form.nombre_completo}
             onChange={handleChange}
-            placeholder="Juan Pérez López"
             className={inputClass}
           />
         </Field>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Usuario" required>
+          <Field label="Usuario" required error={errores.username}>
             <input
               name="username"
+              maxLength={50}
+              autoCapitalize="none"
+              spellCheck={false}
               value={form.username}
               onChange={handleChange}
-              required
-              placeholder="juanperez"
               className={inputClass}
             />
           </Field>
@@ -170,14 +183,14 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               </>
             }
             required={!emailOpcional}
+            error={errores.email}
           >
             <input
               name="email"
               type="email"
+              maxLength={120}
               value={form.email}
               onChange={handleChange}
-              required={!emailOpcional}
-              placeholder={emailOpcional ? "Sin correo" : "juan@demo.com"}
               className={inputClass}
             />
           </Field>
@@ -193,14 +206,15 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
             </>
           }
           required={!editando}
+          error={errores.password}
         >
           <div className="relative">
             <input
               name="password"
               type={showPassword ? "text" : "password"}
+              maxLength={LONGITUD_MAXIMA}
               value={form.password}
               onChange={handleChange}
-              placeholder="Contraseña temporal"
               autoComplete="new-password"
               className={`${inputClass} pr-11`}
             />
@@ -248,14 +262,20 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
 
           {nuevoRol ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                value={rolNombre}
-                onChange={(e) => setRolNombre(e.target.value)}
-                autoFocus
-                maxLength={60}
-                placeholder="Nombre del rol (ej. Supervisor)"
-                className={inputClass}
-              />
+              <div data-error={errores.rolNombre ? "" : undefined}>
+                <input
+                  value={rolNombre}
+                  onChange={(e) => {
+                    setRolNombre(e.target.value);
+                    limpiar("rolNombre");
+                  }}
+                  autoFocus
+                  maxLength={60}
+                  aria-label="Nombre del nuevo rol"
+                  className={inputClass}
+                />
+                {errores.rolNombre && <AvisoCampo>{errores.rolNombre}</AvisoCampo>}
+              </div>
               <select
                 value={rolBase}
                 onChange={(e) => setRolBase(e.target.value)}
@@ -292,7 +312,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
 
         {/* Área que representa la cuenta (solo rol Área) */}
         {!nuevoRol && form.role === ROL_AREA.value && (
-          <Field label="Área" required>
+          <Field label="Área" required error={errores.area}>
             <select
               name="area"
               value={form.area}

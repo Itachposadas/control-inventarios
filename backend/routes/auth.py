@@ -20,8 +20,10 @@ def _minutos_restantes(user):
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json() or {}
-    identifier = (data.get("identifier") or "").strip()
-    password = data.get("password") or ""
+    identifier = data.get("identifier")
+    password = data.get("password")
+    identifier = identifier.strip()[:120] if isinstance(identifier, str) else ""
+    password = password if isinstance(password, str) else ""
 
     if not identifier or not password:
         return jsonify({"msg": "Credenciales incompletas"}), 400
@@ -99,8 +101,8 @@ def renovar():
 def cambiar_password():
     user = get_current_user()
     data = request.get_json() or {}
-    actual = data.get("actual") or ""
-    nueva = data.get("nueva") or ""
+    actual = data.get("actual") if isinstance(data.get("actual"), str) else ""
+    nueva = data.get("nueva") if isinstance(data.get("nueva"), str) else ""
 
     if not user.check_password(actual):
         return jsonify({"msg": "La contraseña actual no es correcta"}), 400

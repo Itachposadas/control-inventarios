@@ -2,6 +2,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
 from seguridad import error_password
+from validacion import texto, es_email, es_usuario
 from auth_utils import role_required
 from extensions import db
 from models import Usuario, Rol, Solicitud, SolicitudEvento, Prestamo, PeticionServicio, Vehiculo, ROLES
@@ -17,7 +18,10 @@ def _resolver_rol(data, role_actual="mecanico"):
     """
     rol_id = data.get("rol_id")
     if rol_id:
-        rol = db.session.get(Rol, int(rol_id))
+        try:
+            rol = db.session.get(Rol, int(rol_id))
+        except (TypeError, ValueError):
+            raise ValueError("Rol inválido")
         if not rol:
             raise ValueError("Rol inválido")
         return rol.base, rol.id
@@ -31,13 +35,18 @@ def _resolver_area(role, data, area_actual=None):
     """Área de una cuenta de área (debe existir en el catálogo). Las demás cuentas no llevan área."""
     if role != "area":
         return None
-    area = (data.get("area") if "area" in data else area_actual) or ""
-    area = area.strip()
+    area = texto(data.get("area") if "area" in data else area_actual) or ""
     if not area:
         raise ValueError("Elige el área de la cuenta")
     if not Vehiculo.query.filter(Vehiculo.area == area).first():
         raise ValueError("Esa área no tiene vehículos registrados")
     return area
+
+
+ERROR_USUARIO = (
+    "El nombre de usuario debe tener de 3 a 50 caracteres: letras sin acentos, "
+    "números, punto, guion o guion bajo (sin espacios)"
+)
 
 
 # ─── Listar usuarios ───
@@ -86,14 +95,20 @@ def obtener_usuario(user_id):
 def crear_usuario():
     data = request.get_json() or {}
 
-    username = (data.get("username") or "").strip()
-    email = (data.get("email") or "").strip().lower() or None
+    username = texto(data.get("username")) or ""
+    email = (texto(data.get("email")) or "").lower() or None
     password = data.get("password") or ""
-    nombre_completo = (data.get("nombre_completo") or "").strip()
+    nombre_completo = texto(data.get("nombre_completo")) or ""
 
     # Validaciones
     if not username or not password:
         return jsonify({"msg": "Usuario y contraseña son obligatorios"}), 400
+    if not es_usuario(username):
+        return jsonify({"msg": ERROR_USUARIO}), 400
+    if email and not es_email(email):
+        return jsonify({"msg": "Escribe un correo válido (ej. nombre@atlacomulco.gob.mx)"}), 400
+    if not isinstance(password, str):
+        return jsonify({"msg": "Contraseña inválida"}), 400
     error = error_password(password, username)
     if error:
         return jsonify({"msg": error}), 400
@@ -142,21 +157,25 @@ def editar_usuario(user_id):
 
     # No permitir que se cambie el username si ya existe en otro user
     if "username" in data:
-        nuevo = (data["username"] or "").strip()
+        nuevo = texto(data["username"])
         if nuevo and nuevo != user.username:
+            if not es_usuario(nuevo):
+                return jsonify({"msg": ERROR_USUARIO}), 400
             if Usuario.query.filter(Usuario.username == nuevo).first():
                 return jsonify({"msg": "Ese nombre de usuario ya existe"}), 409
             user.username = nuevo
 
     if "email" in data:
-        nuevo = (data["email"] or "").strip().lower() or None
+        nuevo = (texto(data["email"]) or "").lower() or None
         if nuevo != user.email:
+            if nuevo and not es_email(nuevo):
+                return jsonify({"msg": "Escribe un correo válido (ej. nombre@atlacomulco.gob.mx)"}), 400
             if nuevo and Usuario.query.filter(Usuario.email == nuevo).first():
                 return jsonify({"msg": "Ese email ya existe"}), 409
             user.email = nuevo  # vacío solo se acepta si termina siendo cuenta de área (ver abajo)
 
     if "nombre_completo" in data:
-        user.nombre_completo = (data["nombre_completo"] or "").strip() or None
+        user.nombre_completo = texto(data["nombre_completo"])
 
     es_uno_mismo = user.id == int(get_jwt_identity())
 
@@ -185,6 +204,9 @@ def editar_usuario(user_id):
     # Cambiar contraseña (opcional). Si el admin la cambia a otra persona es
     # temporal: se le pedirá cambiarla al entrar. También desbloquea la cuenta.
     if data.get("password"):
+        if not isinstance(data["password"], str):
+            db.session.rollback()
+            return jsonify({"msg": "Contraseña inválida"}), 400
         error = error_password(data["password"], user.username)
         if error:
             db.session.rollback()

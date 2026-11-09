@@ -9,12 +9,9 @@ export const ordenesCompraApi = {
 
   obtener: (id) => request(`/ordenes-compra/${id}`),
 
-  // Nombre y firma de quien autorizó la última orden (se proponen en la siguiente)
-  ultimaAutorizacion: () => request("/ordenes-compra/ultima-autorizacion"),
 
   // Administración: { proveedor: {nombre, direccion, telefono}, precios: {idRefaccion: precio},
   //                   iva_porcentaje, adicionales }
-  // Al atender también: { autoriza_nombre, autoriza_firma }
   guardar: (id, payload) => request(`/ordenes-compra/${id}`, { method: "PUT", body: payload }),
   atender: (id, payload) => request(`/ordenes-compra/${id}/atender`, { method: "POST", body: payload }),
 };

@@ -1,12 +1,15 @@
 // src/components/servicio/PasoDiagnostico.jsx
 // Paso 1 del servicio: diagnóstico de fallas presentadas, acciones a realizar /
-// observaciones y refacciones a utilizar (piezas a comprar). Las refacciones son
-// los materiales que pidió el solicitante: el mecánico no agrega ni cambia ninguno.
+// observaciones y refacciones a utilizar (piezas a comprar). Las refacciones las
+// captura parque vehicular; si hay, sigue la orden de compra. Como referencia se
+// muestra la falla que describió el área en su carta de solicitud.
 // El formato "Dictamen" se puede descargar en cuanto el diagnóstico y las
 // acciones están escritos (antes de guardar, con lo capturado).
 import { useState } from "react";
 import { Section, Field, TextArea, Boton, Alerta } from "../ui";
 import { solicitudesApi } from "../../api/solicitudes";
+import EditorMateriales, { materialVacio, erroresMateriales, paraEnviar } from "../peticiones/EditorMateriales";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 import { descargarDiagnosticoPdf } from "../../utils/pdfs";
 import { ArrowRight, FileDown, Loader2 } from "lucide-react";
 
@@ -20,18 +23,30 @@ export default function PasoDiagnostico({ s, editable, onGuardado }) {
 function Formulario({ s, onGuardado }) {
   const [fallas, setFallas] = useState(s.fallas || "");
   const [acciones, setAcciones] = useState(s.acciones_a_realizar || "");
-  // Lo que pidió el área (solo lectura)
-  const solicitados = (s.peticion?.materiales || []).map((m, i) => ({ ...m, id: i }));
+  // Las que ya tenía (si administración regresó el paso) o, en solicitudes
+  // anteriores al cambio, los materiales que pidió el área
+  const [refacciones, setRefacciones] = useState(() =>
+    (s.refacciones?.length ? s.refacciones : s.peticion?.materiales || []).map((r) =>
+      materialVacio({ cantidad: String(r.cantidad), unidad_medida: r.unidad_medida, concepto: r.concepto })
+    )
+  );
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const { errores, validar, limpiar } = useCamposVacios();
 
   const guardar = async () => {
     setError("");
-    if (!fallas.trim()) return setError("Escribe el diagnóstico de fallas presentadas");
-    if (!acciones.trim()) return setError("Escribe las acciones a realizar");
+    const ok = validar({
+      fallas: !fallas.trim() && "Rellena este campo con lo que encontraste al revisar la unidad",
+      acciones: !acciones.trim() && "Rellena este campo con el trabajo que requiere la unidad",
+      ...erroresMateriales(refacciones),
+    });
+    if (!ok) return;
     setGuardando(true);
     try {
-      onGuardado(await solicitudesApi.diagnostico(s.id, { fallas, acciones_a_realizar: acciones }));
+      onGuardado(await solicitudesApi.diagnostico(s.id, {
+        fallas, acciones_a_realizar: acciones, refacciones: paraEnviar(refacciones),
+      }));
     } catch (err) {
       setError(err.message || "No se pudo guardar el diagnóstico");
       setGuardando(false);
@@ -40,7 +55,7 @@ function Formulario({ s, onGuardado }) {
 
   const completo = fallas.trim() && acciones.trim();
   const descargar = () =>
-    descargarDiagnosticoPdf({ ...s, fallas, acciones_a_realizar: acciones, refacciones: solicitados });
+    descargarDiagnosticoPdf({ ...s, fallas, acciones_a_realizar: acciones, refacciones: paraEnviar(refacciones) });
 
   return (
     <Section
@@ -50,35 +65,49 @@ function Formulario({ s, onGuardado }) {
     >
       <div className="space-y-5">
         {error && <Alerta>{error}</Alerta>}
-        <Field label="Diagnóstico de fallas presentadas" required>
+        {s.peticion?.descripcion_falla && (
+          <div className="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+            <p className="text-xs font-medium text-slate-500">
+              Falla que reportó el área{s.peticion.solicitante_nombre && <> ({s.peticion.solicitante_nombre})</>}
+            </p>
+            <p className="mt-1 text-sm text-slate-700 whitespace-pre-line break-words">{s.peticion.descripcion_falla}</p>
+          </div>
+        )}
+        <Field label="Diagnóstico de fallas presentadas" required error={errores.fallas}>
           <TextArea
             value={fallas}
-            onChange={setFallas}
-            placeholder="Ej. Frenos delanteros gastados; ruido al frenar"
+            onChange={(v) => {
+              setFallas(v);
+              limpiar("fallas");
+            }}
           />
         </Field>
-        <Field label="Acciones a realizar / Observaciones" required>
+        <Field label="Acciones a realizar / Observaciones" required error={errores.acciones}>
           <TextArea
             value={acciones}
-            onChange={setAcciones}
-            placeholder="¿Qué trabajo de reparación o ajuste requiere el vehículo?"
+            onChange={(v) => {
+              setAcciones(v);
+              limpiar("acciones");
+            }}
             rows={3}
           />
         </Field>
         <div>
           <p className="text-sm font-medium text-slate-700">Refacciones a utilizar</p>
           <p className="text-xs text-slate-500 mb-3">
-            Son los materiales que pidió el solicitante
-            {s.peticion?.folio && <> en <span className="font-mono">{s.peticion.folio}</span></>}; con ellos se hace la
-            orden de compra. No se pueden agregar otros.
+            Piezas que hay que comprar para la reparación; con ellas se hace la orden de compra.
+            Si no se necesita ninguna, deja la lista vacía y no habrá orden de compra.
           </p>
-          {solicitados.length ? (
-            <TablaRefacciones refacciones={solicitados} />
-          ) : (
-            <p className="rounded-xl border border-dashed border-slate-300 px-4 py-5 text-center text-sm text-slate-500">
-              El solicitante no pidió materiales: no se hará orden de compra.
-            </p>
-          )}
+          <EditorMateriales
+            materiales={refacciones}
+            onChange={setRefacciones}
+            etiquetaConcepto="Descripción"
+            minimo={0}
+            nombre="refacción"
+            plural="refacciones"
+            errores={errores}
+            onLimpiar={limpiar}
+          />
         </div>
         <div className="flex justify-end">
           <Boton
@@ -124,8 +153,8 @@ function Resumen({ s }) {
   );
 }
 
-// Descarga del formato de un paso: se activa cuando están los campos obligatorios
-// y las firmas; mientras tanto dice qué falta.
+// Descarga del formato de un paso: se activa cuando están los campos obligatorios;
+// mientras tanto dice qué falta.
 export function BotonFormato({ listo, onClick, falta = "", texto = "Descargar formato" }) {
   return (
     <Boton

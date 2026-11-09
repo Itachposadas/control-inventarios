@@ -1,5 +1,6 @@
 // src/pages/admin/usuarios/UsuariosList.jsx
 import { useEffect, useState } from "react";
+import { useBusquedaDiferida } from "../../../hooks/useDebounce";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../../layouts/DashboardLayout";
 import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../../config/menus";
@@ -36,11 +37,14 @@ export default function UsuariosList() {
   const [usuarioEditando, setUsuarioEditando] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, usuario: null, loading: false });
 
+  // El texto espera a que se deje de escribir; rol y estado van al instante
+  const consulta = useBusquedaDiferida(filters);
+
   const cargarUsuarios = () => {
     setLoading(true);
     setError("");
     usuariosApi
-      .listar(filters)
+      .listar(consulta)
       .then(setUsuarios)
       .catch((e) => {
         console.error(e);
@@ -50,11 +54,23 @@ export default function UsuariosList() {
   };
 
   useEffect(() => {
+    let cancel = false;
     setPagina(1);
-    const timer = setTimeout(cargarUsuarios, 250);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
+    setLoading(true);
+    setError("");
+    usuariosApi
+      .listar(consulta)
+      .then((data) => !cancel && setUsuarios(data))
+      .catch((e) => {
+        console.error(e);
+        if (!cancel) setError("Error al cargar usuarios");
+      })
+      .finally(() => !cancel && setLoading(false));
+    // Si llega una respuesta de una búsqueda anterior, se ignora
+    return () => {
+      cancel = true;
+    };
+  }, [consulta]);
 
   // Paginación en pantalla: la lista ya viene completa y filtrada del servidor
   const paginas = Math.max(1, Math.ceil(usuarios.length / POR_PAGINA));

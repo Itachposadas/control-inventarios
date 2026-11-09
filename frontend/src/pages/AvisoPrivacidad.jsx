@@ -47,7 +47,7 @@ export default function AvisoPrivacidad() {
               <Seccion titulo="2. Datos personales que se recaban">
                 <ul className="list-disc pl-5 space-y-1.5">
                   <li>Del personal con cuenta en el sistema: nombre de usuario y, en su caso, nombre completo y correo electrónico institucional.</li>
-                  <li>Nombre y firma autógrafa digitalizada de quien solicita el servicio, de quien recibe la unidad en el taller y de quien elabora y autoriza la orden de compra.</li>
+                  <li>Nombre de quien solicita el servicio en nombre de su área.</li>
                   <li>Nombre del operador de la unidad al momento de su entrega.</li>
                   <li>Nombre de la persona que recibe herramientas en préstamo.</li>
                   <li>Fotografías de las unidades como evidencia del servicio, en las que podrían aparecer personas de manera incidental.</li>

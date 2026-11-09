@@ -6,6 +6,7 @@ from auth_utils import role_required, get_current_user
 from extensions import db
 from models import Herramienta, Prestamo, PrestamoItem, utcnow
 from routes.solicitudes import _texto
+from validacion import una_linea
 
 herramientas_bp = Blueprint("herramientas", __name__, url_prefix="/api/herramientas")
 
@@ -31,16 +32,21 @@ def _prestadas():
     return {hid: sum(e["cantidad"] for e in lista) for hid, lista in _en_uso().items()}
 
 
+MAX_PIEZAS = 9999
+
+
 def _entero(valor):
+    if isinstance(valor, bool):
+        return None
     try:
         return int(valor)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
 
 
 def _nombre_y_cantidad(data):
     """Valida nombre y cantidad del catálogo. Devuelve (nombre, cantidad, error)."""
-    nombre = " ".join((data.get("nombre") or "").split())
+    nombre = una_linea(data.get("nombre"))
     cantidad = _entero(data.get("cantidad"))
     if not nombre:
         return None, None, "Escribe el nombre de la herramienta"
@@ -48,6 +54,8 @@ def _nombre_y_cantidad(data):
         return None, None, "El nombre es demasiado largo (máximo 120)"
     if cantidad is None or cantidad < 1:
         return None, None, "La cantidad debe ser al menos 1"
+    if cantidad > MAX_PIEZAS:
+        return None, None, f"La cantidad no debe pasar de {MAX_PIEZAS}"
     return nombre, cantidad, None
 
 
@@ -144,7 +152,7 @@ def crear_prestamo():
     user = get_current_user()
     data = request.get_json() or {}
 
-    mecanico = " ".join((data.get("mecanico") or "").split())
+    mecanico = una_linea(data.get("mecanico"))
     if not mecanico:
         return jsonify({"msg": "Escribe el nombre del mecánico que recibe las herramientas"}), 400
     if len(mecanico) > 150:
@@ -152,7 +160,10 @@ def crear_prestamo():
 
     # Junta las piezas por herramienta (por si se repite en la lista)
     pedidas = {}
-    for item in data.get("items") or []:
+    items = data.get("items") or []
+    if not isinstance(items, list) or not all(isinstance(i, dict) for i in items):
+        return jsonify({"msg": "Revisa las herramientas y cantidades"}), 400
+    for item in items:
         hid = _entero(item.get("herramienta_id"))
         cant = _entero(item.get("cantidad"))
         if not hid or not cant or cant < 1:
@@ -197,6 +208,10 @@ def devolver(prestamo_id):
         return jsonify({"msg": "Este préstamo ya se devolvió"}), 400
 
     pedidos = (request.get_json(silent=True) or {}).get("items")
+    if pedidos is not None and (
+        not isinstance(pedidos, list) or not all(isinstance(x, dict) for x in pedidos)
+    ):
+        return jsonify({"msg": "Revisa las herramientas que regresó"}), 400
     pendientes = {i.id: i for i in p.items if i.devuelto_at is None}
     ahora = utcnow()
 

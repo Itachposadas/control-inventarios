@@ -18,6 +18,7 @@ import { EstadoBadge, PrioridadBadge } from "../../components/solicitudes/Badges
 import PasoDiagnostico, { BotonFormato } from "../../components/servicio/PasoDiagnostico";
 import PasoOrdenCompra from "../../components/servicio/PasoOrdenCompra";
 import PasoEntrega from "../../components/servicio/PasoEntrega";
+import MaterialAlmacen from "../../components/servicio/MaterialAlmacen";
 import { descargarIngresoPdf, descargarSolicitudPdf } from "../../utils/pdfs";
 import { peticionesApi } from "../../api/peticiones";
 import { Section, Field, inputClass, Boton, Alerta } from "../../components/ui";
@@ -274,11 +275,11 @@ export default function SolicitudDetail() {
               </span>
             </p>
           </div>
-          {/* Formato de la solicitud del área: ya tiene las firmas del solicitante y del mecánico */}
-          {s.peticion?.solicitante_firma && s.peticion?.mecanico_firma && (
+          {/* Carta de solicitud del área */}
+          {s.peticion && (
             <BotonFormato
               listo
-              texto="Formato de solicitud"
+              texto="Carta de solicitud"
               onClick={async () => descargarSolicitudPdf(await peticionesApi.obtener(s.peticion.id))}
             />
           )}
@@ -385,11 +386,19 @@ export default function SolicitudDetail() {
                   s={s}
                   editable={puedeLlenar && s.estado === "compra"}
                   esAdmin={esAdmin}
-                  nombreInicial=""
                   onEnviada={(a) => { cargar(a); setAviso("Orden de compra enviada a administración"); }}
                 />
               </div>
             )
+          )}
+
+          {/* Material tomado del almacén del taller (aparte de la orden de compra) */}
+          {despuesDe("diagnostico") && (puedeLlenar || s.material_almacen?.length > 0) && (
+            <MaterialAlmacen
+              s={s}
+              editable={puedeLlenar}
+              onCambio={(lista) => setS((actual) => ({ ...actual, material_almacen: lista }))}
+            />
           )}
 
           {/* 4. Evidencia fotográfica */}
@@ -505,6 +514,7 @@ export default function SolicitudDetail() {
               <div className="mt-4 space-y-2">
                 <input
                   value={nota}
+                  maxLength={500}
                   onChange={(e) => setNota(e.target.value)}
                   placeholder="Motivo (opcional)"
                   className={inputClass}
@@ -540,6 +550,7 @@ export default function SolicitudDetail() {
                     <input
                       type="number"
                       min="0"
+                      max="9999999999"
                       step="0.01"
                       value={form.costo}
                       onChange={(e) => set("costo")(e.target.value)}

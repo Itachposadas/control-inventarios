@@ -4,7 +4,7 @@
 import {
   LayoutDashboard, Car, Users, BarChart3,
   UserCog, HelpCircle,
-  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks, ShoppingCart,
+  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks, ShoppingCart, Package,
 } from "lucide-react";
 import { ROLES } from "./roles";
 
@@ -17,6 +17,8 @@ export const ADMIN_MENU = [
   // Órdenes de compra que manda parque vehicular después del diagnóstico
   { label: "Órdenes de compra", to: "/admin/ordenes-compra", icon: <ShoppingCart size={18} /> },
   { label: "Vehículos", to: "/admin/vehiculos", icon: <Car size={18} /> },
+  // Solo consulta: lo captura parque vehicular
+  { label: "Almacén", to: "/admin/almacen", icon: <Package size={18} /> },
   { label: "Historial de servicios", to: "/admin/historial", icon: <History size={18} /> },
   { label: "Taller foráneo", to: "/admin/foraneo", icon: <Truck size={18} /> },
   { label: "Usuarios", to: "/admin/usuarios", icon: <Users size={18} /> },
@@ -36,6 +38,7 @@ export const MECANICO_MENU = [
   { label: "Mis reparaciones", to: "/mecanico/reparaciones", icon: <Wrench size={18} /> },
   { label: "Evidencia fotográfica", to: "/mecanico/evidencia", icon: <Camera size={18} /> },
   { label: "Taller foráneo", to: "/mecanico/foraneo", icon: <Truck size={18} /> },
+  { label: "Almacén", to: "/mecanico/almacen", icon: <Package size={18} /> },
   { label: "Préstamo de herramientas", to: "/mecanico/herramientas", icon: <Hammer size={18} /> },
   { label: "Historial de servicios", to: "/mecanico/historial", icon: <History size={18} /> },
 ];

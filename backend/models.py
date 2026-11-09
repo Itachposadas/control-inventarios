@@ -128,7 +128,7 @@ class Vehiculo(db.Model):
 # ════════════════════════════════════════════════════════════
 #  SOLICITUDES DE SERVICIO
 # ════════════════════════════════════════════════════════════
-# Se abre cuando el mecánico firma de recibido la solicitud del área. Pasos:
+# Se abre cuando parque vehicular atiende la solicitud del área. Pasos:
 #   diagnostico → ingreso (formato de ingreso a taller) → compra (orden de compra,
 #   solo si hay refacciones) → reparacion (evidencia fotográfica y formato de
 #   entrega) → entregada
@@ -285,6 +285,8 @@ class Solicitud(db.Model):
                 "ordenes_foraneas": [o.to_dict(resumen=True) for o in self.ordenes_foraneas],
                 "acciones_a_realizar": self.acciones_a_realizar,
                 "refacciones": [r.to_dict() for r in self.piezas],
+                # Lo que salió del almacén para este servicio (neto de devoluciones)
+                "material_almacen": material_almacen_de([self.id]).get(self.id, []),
                 "ingreso_at": _iso(self.ingreso_at),
                 "orden_compra": self.orden_compra.to_dict() if self.orden_compra else None,
                 # Lo que pidió el área: base para las refacciones del diagnóstico
@@ -332,8 +334,9 @@ ESTADOS_ORDEN_COMPRA = ("enviada", "atendida")
 class OrdenCompra(db.Model):
     """
     Orden de compra del servicio (formato del municipio). El mecánico la manda
-    con las refacciones del diagnóstico, la hoja y su nombre y firma;
-    administración captura proveedor, precios e IVA y la atiende.
+    con las refacciones del diagnóstico y la hoja; administración captura
+    proveedor, precios e IVA y la atiende. Ya no lleva firmas: las columnas
+    *_nombre/*_firma solo conservan lo capturado antes del cambio.
     """
     __tablename__ = "ordenes_compra"
 
@@ -344,7 +347,7 @@ class OrdenCompra(db.Model):
     hoja_no = db.Column(db.Integer, default=1)
     hoja_total = db.Column(db.Integer, default=1)
 
-    # Mecánico/Almacén: nombre completo y firma
+    # Sin uso desde que se quitaron las firmas (se conservan los datos anteriores)
     mecanico_nombre = db.Column(db.String(120))
     mecanico_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))
 
@@ -355,7 +358,7 @@ class OrdenCompra(db.Model):
     iva_porcentaje = db.Column(db.Numeric(5, 2), default=16)
     adicionales = db.Column(db.Text)
 
-    # Autorizó: coordinador de parque vehicular (firma al atenderla)
+    # Sin uso desde que se quitaron las firmas (se conservan los datos anteriores)
     autoriza_nombre = db.Column(db.String(120))
     autoriza_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))
 
@@ -388,16 +391,12 @@ class OrdenCompra(db.Model):
             "fecha": _iso(self.created_at),
             "hoja_no": self.hoja_no,
             "hoja_total": self.hoja_total,
-            "mecanico_nombre": self.mecanico_nombre,
-            "mecanico_firma": self.mecanico_firma,
             "proveedor": {
                 "nombre": self.proveedor_nombre,
                 "direccion": self.proveedor_direccion,
                 "telefono": self.proveedor_telefono,
             },
             "adicionales": self.adicionales,
-            "autoriza_nombre": self.autoriza_nombre,
-            "autoriza_firma": self.autoriza_firma,
             "piezas": piezas,
             "precios_completos": bool(s.piezas) and all(r.precio_unitario is not None for r in s.piezas),
             "subtotal": subtotal,
@@ -580,12 +579,11 @@ def _peticion_de(solicitud):
     return {
         "id": p.id,
         "folio": p.folio,
-        # Mecánico que firmó de recibido: se propone en la orden de compra
-        "mecanico_nombre": p.mecanico_nombre,
-        "mecanico_firma": p.mecanico_firma,
-        # Solicitante: firma en "Área" (quien recibe) del formato de entrega
+        "fecha": _iso(p.created_at),
+        # Quien pidió el servicio y la falla que describió en su carta
         "solicitante_nombre": p.solicitante_nombre,
-        "solicitante_firma": p.solicitante_firma,
+        "descripcion_falla": p.descripcion_falla,
+        # Solo las solicitudes anteriores al cambio traen materiales
         "materiales": [
             {k: m[k] for k in ("cantidad", "unidad_medida", "concepto")}
             for m in (x.to_dict() for x in p.materiales)
@@ -678,15 +676,19 @@ class PrestamoItem(db.Model):
 #  PETICIONES DE LAS ÁREAS (cada área con su cuenta)
 # ════════════════════════════════════════════════════════════
 
-ESTADOS_PETICION = ("pendiente", "atendida", "descartada")
+# vencida = se canceló sola porque la unidad no llegó a tiempo (ver vigencia.py)
+ESTADOS_PETICION = ("pendiente", "atendida", "descartada", "vencida")
 
 
 class PeticionServicio(db.Model):
     """
-    Solicitud que hace un área con su cuenta: elige un vehículo de su área y
-    lista los materiales que necesita. La fecha y la hora
-    son las de created_at y el área es la del vehículo (no se guardan aparte).
-    El mecánico la convierte en ingreso a taller o la descarta.
+    Solicitud que hace un área con su cuenta: una carta dirigida al Coordinador
+    de Parque Vehicular con la unidad, la descripción de la falla y el nombre de
+    quien la solicita (sin firma). La fecha y la hora son las de created_at y
+    el área es la del vehículo (no se guardan aparte).
+    Parque vehicular la atiende (abre el servicio) o la descarta.
+    Las solicitudes anteriores al cambio pueden traer materiales y firmas: se
+    conservan en la BD pero las firmas ya no se muestran.
     """
     __tablename__ = "peticiones_servicio"
 
@@ -697,15 +699,16 @@ class PeticionServicio(db.Model):
     creado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)  # cuenta del área
     # Quién hace la solicitud (la cuenta es del área y la usan varias personas)
     solicitante_nombre = db.Column(db.String(120))
-    solicitante_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))  # data:image/png;base64,...
+    descripcion_falla = db.Column(db.Text)  # lo que falla la unidad, en palabras del área
+    # Sin uso desde que se quitaron las firmas (se conservan los datos anteriores)
+    solicitante_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))
 
     # Seguimiento del taller (no lo llena el área)
     solicitud_id = db.Column(db.Integer, db.ForeignKey("solicitudes.id"), nullable=True)
     atendida_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)
     motivo_descarte = db.Column(db.Text)
     atendida_at = db.Column(db.DateTime)
-    # Paso 1 de "Atender": el mecánico responsable recibe la solicitud con su
-    # nombre y firma. Después se registra el ingreso a taller (estado "atendida").
+    # Sin uso desde que se quitaron las firmas (se conservan los datos anteriores)
     mecanico_nombre = db.Column(db.String(120))
     mecanico_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))
     recibida_at = db.Column(db.DateTime)
@@ -742,11 +745,11 @@ class PeticionServicio(db.Model):
             "solicitud": {"id": self.solicitud.id, "folio": self.solicitud.folio} if self.solicitud else None,
             "creado_por": _nombre_usuario(self.creado_por),
             "solicitante_nombre": self.solicitante_nombre,
-            "solicitante_firma": self.solicitante_firma,
+            "descripcion_falla": self.descripcion_falla,
             "atendida_por": _nombre_usuario(self.atendida_por),
-            "mecanico_nombre": self.mecanico_nombre,
-            "mecanico_firma": self.mecanico_firma,
             "recibida_at": _iso(self.recibida_at),
+            # Vigencia mientras está pendiente: vigente / por_vencer (ver vigencia.py)
+            "plazo": _plazo(self),
             "motivo_descarte": self.motivo_descarte,
             "atendida_at": _iso(self.atendida_at),
         }
@@ -779,3 +782,123 @@ class PeticionMaterial(db.Model):
             "total": round(cantidad * precio, 2) if precio is not None else None,
         }
 
+
+
+# ─── Almacén (control de refacciones) ───
+# El cuarto donde Coordinación de Parque Vehicular guarda lo que llega en
+# cantidad (aceites, barriles, etc.). Las piezas que se compran para un servicio
+# siguen por la orden de compra; el almacén es un camino aparte.
+
+TIPOS_MOVIMIENTO = ("entrada", "salida", "devolucion", "ajuste")
+
+
+class MaterialAlmacen(db.Model):
+    """Un material del almacén y cuánto hay. La existencia se actualiza con cada movimiento."""
+    __tablename__ = "almacen_materiales"
+
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(150), unique=True, nullable=False)
+    unidad_medida = db.Column(db.String(40), nullable=False)  # Litro, Pieza, Galón, Barril...
+    existencia = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    minimo = db.Column(db.Numeric(10, 2))  # con esta cantidad o menos se avisa; vacío = sin aviso
+    activo = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    def to_dict(self):
+        existencia = float(self.existencia or 0)
+        minimo = float(self.minimo) if self.minimo is not None else None
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "unidad_medida": self.unidad_medida,
+            "existencia": existencia,
+            "minimo": minimo,
+            "bajo": minimo is not None and existencia <= minimo,
+            "activo": self.activo,
+        }
+
+
+class MovimientoAlmacen(db.Model):
+    """
+    Entrada (llegó material), salida (se usó en un servicio), devolución (sobró
+    de un servicio) o ajuste (corrección del conteo físico, con motivo).
+    `cantidad` es positiva salvo en los ajustes, que guardan la diferencia con signo.
+    """
+    __tablename__ = "almacen_movimientos"
+
+    id = db.Column(db.Integer, primary_key=True)
+    material_id = db.Column(db.Integer, db.ForeignKey("almacen_materiales.id"), nullable=False, index=True)
+    tipo = db.Column(db.Enum(*TIPOS_MOVIMIENTO), nullable=False, index=True)
+    cantidad = db.Column(db.Numeric(10, 2), nullable=False)
+    solicitud_id = db.Column(db.Integer, db.ForeignKey("solicitudes.id"), nullable=True, index=True)
+    nota = db.Column(db.Text)
+    registrado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, index=True)
+
+    material = db.relationship("MaterialAlmacen")
+    solicitud = db.relationship("Solicitud")
+    registrado_por = db.relationship("Usuario")
+
+    def efecto(self):
+        """Cuánto suma (o resta) a la existencia."""
+        cantidad = float(self.cantidad)
+        return -cantidad if self.tipo == "salida" else cantidad
+
+    def to_dict(self):
+        s = self.solicitud
+        v = s.vehiculo if s else None
+        return {
+            "id": self.id,
+            "tipo": self.tipo,
+            "cantidad": float(self.cantidad),
+            "efecto": self.efecto(),
+            "material": {
+                "id": self.material.id,
+                "nombre": self.material.nombre,
+                "unidad_medida": self.material.unidad_medida,
+            },
+            "solicitud": {
+                "id": s.id,
+                "folio": s.folio,
+                "vehiculo": (v.numero_economico or v.unidad or v.no_inventario) if v else None,
+            } if s else None,
+            "nota": self.nota,
+            "registrado_por": _nombre_usuario(self.registrado_por),
+            "fecha": _iso(self.created_at),
+        }
+
+
+def material_almacen_de(solicitud_ids):
+    """
+    Material del almacén que se quedó en cada servicio (salidas menos devoluciones).
+    Devuelve {solicitud_id: [{material_id, nombre, unidad_medida, cantidad}]}.
+    """
+    if not solicitud_ids:
+        return {}
+    netos = {}
+    movimientos = (
+        MovimientoAlmacen.query
+        .filter(MovimientoAlmacen.solicitud_id.in_(solicitud_ids),
+                MovimientoAlmacen.tipo.in_(("salida", "devolucion")))
+        .all()
+    )
+    for m in movimientos:
+        clave = (m.solicitud_id, m.material_id)
+        if clave not in netos:
+            netos[clave] = {"material": m.material, "cantidad": 0.0}
+        netos[clave]["cantidad"] += float(m.cantidad) if m.tipo == "salida" else -float(m.cantidad)
+    resultado = {}
+    for (sid, mid), d in sorted(netos.items(), key=lambda x: x[1]["material"].nombre):
+        if d["cantidad"] > 0:
+            resultado.setdefault(sid, []).append({
+                "material_id": mid,
+                "nombre": d["material"].nombre,
+                "unidad_medida": d["material"].unidad_medida,
+                "cantidad": round(d["cantidad"], 2),
+            })
+    return resultado
+
+
+def _plazo(peticion):
+    from vigencia import plazo  # import local: vigencia importa este módulo
+    return plazo(peticion)

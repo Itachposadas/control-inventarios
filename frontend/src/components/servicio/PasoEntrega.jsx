@@ -2,7 +2,7 @@
 // Último paso: "Formato de entrega de vehículo y/o maquinaria reparada".
 // Los datos de la unidad y las fechas salen solos; el mecánico escribe el
 // operador, el trabajo realizado y las observaciones. Al guardarlo el vehículo
-// queda entregado. En el PDF firman mecánico, área (el solicitante) y autorizó.
+// queda entregado. El PDF lleva quién solicitó y quién autoriza (sin firmas).
 import { useState } from "react";
 import { Section, Field, TextArea, Boton, Alerta, inputClass } from "../ui";
 import ConfirmModal from "../ConfirmModal";
@@ -11,8 +11,10 @@ import { descargarEntregaPdf } from "../../utils/pdfs";
 import { BotonFormato } from "./PasoDiagnostico";
 import { formatFecha } from "../../config/solicitudes";
 import { CheckCircle2 } from "lucide-react";
+import { useCamposVacios } from "../../hooks/useCamposVacios";
 
 export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }) {
+  const { errores, validar, limpiar } = useCamposVacios();
   const [trabajo, setTrabajo] = useState(s.acciones || "");
   const [observaciones, setObservaciones] = useState(s.observaciones || "");
   const [operador, setOperador] = useState(s.operador || "");
@@ -24,7 +26,7 @@ export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }
   const pedirConfirmacion = () => {
     setError("");
     if (!fotosCompletas) return setError("Primero sube las 3 fotos de la evidencia fotográfica");
-    if (!trabajo.trim()) return setError("Describe el trabajo realizado");
+    if (!validar({ trabajo: !trabajo.trim() && "Rellena este campo con el trabajo que se le hizo a la unidad" })) return;
     setConfirmar(true);
   };
 
@@ -93,22 +95,22 @@ export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }
                 onChange={(e) => setOperador(e.target.value)}
                 maxLength={150}
                 autoComplete="off"
-                placeholder="Quien maneja la unidad en el área"
                 className={inputClass}
               />
             </Field>
-            <Field label="Trabajo realizado" required>
+            <Field label="Trabajo realizado" required error={errores.trabajo}>
               <TextArea
                 value={trabajo}
-                onChange={setTrabajo}
-                placeholder="Describe el trabajo que se le realizó al vehículo o maquinaria"
+                onChange={(v) => {
+                  setTrabajo(v);
+                  limpiar("trabajo");
+                }}
               />
             </Field>
             <Field label="Observaciones">
               <TextArea
                 value={observaciones}
                 onChange={setObservaciones}
-                placeholder="Opinión de lo que se hizo o se observó"
                 rows={3}
               />
             </Field>

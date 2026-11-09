@@ -2,7 +2,7 @@
 // "ORDEN DE COMPRA" tal cual el formato del municipio (en blanco y negro,
 // letra tipo Times): fecha, número de orden y hoja; datos de la unidad; datos
 // del proveedor y del cliente; tabla de artículos con renglones; subtotal,
-// I.V.A. y total; adicionales; firmas de Mecánico/Almacén y Autorizó.
+// I.V.A. y total; adicionales y "Autorizó" con el nombre del coordinador (sin firmas).
 // Lo que no se tenga (ej. precios para parque vehicular) queda en blanco.
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
@@ -159,7 +159,7 @@ export async function descargarOrdenCompraPdf(o) {
   y = doc.lastAutoTable.finalY;
 
   // ─── Subtotal, I.V.A. y Total (cajas bajo "IMPORTE") ───
-  // Totales, adicionales y firmas ocupan unos 52 mm
+  // Totales, adicionales y autorización ocupan unos 45 mm
   if (y + 52 > doc.internal.pageSize.getHeight() - 16) {
     doc.addPage();
     y = 20;
@@ -190,37 +190,11 @@ export async function descargarOrdenCompraPdf(o) {
     texto(doc.splitTextToSize(ad.slice(1).join(" "), finAd - MARGEN)[0], MARGEN + 1, yAd + 6, { negrita: false, tam: 10 });
   }
 
-  // ─── Firmas: Mecánico/Almacén | Autorizó ───
-  const yF = y + cajaH * 3 + 6;
-  const anchoF = util * 0.74;
-  const xF = MARGEN + (util - anchoF) / 2 + 6;
-  const medio = xF + anchoF / 2;
-  const altoEnc = 7;
-  const altoCuerpo = 24;
-  doc.setDrawColor(...NEGRO);
-  doc.setLineWidth(0.35);
-  doc.rect(xF, yF, anchoF, altoEnc + altoCuerpo);
-  linea(xF, yF + altoEnc, xF + anchoF, yF + altoEnc);
-  linea(medio, yF, medio, yF + altoEnc + altoCuerpo);
-  const cMec = xF + anchoF / 4;
-  const cAut = xF + (anchoF * 3) / 4;
-  texto("Mecánico/Almacén", cMec, yF + 5, { tam: 11, alinear: "center" });
-  texto("Autorizó", cAut, yF + 5, { tam: 11, alinear: "center" });
-
-  const firma = (img, centro) => {
-    if (!img) return;
-    try {
-      doc.addImage(img, "PNG", centro - 21, yF + altoEnc + 1, 42, 13);
-    } catch {
-      // firma dañada: queda el espacio para firmar a mano
-    }
-  };
-  firma(o.mecanico_firma, cMec);
-  firma(o.autoriza_firma, cAut);
-  if (o.mecanico_nombre) texto(o.mecanico_nombre, cMec, yF + altoEnc + 16.5, { negrita: false, tam: 9.5, alinear: "center" });
-  texto("Nombre completo y firma", cMec, yF + altoEnc + 21.5, { tam: 10, alinear: "center" });
-  texto(o.autoriza_nombre || AUTORIZA.nombre, cAut, yF + altoEnc + 16.5, { tam: 10, alinear: "center" });
-  texto(AUTORIZA.cargo, cAut, yF + altoEnc + 21.5, { tam: 10, alinear: "center" });
+  // ─── Autorizó (sin firma) ───
+  const yF = y + cajaH * 3 + 12;
+  texto("Autorizó", ancho / 2, yF, { tam: 11, alinear: "center" });
+  texto(AUTORIZA.nombre, ancho / 2, yF + 6, { tam: 10, alinear: "center" });
+  texto(AUTORIZA.cargo, ancho / 2, yF + 11, { negrita: false, tam: 10, alinear: "center" });
 
   pie(doc);
   doc.save(`orden-compra_${o.folio || o.id}.pdf`);

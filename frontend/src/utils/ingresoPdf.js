@@ -2,10 +2,8 @@
 // "FORMATO DE INGRESO A TALLER" tal cual el formato del municipio (en blanco y
 // negro, letra tipo Times, como la orden de compra): fecha de ingreso y hoja;
 // datos del vehículo/maquinaria; accesorios y herramientas (SI/NO en dos
-// columnas); observaciones y las firmas. Lleva el dibujo del carro del papel.
-// Firmas:
-//   ÁREA (operador: el solicitante) · MECÁNICO (quien recibe) · AUTORIZÓ
-// La firma que falte queda en blanco para firmarla a mano al imprimir.
+// columnas); observaciones; quién solicitó y quién autoriza (sin firmas).
+// Lleva el dibujo del carro del papel.
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { MARGEN, aFecha, logos, pie, cargarImagen } from "./pdfComun";
@@ -25,7 +23,6 @@ export async function descargarIngresoPdf(s) {
   const util = ancho - MARGEN * 2;
   const ing = s.ingreso || {};
   const p = s.peticion || {};
-  const o = s.orden_compra || {};
   const checklist = s.checklist || {};
 
   const texto = (t, x, y, { negrita = true, tam = 10.5, alinear = "left" } = {}) => {
@@ -159,49 +156,17 @@ export async function descargarIngresoPdf(s) {
   lineas.forEach((l, i) => texto(l, MARGEN + 3, y + 6 + alto * i + 4, { negrita: false, tam: 10 }));
   y += 6 + alto * n;
 
-  // ─── Firmas: ÁREA · MECÁNICO · AUTORIZÓ ───
-  const firmas = [
-    { titulo: "ÁREA", firma: p.solicitante_firma, nombre: p.solicitante_nombre, leyenda: "Nombre y firma del Operador" },
-    { titulo: "MECÁNICO", firma: p.mecanico_firma, nombre: p.mecanico_nombre, leyenda: "Nombre y firma de quien recibe" },
-    {
-      titulo: "AUTORIZÓ",
-      firma: o.autoriza_firma,
-      leyenda: `${o.autoriza_nombre || AUTORIZA.nombre}\n${AUTORIZA.cargo}`,
-      negrita: true,
-    },
-  ];
-  const col = util / 3;
-  const altoTitulo = 7;
-  const altoCaja = 30;
-  if (y + altoTitulo + altoCaja > limite) {
+  // ─── Área y autorización (sin firmas) ───
+  if (y + 16 > limite) {
     doc.addPage();
     y = 20;
   }
-  doc.setDrawColor(...NEGRO);
-  doc.setLineWidth(0.35);
-  doc.rect(MARGEN, y, util, altoTitulo + altoCaja);
-  linea(MARGEN, y + altoTitulo, der, y + altoTitulo, 0.35);
-  firmas.forEach((fz, i) => {
-    const x0 = MARGEN + col * i;
-    const centro = x0 + col / 2;
-    if (i > 0) linea(x0, y, x0, y + altoTitulo + altoCaja, 0.35);
-    texto(fz.titulo, centro, y + 5, { tam: 11, negrita: false, alinear: "center" });
-    const top = y + altoTitulo;
-    if (fz.firma) {
-      try {
-        doc.addImage(fz.firma, "PNG", centro - 20, top + 1.5, 40, 13);
-      } catch {
-        // firma dañada: el espacio queda para firmarla a mano
-      }
-    }
-    doc.setFont(FUENTE, "normal");
-    doc.setFontSize(9);
-    if (fz.nombre) texto(doc.splitTextToSize(fz.nombre, col - 6)[0], centro, top + 18, { negrita: false, tam: 9, alinear: "center" });
-    doc.setFont(FUENTE, fz.negrita ? "bold" : "normal");
-    doc.setFontSize(10);
-    const leyenda = fz.leyenda.split("\n").flatMap((l) => doc.splitTextToSize(l, col - 4));
-    texto(leyenda, centro, top + altoCaja - 3 - 4 * (leyenda.length - 1), { tam: 10, negrita: !!fz.negrita, alinear: "center" });
-  });
+  y += 7;
+  texto("Área (solicitó):", MARGEN, y, { tam: 10 });
+  texto([p.solicitante_nombre, s.ingreso?.area || s.vehiculo?.area].filter(Boolean).join(" — ") || "—",
+    MARGEN + 30, y, { negrita: false, tam: 10 });
+  texto("Autorizó:", MARGEN, y + 5.5, { tam: 10 });
+  texto(`${AUTORIZA.nombre}, ${AUTORIZA.cargo}`, MARGEN + 30, y + 5.5, { negrita: false, tam: 10 });
 
   pie(doc);
   doc.save(`ingreso_${s.folio || s.id}.pdf`);

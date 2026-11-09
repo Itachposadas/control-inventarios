@@ -4,7 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { HOME_BY_ROLE } from "../config/roles";
 import { useSystemHealth } from "../hooks/useSystemHealth";
-import { MarcaAgua } from "../components/ui";
+import { MarcaAgua, AvisoCampo } from "../components/ui";
+import { useCamposVacios } from "../hooks/useCamposVacios";
 import {
   Eye, EyeOff, User, Lock, ArrowRight, ArrowLeft, Loader2, AlertCircle, ArrowBigUp,
 } from "lucide-react";
@@ -30,8 +31,11 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) =>
+  const { errores, validar, limpiar } = useCamposVacios();
+  const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    limpiar(e.target.name);
+  };
 
   // Detecta Bloq Mayús mientras se escribe la contraseña
   const revisarCapsLock = (e) => setCapsLock(e.getModifierState?.("CapsLock") ?? false);
@@ -39,6 +43,11 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const ok = validar({
+      identifier: !form.identifier.trim() && "Rellena este campo con tu usuario o correo",
+      password: !form.password && "Rellena este campo con tu contraseña",
+    });
+    if (!ok) return;
     setLoading(true);
     try {
       const u = await login(form.identifier.trim(), form.password);
@@ -146,7 +155,7 @@ export default function Login() {
 
               {/* ─── Formulario ─── */}
               {/* Sin autocompletar: el navegador no debe rellenar usuario ni contraseña */}
-              <form onSubmit={handleSubmit} autoComplete="off" className="mt-6 space-y-4">
+              <form onSubmit={handleSubmit} autoComplete="off" noValidate className="mt-6 space-y-4">
                 {error && (
                   <div
                     role="alert"
@@ -159,7 +168,7 @@ export default function Login() {
                 )}
 
                 {/* Usuario */}
-                <div>
+                <div data-error={errores.identifier ? "" : undefined}>
                   <label htmlFor="identifier" className="block text-sm font-medium text-slate-700 mb-1.5">
                     Usuario o correo
                   </label>
@@ -167,19 +176,19 @@ export default function Login() {
                     <input
                       id="identifier"
                       name="identifier"
+                      maxLength={120}
                       value={form.identifier}
                       onChange={handleChange}
                       autoComplete="off"
                       autoFocus
-                      required
-                      placeholder="Tu usuario o correo"
                       className={inputClass}
                     />
                   </InputConIcono>
+                  {errores.identifier && <AvisoCampo>{errores.identifier}</AvisoCampo>}
                 </div>
 
                 {/* Contraseña */}
-                <div>
+                <div data-error={errores.password ? "" : undefined}>
                   <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
                     Contraseña
                   </label>
@@ -187,6 +196,7 @@ export default function Login() {
                     <input
                       id="password"
                       name="password"
+                      maxLength={128}
                       type={showPassword ? "text" : "password"}
                       value={form.password}
                       onChange={handleChange}
@@ -194,8 +204,6 @@ export default function Login() {
                       onKeyDown={revisarCapsLock}
                       onBlur={() => setCapsLock(false)}
                       autoComplete="new-password"
-                      required
-                      placeholder="Tu contraseña"
                       className={`${inputClass} pr-11`}
                     />
                     <button
@@ -210,6 +218,7 @@ export default function Login() {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </InputConIcono>
+                  {errores.password && <AvisoCampo>{errores.password}</AvisoCampo>}
                   {capsLock && (
                     <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-900">
                       <ArrowBigUp size={14} />

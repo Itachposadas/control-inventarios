@@ -17,6 +17,9 @@ from routes.herramientas import herramientas_bp
 from routes.peticiones import area_bp, peticiones_bp
 from routes.ordenes_compra import ordenes_compra_bp
 from routes.historial import historial_bp
+from routes.almacen import almacen_bp
+import validacion
+import vigencia
 
 # Columnas agregadas a tablas que ya existían. create_all() no las añade,
 # así que se agregan al arrancar si faltan (solo agrega, nunca borra datos).
@@ -41,6 +44,7 @@ COLUMNAS_NUEVAS = [
     ("usuarios", "debe_cambiar_password", "BOOLEAN NOT NULL DEFAULT 0"),
     ("usuarios", "intentos_fallidos", "INT NOT NULL DEFAULT 0"),
     ("usuarios", "bloqueado_hasta", "DATETIME NULL"),
+    ("peticiones_servicio", "descripcion_falla", "TEXT NULL"),
 ]
 
 # Valores que debe aceptar la columna usuarios.role (ENUM de MySQL)
@@ -63,6 +67,24 @@ def _ampliar_roles(app):
             f"ALTER TABLE usuarios MODIFY COLUMN role ENUM({valores}) NOT NULL DEFAULT 'mecanico'"
         ))
     app.logger.info("Rol 'area' agregado a usuarios.role")
+
+
+def _ampliar_estados_peticion(app):
+    """Agrega 'vencida' al ENUM de peticiones_servicio.estado si falta (solo amplía)."""
+    if db.engine.dialect.name != "mysql":
+        return
+    with db.engine.begin() as conn:
+        tipo = conn.execute(db.text(
+            "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() "
+            "AND TABLE_NAME = 'peticiones_servicio' AND COLUMN_NAME = 'estado'"
+        )).scalar() or ""
+        if not tipo or "'vencida'" in tipo:
+            return
+        conn.execute(db.text(
+            "ALTER TABLE peticiones_servicio MODIFY COLUMN estado "
+            "ENUM('pendiente','atendida','descartada','vencida') NOT NULL DEFAULT 'pendiente'"
+        ))
+    app.logger.info("Estado 'vencida' agregado a peticiones_servicio.estado")
 
 
 # Pasos del servicio. Antes: recibida → diagnostico → reparacion → completada → entregada
@@ -161,6 +183,10 @@ def create_app():
 
     db.init_app(app)
     jwt.init_app(app)
+    # Revisión de datos antes de guardar y respuestas de error en JSON
+    validacion.registrar(app)
+    # Cancela las solicitudes cuya unidad no llegó a tiempo (máx. una vez por minuto)
+    vigencia.registrar(app)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(vehiculos_bp)
@@ -177,6 +203,7 @@ def create_app():
     app.register_blueprint(peticiones_bp)
     app.register_blueprint(ordenes_compra_bp)
     app.register_blueprint(historial_bp)
+    app.register_blueprint(almacen_bp)
 
     # Crea las tablas que falten al arrancar (no modifica las que ya existen),
     # así un módulo nuevo no deja al sistema sin funcionar.
@@ -187,6 +214,7 @@ def create_app():
             _agregar_columnas_faltantes(app)
             _migrar_estados_servicio(app)
             _ampliar_roles(app)
+            _ampliar_estados_peticion(app)
             _email_opcional(app)
             _precio_opcional(app)
             _cargar_catalogo_herramientas(app)

@@ -1,8 +1,7 @@
 # backend/routes/ordenes_compra.py
 # Órdenes de compra: las manda el mecánico desde su servicio (paso "compra",
 # POST /api/solicitudes/<id>/orden-compra) y administración las atiende:
-# captura proveedor, precios unitarios e IVA. La firma de quien autoriza
-# (coordinador de parque vehicular) la pone parque vehicular al enviarla.
+# captura proveedor, precios unitarios e IVA. No lleva firmas.
 # Al atenderla, el servicio pasa a Reparación y su costo es el total de la orden.
 from flask import Blueprint, request, jsonify
 from extensions import db
@@ -32,18 +31,6 @@ def listar():
     orden = OrdenCompra.created_at.asc() if estado == "enviada" else OrdenCompra.created_at.desc()
     items = query.order_by(orden, OrdenCompra.id.asc()).limit(200).all()
     return jsonify([o.to_dict() for o in items]), 200
-
-
-@ordenes_compra_bp.route("/ultima-autorizacion", methods=["GET"])
-@role_required("admin", "mecanico")
-def ultima_autorizacion():
-    """Nombre y firma de la última orden atendida: se proponen en la siguiente."""
-    o = (
-        OrdenCompra.query.filter(OrdenCompra.autoriza_firma.isnot(None))
-        .order_by(OrdenCompra.atendida_at.desc(), OrdenCompra.id.desc())
-        .first()
-    )
-    return jsonify({"nombre": o.autoriza_nombre, "firma": o.autoriza_firma} if o else None), 200
 
 
 @ordenes_compra_bp.route("/<int:orden_id>", methods=["GET"])

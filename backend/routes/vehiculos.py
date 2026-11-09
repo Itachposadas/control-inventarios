@@ -4,10 +4,29 @@ from auth_utils import role_required
 from extensions import db
 from sqlalchemy import func
 from models import Vehiculo, Solicitud
+from validacion import texto
 
 vehiculos_bp = Blueprint("vehiculos", __name__, url_prefix="/api/vehiculos")
 
 ESTADOS = ("activo", "mantenimiento", "baja")
+
+CAMPOS_TEXTO = [
+    "unidad", "descripcion", "modelo", "marca",
+    "serie", "no_motor", "placas", "numero_economico", "color",
+]
+
+
+def _np(valor):
+    """N.P. (número progresivo): entero positivo o vacío. Devuelve (np, error)."""
+    if valor in (None, ""):
+        return None, None
+    try:
+        np = int(valor)
+    except (TypeError, ValueError):
+        return None, "El N.P. debe ser un número entero"
+    if not 1 <= np <= 999999:
+        return None, "El N.P. debe estar entre 1 y 999999"
+    return np, None
 
 
 # ─── Rutas específicas PRIMERO (importante el orden) ───
@@ -82,8 +101,8 @@ def get_vehiculo(vehiculo_id):
 def crear_vehiculo():
     data = request.get_json() or {}
 
-    no_inventario = (data.get("no_inventario") or "").strip()
-    area = (data.get("area") or "").strip()
+    no_inventario = texto(data.get("no_inventario"))
+    area = texto(data.get("area"))
 
     if not no_inventario:
         return jsonify({"msg": "El No. de Inventario es obligatorio"}), 400
@@ -93,25 +112,20 @@ def crear_vehiculo():
     estado = data.get("estado") or "activo"
     if estado not in ESTADOS:
         return jsonify({"msg": "Estado inválido"}), 400
+    np, error = _np(data.get("np"))
+    if error:
+        return jsonify({"msg": error}), 400
 
     # Verificar que no exista otro vehículo con el mismo No. Inventario
     if Vehiculo.query.filter(Vehiculo.no_inventario == no_inventario).first():
         return jsonify({"msg": "Ya existe un vehículo con ese No. de Inventario"}), 409
 
     vehiculo = Vehiculo(
-        np=data.get("np") or None,
+        np=np,
         no_inventario=no_inventario,
         area=area,
-        unidad=(data.get("unidad") or "").strip() or None,
-        descripcion=(data.get("descripcion") or "").strip() or None,
-        modelo=(data.get("modelo") or "").strip() or None,
-        marca=(data.get("marca") or "").strip() or None,
-        serie=(data.get("serie") or "").strip() or None,
-        no_motor=(data.get("no_motor") or "").strip() or None,
-        placas=(data.get("placas") or "").strip() or None,
-        numero_economico=(data.get("numero_economico") or "").strip() or None,
-        color=(data.get("color") or "").strip() or None,
         estado=estado,
+        **{campo: texto(data.get(campo)) for campo in CAMPOS_TEXTO},
     )
 
     db.session.add(vehiculo)
@@ -131,25 +145,20 @@ def editar_vehiculo(vehiculo_id):
     data = request.get_json() or {}
 
     # Campos de texto
-    campos_texto = [
-        "unidad", "descripcion", "modelo", "marca",
-        "serie", "no_motor", "placas", "numero_economico", "color",
-    ]
-    for campo in campos_texto:
+    for campo in CAMPOS_TEXTO:
         if campo in data:
-            valor = (data[campo] or "").strip() or None
-            setattr(v, campo, valor)
+            setattr(v, campo, texto(data[campo]))
 
     # Área (obligatoria)
     if "area" in data:
-        area = (data["area"] or "").strip()
+        area = texto(data["area"])
         if not area:
             return jsonify({"msg": "El Área es obligatoria"}), 400
         v.area = area
 
     # No. Inventario (obligatorio y único)
     if "no_inventario" in data:
-        nuevo = (data["no_inventario"] or "").strip()
+        nuevo = texto(data["no_inventario"])
         if not nuevo:
             return jsonify({"msg": "El No. de Inventario es obligatorio"}), 400
         if nuevo != v.no_inventario:
@@ -159,7 +168,10 @@ def editar_vehiculo(vehiculo_id):
 
     # N.P. (numérico)
     if "np" in data:
-        v.np = data["np"] or None
+        np, error = _np(data["np"])
+        if error:
+            return jsonify({"msg": error}), 400
+        v.np = np
 
     # Estado
     if "estado" in data:

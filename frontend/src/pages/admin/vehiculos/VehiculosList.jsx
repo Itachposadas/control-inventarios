@@ -1,6 +1,7 @@
 // src/pages/admin/vehiculos/VehiculosList.jsx
 // Catálogo de vehículos. Admin: lo administra. Mecánico: solo lo consulta.
 import { useEffect, useState } from "react";
+import { useBusquedaDiferida } from "../../../hooks/useDebounce";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../../layouts/DashboardLayout";
 import { menusForRole } from "../../../config/menus";
@@ -55,6 +56,9 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [searchParams]);
 
+  // El texto espera a que se deje de escribir; área y estado van al instante
+  const consulta = useBusquedaDiferida(filters);
+
   // Cargar vehículos cada vez que cambian los filtros (y volver a la página 1)
   useEffect(() => {
     let cancel = false;
@@ -62,26 +66,24 @@ useEffect(() => {
     setLoading(true);
     setError("");
 
-    const timer = setTimeout(() => {
-      vehiculosApi
-        .listar(filters)
-        .then((data) => {
-          if (!cancel) setVehiculos(data);
-        })
-        .catch((e) => {
-          console.error(e);
-          if (!cancel) setError("Error al cargar vehículos");
-        })
-        .finally(() => {
-          if (!cancel) setLoading(false);
-        });
-    }, 250);
+    vehiculosApi
+      .listar(consulta)
+      .then((data) => {
+        if (!cancel) setVehiculos(data);
+      })
+      .catch((e) => {
+        console.error(e);
+        if (!cancel) setError("Error al cargar vehículos");
+      })
+      .finally(() => {
+        if (!cancel) setLoading(false);
+      });
 
+    // Si llega una respuesta de una búsqueda anterior, se ignora
     return () => {
       cancel = true;
-      clearTimeout(timer);
     };
-  }, [filters]);
+  }, [consulta]);
 
   // Paginación en pantalla: la lista ya viene completa y filtrada del servidor
   const paginas = Math.max(1, Math.ceil(vehiculos.length / POR_PAGINA));
@@ -104,7 +106,7 @@ useEffect(() => {
     }
     // Recargar áreas y vehículos
     cargarAreas();
-    const data = await vehiculosApi.listar(filters);
+    const data = await vehiculosApi.listar(consulta);
     setVehiculos(data);
   };
 

@@ -2,9 +2,8 @@
 // "PARQUE VEHICULAR · DICTAMEN" tal cual el formato del municipio (en blanco y
 // negro, letra tipo Times, como la orden de compra): fecha de entrada a
 // reparar; datos de la unidad; diagnóstico de fallas presentadas; acciones a
-// realizar / observaciones; refacciones a utilizar; adicionales y las firmas:
-//   Dictamen (mecánico) · Aplica (mecánico) · Área usuaria (solicitante) · Autorizó
-// La firma que falte queda en blanco para firmarla a mano al imprimir.
+// realizar / observaciones; refacciones a utilizar; adicionales; quién lo
+// solicitó (área usuaria) y quién autoriza. No lleva firmas.
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { MARGEN, aFecha, cantidad, logos, pie } from "./pdfComun";
@@ -182,59 +181,14 @@ export async function descargarDiagnosticoPdf(s) {
   });
   y = doc.lastAutoTable.finalY + 6;
 
-  // ─── Firmas: Dictamen · Aplica · Área usuaria · Autorizó ───
-  const firmas = [
-    { titulo: "Dictamen", firma: p.mecanico_firma, nombre: p.mecanico_nombre, leyenda: "Nombre completo y firma de mecánico" },
-    {
-      titulo: "Aplica",
-      firma: o.mecanico_firma || p.mecanico_firma,
-      nombre: o.mecanico_nombre || p.mecanico_nombre,
-      leyenda: "Nombre completo y firma de mecánico",
-    },
-    {
-      titulo: "Área Usuaria",
-      firma: p.solicitante_firma,
-      nombre: p.solicitante_nombre,
-      cargo: ing.area || s.vehiculo?.area,
-      leyenda: "Nombre completo, cargo y firma",
-    },
-    {
-      titulo: "Autorizó",
-      firma: o.autoriza_firma,
-      nombre: null,
-      leyenda: `${o.autoriza_nombre || AUTORIZA.nombre}\n${AUTORIZA.cargo}`,
-    },
-  ];
-  const col = util / 4;
-  const altoTitulo = 8;
-  const altoCaja = 30;
-  asegurar(altoTitulo + altoCaja);
-  doc.setDrawColor(...NEGRO);
-  doc.setLineWidth(0.35);
-  doc.rect(MARGEN, y, util, altoTitulo + altoCaja);
-  linea(MARGEN, y + altoTitulo, der, y + altoTitulo, 0.35);
-  firmas.forEach((fz, i) => {
-    const x0 = MARGEN + col * i;
-    const centro = x0 + col / 2;
-    if (i > 0) linea(x0, y, x0, y + altoTitulo + altoCaja, 0.35);
-    texto(fz.titulo, centro, y + 5.8, { tam: 12, alinear: "center" });
-    const top = y + altoTitulo;
-    if (fz.firma) {
-      try {
-        doc.addImage(fz.firma, "PNG", centro - 18, top + 1, 36, 12);
-      } catch {
-        // firma dañada: el espacio queda para firmar a mano
-      }
-    }
-    doc.setFont(FUENTE, "normal");
-    doc.setFontSize(8.5);
-    if (fz.nombre) texto(doc.splitTextToSize(fz.nombre, col - 4)[0], centro, top + 15.5, { negrita: false, tam: 8.5, alinear: "center" });
-    if (fz.cargo) texto(doc.splitTextToSize(fz.cargo, col - 4)[0], centro, top + 19, { negrita: false, tam: 8, alinear: "center" });
-    doc.setFont(FUENTE, "bold");
-    doc.setFontSize(9);
-    const leyenda = fz.leyenda.split("\n").flatMap((l) => doc.splitTextToSize(l, col - 4));
-    texto(leyenda, centro, top + altoCaja - 2 - 3.6 * (leyenda.length - 1), { tam: 9, alinear: "center" });
-  });
+  // ─── Área usuaria y autorización (sin firmas) ───
+  asegurar(14);
+  y += 2;
+  const area = ing.area || s.vehiculo?.area;
+  texto("Área usuaria:", MARGEN, y, { tam: 10.5 });
+  texto([p.solicitante_nombre, area].filter(Boolean).join(" — ") || "—", MARGEN + 26, y, { negrita: false, tam: 10.5 });
+  texto("Autorizó:", MARGEN, y + 6, { tam: 10.5 });
+  texto(`${AUTORIZA.nombre}, ${AUTORIZA.cargo}`, MARGEN + 26, y + 6, { negrita: false, tam: 10.5 });
 
   pie(doc);
   doc.save(`dictamen_${s.folio || s.id}.pdf`);

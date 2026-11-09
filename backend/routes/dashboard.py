@@ -1,6 +1,7 @@
 # backend/routes/dashboard.py
 import re
 from collections import Counter
+from datetime import timedelta
 from flask import Blueprint, jsonify
 from sqlalchemy import func
 from extensions import db
@@ -100,6 +101,11 @@ def stats():
     pendientes_q = PeticionServicio.query.filter_by(estado="pendiente")
     pendientes = pendientes_q.order_by(PeticionServicio.created_at.asc()).limit(6).all()
     fechas_pendientes = [f for (f,) in pendientes_q.with_entities(PeticionServicio.created_at).all()]
+    # Rezago: solicitudes que vencieron porque el área no llevó la unidad (últimos 30 días)
+    vencidas_30 = PeticionServicio.query.filter(
+        PeticionServicio.estado == "vencida",
+        PeticionServicio.atendida_at >= utcnow() - timedelta(days=30),
+    ).count()
 
     # ─── Resumen del mes en curso (mismo cálculo que Reportes → "Este mes") ───
     # Los costos solo los ve el admin
@@ -132,6 +138,7 @@ def stats():
             "en_reparacion": en_reparacion,
             "ordenes_por_atender": ordenes_por_atender,
             "pendientes": len(fechas_pendientes),
+            "vencidas_30": vencidas_30,
         },
         "en_taller_por_paso": en_taller_por_paso,
         # Fechas de todas las pendientes: el panel calcula la prioridad por días de espera
@@ -144,7 +151,7 @@ def stats():
                 "area": p.vehiculo.area if p.vehiculo else None,
                 "vehiculo": (p.vehiculo.numero_economico or p.vehiculo.unidad or p.vehiculo.no_inventario)
                 if p.vehiculo else None,
-                "materiales": len(p.materiales),
+                "falla": (p.descripcion_falla or "")[:140] or None,
             }
             for p in pendientes
         ],
