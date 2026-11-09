@@ -207,15 +207,6 @@ const GUIA_ADMIN = [
     ],
   },
   {
-    icon: <Package size={20} />,
-    titulo: "Almacén",
-    pasos: [
-      "En Almacén puedes consultar las existencias del almacén del taller y todos sus movimientos: entradas, salidas a servicios, devoluciones y ajustes.",
-      "Los materiales que están en su mínimo aparecen en rojo como “Por acabarse”.",
-      "Lo captura parque vehicular; en cada servicio y en el historial de la unidad aparece el material que se le colocó.",
-    ],
-  },
-  {
     icon: <History size={20} />,
     titulo: "Historial de servicios",
     pasos: [

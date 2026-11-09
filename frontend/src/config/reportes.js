@@ -9,6 +9,16 @@ export function etiquetaMes(aaaamm) {
   return `${MESES[m - 1]} ${y}`;
 }
 
+// Etiquetas para las gráficas por mes: si todo es del mismo año, solo el mes
+// ("Ene", "Feb"…); si cruza de año, con el año corto ("Dic 25", "Ene 26").
+export function etiquetasMeses(lista) {
+  const anios = new Set(lista.map((m) => m.slice(0, 4)));
+  return lista.map((aaaamm) => {
+    const [y, m] = aaaamm.split("-").map(Number);
+    return anios.size > 1 ? `${MESES[m - 1]} ${String(y).slice(2)}` : MESES[m - 1];
+  });
+}
+
 export function moneda(v, decimales = 2) {
   return Number(v || 0).toLocaleString("es-MX", {
     style: "currency",

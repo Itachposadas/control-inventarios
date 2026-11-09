@@ -17,8 +17,6 @@ export const ADMIN_MENU = [
   // Órdenes de compra que manda parque vehicular después del diagnóstico
   { label: "Órdenes de compra", to: "/admin/ordenes-compra", icon: <ShoppingCart size={18} /> },
   { label: "Vehículos", to: "/admin/vehiculos", icon: <Car size={18} /> },
-  // Solo consulta: lo captura parque vehicular
-  { label: "Almacén", to: "/admin/almacen", icon: <Package size={18} /> },
   { label: "Historial de servicios", to: "/admin/historial", icon: <History size={18} /> },
   { label: "Taller foráneo", to: "/admin/foraneo", icon: <Truck size={18} /> },
   { label: "Usuarios", to: "/admin/usuarios", icon: <Users size={18} /> },

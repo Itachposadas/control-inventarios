@@ -12,7 +12,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 const GUINDA = INSTITUCIONAL.DEFAULT;
 
-const BarrasPorMes = forwardRef(function BarrasPorMes({ labels, values, formato = (v) => v }, ref) {
+// formato: texto del valor en el globo; formatoEje: en las marcas del eje (por omisión, el mismo)
+const BarrasPorMes = forwardRef(function BarrasPorMes({ labels, values, formato = (v) => v, formatoEje }, ref) {
   const data = {
     labels,
     datasets: [{
@@ -48,7 +49,7 @@ const BarrasPorMes = forwardRef(function BarrasPorMes({ labels, values, formato 
         beginAtZero: true,
         grid: { color: "#f1f5f9" },
         border: { display: false },
-        ticks: { color: "#64748b", font: { size: 11 }, callback: (v) => formato(v), maxTicksLimit: 5, precision: 0 },
+        ticks: { color: "#64748b", font: { size: 11 }, callback: (v) => (formatoEje || formato)(v), maxTicksLimit: 5, precision: 0 },
       },
     },
   };

@@ -45,7 +45,7 @@ const HistorialServicios = lazy(() => import("./pages/historial/HistorialServici
 // Préstamo de herramientas (solo mecánico)
 const PrestamoHerramientas = lazy(() => import("./pages/herramientas/PrestamoHerramientas"));
 
-// Almacén: lo captura parque vehicular, el admin consulta
+// Almacén: solo parque vehicular (el admin no lo maneja)
 const Almacen = lazy(() => import("./pages/almacen/Almacen"));
 
 // Reportes (solo admin)
@@ -119,7 +119,6 @@ export default function App() {
           <Route path="/admin/solicitudes-areas" element={solo([ADMIN], <PeticionesAreas />)} />
           <Route path="/admin/ordenes-compra" element={solo([ADMIN], <OrdenesCompra />)} />
           <Route path="/admin/historial" element={solo([ADMIN], <HistorialServicios />)} />
-          <Route path="/admin/almacen" element={solo([ADMIN], <Almacen />)} />
 
           <Route path="/admin/*" element={solo([ADMIN], <EnConstruccion />)} />
 

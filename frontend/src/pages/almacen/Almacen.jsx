@@ -2,7 +2,7 @@
 // Almacén (control de refacciones): el cuarto donde Coordinación de Parque
 // Vehicular guarda lo que llega en cantidad (aceites, barriles, etc.).
 // Parque vehicular captura entradas y ajustes; las salidas se registran desde
-// cada servicio ("Material del almacén"). Administración solo consulta.
+// cada servicio ("Material del almacén"). Administración no tiene este apartado.
 // Las piezas que se compran para un servicio siguen por la orden de compra.
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";

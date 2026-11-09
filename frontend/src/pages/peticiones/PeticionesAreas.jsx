@@ -20,7 +20,7 @@ import { useAuth } from "../../context/AuthContext";
 import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import { SOLICITUDES_BASE } from "../../config/solicitudes";
-import { PLAZOS, DIAS_LIMITE, plazoDe, textoVence, fechaCorta, aFecha, tiempoEsperando } from "../../config/espera";
+import { PLAZOS, DIAS_LIMITE, plazoDe, textoVence, fechaCorta, aFecha } from "../../config/espera";
 import TablaMateriales from "../../components/peticiones/TablaMateriales";
 import { descargarSolicitudPdf } from "../../utils/pdfs";
 import {
@@ -125,12 +125,13 @@ export default function PeticionesAreas() {
       title="Solicitudes"
       subtitle="Lo que piden las áreas para sus vehículos"
     >
-      <div className="mb-4 inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200">
+      {/* En celular, cuatro columnas iguales para que quepan las cuatro pestañas */}
+      <div className="mb-4 grid grid-cols-4 sm:inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200">
         {PESTANAS.map((t) => (
           <button
             key={t.valor}
             onClick={() => cambiarPestana(t.valor)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
+            className={`whitespace-nowrap px-1 sm:px-4 py-1.5 rounded-lg text-[13px] sm:text-sm font-medium transition ${
               estado === t.valor ? "bg-white text-institucional shadow-sm" : "text-slate-600 hover:text-slate-800"
             }`}
           >
@@ -215,19 +216,19 @@ export default function PeticionesAreas() {
             return (
             <li
               key={p.id}
-              className={`animate-fade-up bg-white rounded-2xl border border-slate-200
-                         shadow-[0_1px_3px_rgba(15,23,42,0.04)] flex flex-col
-                         ${prio ? `border-l-4 ${prio.borde}` : ""}`}
+              className="animate-fade-up bg-white rounded-2xl border border-slate-200
+                         shadow-[0_1px_3px_rgba(15,23,42,0.04)] flex flex-col"
             >
               <div className="px-5 pt-4 flex items-center justify-between gap-3 flex-wrap">
                 <span className="flex items-center gap-2">
                   <span className="font-mono text-xs font-semibold text-institucional">{p.folio}</span>
                   {prio && (
                     <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${prio.chip}`}
-                      title={`Fecha límite: ${fechaCorta(prio.vence)}`}
+                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${prio.chip}`}
+                      title={`${prio.label}. Fecha límite: ${fechaCorta(prio.vence)}`}
                     >
-                      {prio.label} · {textoVence(p.fecha).toLowerCase()}
+                      <Clock size={11} aria-hidden />
+                      {textoVence(p.fecha)}
                     </span>
                   )}
                   {p.estado === "vencida" && (
@@ -236,14 +237,7 @@ export default function PeticionesAreas() {
                     </span>
                   )}
                 </span>
-                <span className="text-right">
-                  <span className="block text-xs text-slate-500">{fechaHora(p.fecha)}</span>
-                  {prio && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600">
-                      <Clock size={11} /> {tiempoEsperando(p.fecha)}
-                    </span>
-                  )}
-                </span>
+                <span className="text-xs text-slate-500">Enviada {fechaHora(p.fecha)}</span>
               </div>
 
               <div className="px-5 py-4 flex items-start gap-3">

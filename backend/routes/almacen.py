@@ -1,7 +1,7 @@
 # backend/routes/almacen.py
 # Almacén (control de refacciones): el cuarto donde Coordinación de Parque
 # Vehicular guarda lo que llega en cantidad (aceites, barriles, etc.).
-# Lo captura parque vehicular; administración solo consulta.
+# Solo lo maneja parque vehicular; administración no tiene este apartado.
 # Las piezas compradas para un servicio siguen por la orden de compra: este
 # módulo no la toca. Lo que sale del almacén se liga al servicio donde se usó.
 from decimal import Decimal, InvalidOperation
@@ -65,7 +65,7 @@ def _mover(material, tipo, cantidad, user, solicitud=None, nota=None):
 
 # ─── Catálogo y existencias ───
 @almacen_bp.route("/materiales", methods=["GET"])
-@role_required()
+@role_required("mecanico")
 def listar_materiales():
     """?todos=1 incluye los dados de baja."""
     query = MaterialAlmacen.query
@@ -180,7 +180,7 @@ def registrar_ajuste():
 
 
 @almacen_bp.route("/movimientos", methods=["GET"])
-@role_required()
+@role_required("mecanico")
 def listar_movimientos():
     """?material_id= &tipo=entrada|salida|devolucion|ajuste &pagina= (los más recientes primero)"""
     query = MovimientoAlmacen.query

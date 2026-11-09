@@ -49,8 +49,8 @@ export default function EditorMateriales({
 
   return (
     <div>
-      {/* Encabezados de la tabla (escritorio) */}
-      <div className={`hidden ${COLUMNAS} gap-2 px-1
+      {/* Encabezados de la tabla (escritorio); sin renglones no se muestran */}
+      <div className={`hidden ${materiales.length ? COLUMNAS : ""} gap-2 px-1
                       text-[11px] font-semibold uppercase tracking-wide text-slate-500`}>
         <span>Cantidad</span>
         <span>Unidad de medida</span>

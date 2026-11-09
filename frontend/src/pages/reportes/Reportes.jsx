@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import KpiCard from "../../components/dashboard/KpiCard";
+import { Cifras, Cifra } from "../../components/dashboard/Cifras";
 import BarrasPorMes from "../../components/reportes/BarrasPorMes";
 import { inputClass, Boton, Alerta } from "../../components/ui";
 import { reportesApi } from "../../api/reportes";
@@ -11,11 +11,10 @@ import { vehiculosApi } from "../../api/vehiculos";
 import { dashboardApi } from "../../api/dashboard";
 import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../config/menus";
 import { TIPO_LABEL } from "../../config/solicitudes";
-import { PERIODOS, rangoDePeriodo, etiquetaMes, moneda, fechaCorta } from "../../config/reportes";
+import { PERIODOS, rangoDePeriodo, etiquetasMeses, moneda, fechaCorta } from "../../config/reportes";
 import {
-  FileDown, Loader2, ClipboardList, DollarSign, Timer, Wrench, AlertTriangle, BarChart3, FileSpreadsheet,
+  FileDown, Loader2, AlertTriangle, BarChart3, FileSpreadsheet,
 } from "lucide-react";
-import { COLORS } from "../../config/colors";
 
 export default function Reportes() {
   const [periodo, setPeriodo] = useState("mes");
@@ -176,40 +175,28 @@ export default function Reportes() {
       ) : reporte && (
         <div className={`space-y-5 transition-opacity ${loading ? "opacity-60" : ""}`}>
           {/* ─── Resumen ─── */}
-          <div className="stagger grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <KpiCard
-              label="Servicios ingresados"
-              value={res.servicios}
-              accent={COLORS.institucional}
-              icon={<ClipboardList size={20} />}
-              status={`${res.terminados} terminados`}
-              statusType="info"
+          <Cifras etiqueta="Resumen del periodo">
+            <Cifra
+              etiqueta="Servicios ingresados"
+              valor={res.servicios}
+              detalle={`${res.terminados} ${res.terminados === 1 ? "terminado" : "terminados"}`}
             />
-            <KpiCard
-              label="Gasto total"
-              value={moneda(res.gasto_total, 0)}
-              accent={COLORS.success}
-              icon={<DollarSign size={20} />}
-              status={`Promedio ${moneda(res.gasto_promedio, 0)} por servicio`}
-              statusType="success"
+            <Cifra
+              etiqueta="Gasto total"
+              valor={moneda(res.gasto_total, 0)}
+              detalle={`Promedio ${moneda(res.gasto_promedio, 0)} por servicio`}
             />
-            <KpiCard
-              label="Tiempo promedio"
-              value={res.dias_promedio_taller == null ? "—" : `${res.dias_promedio_taller} días`}
-              accent={COLORS.info}
-              icon={<Timer size={20} />}
-              status="En taller, del ingreso a completado"
-              statusType="info"
+            <Cifra
+              etiqueta="Tiempo promedio en taller"
+              valor={res.dias_promedio_taller == null ? "—" : `${res.dias_promedio_taller} días`}
+              detalle="Del ingreso a que se completa"
             />
-            <KpiCard
-              label="Siguen en taller"
-              value={res.en_taller}
-              accent={COLORS.warning}
-              icon={<Wrench size={20} />}
-              status="Sin completar"
-              statusType="warning"
+            <Cifra
+              etiqueta="Siguen en taller"
+              valor={res.en_taller}
+              detalle={res.en_taller ? "Sin completar" : "Todos se completaron"}
             />
-          </div>
+          </Cifras>
 
           {res.sin_costo > 0 && (
             <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-900 text-sm px-4 py-3 rounded-xl">
@@ -231,17 +218,23 @@ export default function Reportes() {
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                 <Tarjeta titulo="Gasto por mes" subtitulo="Suma del costo de los servicios">
                   <div className="h-64">
+                    {res.gasto_total === 0 ? (
+                      <p className="h-full flex items-center justify-center text-center text-sm text-slate-500">
+                        Los servicios del periodo todavía no tienen costo capturado.
+                      </p>
+                    ) : (
                     <BarrasPorMes
-                      labels={meses.map((m) => etiquetaMes(m.mes))}
+                      labels={etiquetasMeses(meses.map((m) => m.mes))}
                       values={meses.map((m) => m.gasto)}
                       formato={(v) => moneda(v, 0)}
                     />
+                    )}
                   </div>
                 </Tarjeta>
                 <Tarjeta titulo="Servicios ingresados por mes" subtitulo="Entradas al taller">
                   <div className="h-64">
                     <BarrasPorMes
-                      labels={meses.map((m) => etiquetaMes(m.mes))}
+                      labels={etiquetasMeses(meses.map((m) => m.mes))}
                       values={meses.map((m) => m.servicios)}
                     />
                   </div>
@@ -458,24 +451,30 @@ function TablaVehiculos({ filas }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-100">
-            <th className="text-left font-semibold px-5 py-2 w-8">#</th>
-            <th className="text-left font-semibold px-2 py-2">Vehículo</th>
-            <th className="text-right font-semibold px-2 py-2">Servicios</th>
+            <th className="hidden sm:table-cell text-left font-semibold px-5 py-2 w-8">#</th>
+            <th className="text-left font-semibold pl-5 sm:pl-2 pr-2 py-2">Vehículo</th>
+            <th className="text-right font-semibold px-2 py-2">
+              <span className="sm:hidden" aria-hidden>Serv.</span>
+              <span className="hidden sm:inline">Servicios</span>
+            </th>
             <th className="text-right font-semibold px-5 py-2">Gasto</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {filas.map((v, i) => (
             <tr key={v.vehiculo_id} className="hover:bg-slate-50 transition">
-              <td className="px-5 py-2.5 text-xs text-slate-500 font-mono">{String(i + 1).padStart(2, "0")}</td>
-              <td className="px-2 py-2.5">
+              <td className="hidden sm:table-cell px-5 py-2.5 text-xs text-slate-500 tabular-nums">{i + 1}</td>
+              <td className="pl-5 sm:pl-2 pr-2 py-2.5 min-w-0">
                 <Link to={`/admin/vehiculos/${v.vehiculo_id}`} className="font-medium text-slate-800 hover:text-institucional">
                   {v.nombre}
                 </Link>
-                <p className="text-xs text-slate-500">{[v.no_inventario, v.area].filter(Boolean).join(" · ")}</p>
+                <p className="text-xs text-slate-500">
+                  <span className="whitespace-nowrap">{v.no_inventario}</span>
+                  {v.area && <span className="block sm:inline"><span className="hidden sm:inline"> · </span>{v.area}</span>}
+                </p>
               </td>
               <td className="px-2 py-2.5 text-right text-slate-600 tabular-nums">{v.servicios}</td>
-              <td className="px-5 py-2.5 text-right font-semibold text-slate-800 tabular-nums">{moneda(v.gasto)}</td>
+              <td className="px-5 py-2.5 text-right font-semibold text-slate-800 tabular-nums whitespace-nowrap">{moneda(v.gasto)}</td>
             </tr>
           ))}
         </tbody>

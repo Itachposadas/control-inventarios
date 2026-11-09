@@ -13,11 +13,11 @@ const DIA = 86400000;
 export const PLAZOS = [
   {
     valor: "vigente", label: "Vigente", rango: `menos de ${DIAS_VIGENTE} días`,
-    chip: "bg-emerald-100 text-emerald-800", borde: "border-l-emerald-500", punto: "bg-emerald-500", texto: "text-emerald-700",
+    chip: "bg-emerald-100 text-emerald-800", punto: "bg-emerald-500", texto: "text-emerald-700",
   },
   {
     valor: "por_vencer", label: "Por vencer", rango: `${DIAS_VIGENTE}–${DIAS_LIMITE} días`,
-    chip: "bg-amber-100 text-amber-900", borde: "border-l-amber-500", punto: "bg-amber-500", texto: "text-amber-900",
+    chip: "bg-amber-100 text-amber-900", punto: "bg-amber-500", texto: "text-amber-900",
   },
 ];
 

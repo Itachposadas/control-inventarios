@@ -292,16 +292,11 @@ function FormatoSolicitud({ p }) {
   return (
     <div className="border-t border-slate-100 bg-slate-50/70 px-4 sm:px-5 py-3">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-institucional flex items-center justify-center shrink-0">
-          <FileText size={16} />
-        </span>
-        <div className="min-w-0 mr-auto">
-          <p className="text-sm font-semibold text-slate-800">Carta de solicitud</p>
-          <p className="text-xs text-slate-500">
-            Enviada el {fechaHora(p.fecha)}
-            {p.solicitante_nombre && <> · {p.solicitante_nombre}</>}
-          </p>
-        </div>
+        {/* La fecha y quién solicitó ya están arriba en la tarjeta */}
+        <p className="mr-auto inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <FileText size={16} className="text-institucional shrink-0" aria-hidden />
+          Carta de solicitud
+        </p>
         <div className="flex gap-2">
           <Boton variante="secundario" tamano="sm" icono={icono("imprimir", Printer)}
             onClick={() => generar("imprimir")} disabled={!!ocupado}>

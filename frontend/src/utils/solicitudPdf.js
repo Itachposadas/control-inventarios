@@ -61,7 +61,7 @@ export async function descargarSolicitudPdf(p, ventana) {
   const horaTxt = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
   y = 54;
   texto(`Atlacomulco de Fabela, Méx., a ${fechaTxt}`, der, y, { alinear: "right" });
-  texto(`Hora: ${horaTxt} h`, der, y + INTERLINEA, { alinear: "right" });
+  texto(`Hora: ${horaTxt}`, der, y + INTERLINEA, { alinear: "right" });
   if (p.folio) texto(`Folio: ${p.folio}`, der, y + INTERLINEA * 2, { negrita: true, alinear: "right" });
   texto("ASUNTO: Solicitud de servicio vehicular", der, y + INTERLINEA * 3, { negrita: true, alinear: "right" });
 

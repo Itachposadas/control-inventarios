@@ -9,9 +9,9 @@ import { useAutoActualizar } from "../../hooks/useAutoActualizar";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { ADMIN_MENU, ADMIN_SECONDARY_MENU } from "../../config/menus";
 import ActivityFeed from "../../components/dashboard/ActivityFeed";
-import LineChartCard from "../../components/dashboard/LineChartCard";
+import VehiculosPorAnio from "../../components/dashboard/VehiculosPorAnio";
 import DonutCard from "../../components/dashboard/DonutCard";
-import DataTable from "../../components/dashboard/DataTable";
+import { Cifras, Cifra } from "../../components/dashboard/Cifras";
 import AvisosPreventivo from "../../components/dashboard/AvisosPreventivo";
 import { dashboardApi } from "../../api/dashboard";
 import { ordenesCompraApi } from "../../api/ordenesCompra";
@@ -89,8 +89,7 @@ export default function AdminDashboard() {
         <>
           {/* ─── Estado del taller: una franja, cuatro cifras distintas ─── */}
           {/* Rejilla de 1 px: el fondo gris asoma entre las celdas blancas como divisor */}
-          <section aria-label="Estado del taller" className="mb-5 rounded-2xl border border-slate-200 overflow-hidden
-                     grid grid-cols-2 lg:grid-cols-4 gap-px bg-slate-200">
+          <Cifras etiqueta="Estado del taller" className="mb-5">
             <Cifra
               etiqueta="Solicitudes pendientes"
               valor={totalPendientes}
@@ -134,7 +133,7 @@ export default function AdminDashboard() {
               onClick={() => navigate("/admin/reportes")}
               detalle={mes ? `${mes.servicios} ${mes.servicios === 1 ? "servicio ingresado" : "servicios ingresados"} · ${mes.terminados} ${mes.terminados === 1 ? "terminado" : "terminados"}` : ""}
             />
-          </section>
+          </Cifras>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
             <div className="xl:col-span-2 space-y-5">
@@ -223,16 +222,10 @@ export default function AdminDashboard() {
           {/* ─── Parque vehicular ─── */}
           <div className="mt-5 grid grid-cols-1 xl:grid-cols-3 gap-5">
             <div className="xl:col-span-2">
-              <LineChartCard data={stats?.por_anio || []} sinAnio={stats?.sin_anio || 0} />
+              <VehiculosPorAnio data={stats?.por_anio || []} sinAnio={stats?.sin_anio || 0} />
             </div>
+            {/* La dona ya trae la lista de áreas con su número de unidades */}
             <DonutCard data={stats?.vehiculos_por_area || []} />
-          </div>
-          <div className="mt-5">
-            <DataTable
-              title="Áreas con más vehículos"
-              subtitle="Ranking por cantidad de unidades"
-              rows={(stats?.top_areas || []).slice(0, 6)}
-            />
           </div>
         </>
       )}
@@ -241,26 +234,6 @@ export default function AdminDashboard() {
 }
 
 /* ───── Piezas ───── */
-
-// Una cifra de la franja de estado. Si tiene destino, toda la celda es el enlace.
-function Cifra({ etiqueta, valor, detalle, onClick }) {
-  const contenido = (
-    <>
-      <span className="block text-sm text-slate-600">{etiqueta}</span>
-      <span className="mt-1 block text-3xl font-semibold text-slate-900 tabular-nums tracking-tight">{valor}</span>
-      {detalle && <span className="mt-1.5 block text-xs text-slate-500 leading-snug">{detalle}</span>}
-    </>
-  );
-  const clase = "bg-white text-left px-5 py-4 min-w-0";
-  return onClick ? (
-    <button onClick={onClick} className={`${clase} hover:bg-slate-50 transition
-                                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-institucional/40`}>
-      {contenido}
-    </button>
-  ) : (
-    <div className={clase}>{contenido}</div>
-  );
-}
 
 function Fila({ onClick, marca, titulo, detalle, lado }) {
   return (

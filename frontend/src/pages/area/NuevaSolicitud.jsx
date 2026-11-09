@@ -190,20 +190,23 @@ function ElegirVehiculo({ area, onElegir }) {
                     <CarFront size={21} />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-semibold text-slate-800 leading-snug line-clamp-2">{v.nombre}</span>
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-semibold text-slate-800 leading-snug">{v.nombre}</span>
+                      {v.en_taller ? (
+                        <Etiqueta>En servicio</Etiqueta>
+                      ) : v.peticion_pendiente ? (
+                        <Etiqueta>Solicitud pendiente</Etiqueta>
+                      ) : null}
+                    </span>
                     <span className="block text-xs text-slate-500 truncate">
                       {[v.marca, v.modelo, v.placas && `Placas ${v.placas}`].filter(Boolean).join(" · ")}
                     </span>
                     <span className="block text-[11px] text-slate-500 font-mono truncate">{v.noInventario}</span>
                     {ocupado && (
-                      <span className="block mt-1 text-[11px] font-medium text-amber-900">{motivoBloqueo(v)}</span>
+                      <span className="block mt-1.5 text-xs text-slate-600">{motivoBloqueo(v)}</span>
                     )}
                   </span>
-                  {v.en_taller ? (
-                    <Etiqueta>En servicio</Etiqueta>
-                  ) : v.peticion_pendiente ? (
-                    <Etiqueta>Solicitud pendiente</Etiqueta>
-                  ) : (
+                  {!ocupado && (
                     <ChevronRight
                       size={18}
                       className="text-slate-300 group-hover:text-institucional group-hover:translate-x-0.5 transition shrink-0"
@@ -274,7 +277,7 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
       {/* La carta, como se imprime */}
       <article className="mt-5 rounded-xl border border-slate-200 bg-white px-5 py-6 sm:px-8 sm:py-8 text-sm text-slate-700 leading-relaxed">
         <p className="text-right">
-          Atlacomulco, Méx., a {fecha} · {hora} h
+          Atlacomulco, Méx., a {fecha} · {hora}
         </p>
 
         <div className="mt-6">
@@ -368,7 +371,7 @@ function DatoGeneral({ etiqueta, valor }) {
   return (
     <div className="bg-slate-50 px-4 py-3 min-w-0">
       <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{etiqueta}</dt>
-      <dd className="mt-0.5 text-sm font-semibold text-slate-800 truncate">{valor || "—"}</dd>
+      <dd className="mt-0.5 text-sm font-semibold text-slate-800 break-words">{valor || "—"}</dd>
     </div>
   );
 }
