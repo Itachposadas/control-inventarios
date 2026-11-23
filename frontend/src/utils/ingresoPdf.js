@@ -7,7 +7,7 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { MARGEN, aFecha, logos, pie, cargarImagen } from "./pdfComun";
-import { AUTORIZA } from "../config/ordenCompra";
+import { autorizaEn } from "./titular";
 import { CHECKLIST_IZQUIERDA, CHECKLIST_DERECHA } from "../config/solicitudes";
 
 const NEGRO = [0, 0, 0];
@@ -16,6 +16,8 @@ const FUENTE = "times";
 
 /** @param {object} s  servicio tal como lo regresa /api/solicitudes/<id> */
 export async function descargarIngresoPdf(s) {
+  // Titular de la coordinación vigente en la fecha del documento
+  const autoriza = await autorizaEn(s.fecha_ingreso);
   const doc = new jsPDF({ unit: "mm", format: "letter" });
   const ancho = doc.internal.pageSize.getWidth();
   const limite = doc.internal.pageSize.getHeight() - 18; // arriba del pie
@@ -166,7 +168,7 @@ export async function descargarIngresoPdf(s) {
   texto([p.solicitante_nombre, s.ingreso?.area || s.vehiculo?.area].filter(Boolean).join(" — ") || "—",
     MARGEN + 30, y, { negrita: false, tam: 10 });
   texto("Autorizó:", MARGEN, y + 5.5, { tam: 10 });
-  texto(`${AUTORIZA.nombre}, ${AUTORIZA.cargo}`, MARGEN + 30, y + 5.5, { negrita: false, tam: 10 });
+  texto(`${autoriza.nombre}, ${autoriza.cargo}`, MARGEN + 30, y + 5.5, { negrita: false, tam: 10 });
 
   pie(doc);
   doc.save(`ingreso_${s.folio || s.id}.pdf`);

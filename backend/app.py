@@ -18,6 +18,7 @@ from routes.peticiones import area_bp, peticiones_bp
 from routes.ordenes_compra import ordenes_compra_bp
 from routes.historial import historial_bp
 from routes.almacen import almacen_bp
+from routes.coordinacion import coordinacion_bp, cargar_titular_inicial
 import validacion
 import vigencia
 
@@ -204,6 +205,7 @@ def create_app():
     app.register_blueprint(ordenes_compra_bp)
     app.register_blueprint(historial_bp)
     app.register_blueprint(almacen_bp)
+    app.register_blueprint(coordinacion_bp)
 
     # Crea las tablas que falten al arrancar (no modifica las que ya existen),
     # así un módulo nuevo no deja al sistema sin funcionar.
@@ -218,6 +220,7 @@ def create_app():
             _email_opcional(app)
             _precio_opcional(app)
             _cargar_catalogo_herramientas(app)
+            cargar_titular_inicial(app)
         except Exception as e:
             app.logger.error("No se pudieron crear las tablas: %s", e)
 

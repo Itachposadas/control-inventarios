@@ -9,7 +9,7 @@ import { Section, Field, Boton, Alerta, Insignia, inputClass } from "../ui";
 import { TablaRefacciones, BotonFormato } from "./PasoDiagnostico";
 import { solicitudesApi } from "../../api/solicitudes";
 import { ESTADO_ORDEN } from "../../api/ordenesCompra";
-import { AUTORIZA } from "../../config/ordenCompra";
+import { useTitularActual } from "../../utils/titular";
 import { descargarOrdenCompraPdf } from "../../utils/pdfs";
 import { formatFecha, formatMoneda } from "../../config/solicitudes";
 import { FileDown, Send, Loader2, Clock } from "lucide-react";
@@ -30,6 +30,8 @@ export default function PasoOrdenCompra({ s, editable, esAdmin, onEnviada }) {
 }
 
 function Formulario({ s, onEnviada }) {
+  // Titular de la coordinación (lo cambia administración en "Coordinación")
+  const titular = useTitularActual();
   const [hoja, setHoja] = useState({ no: 1, total: 1 });
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -111,8 +113,8 @@ function Formulario({ s, onEnviada }) {
           </Field>
           <div>
             <p className="text-sm font-medium text-slate-700 mb-1">Autorizó</p>
-            <p className="text-sm text-slate-800">{AUTORIZA.nombre}</p>
-            <p className="text-xs text-slate-500">{AUTORIZA.cargo}</p>
+            <p className="text-sm text-slate-800">{titular?.nombre ?? "…"}</p>
+            <p className="text-xs text-slate-500">{titular?.cargo ?? ""}</p>
           </div>
         </div>
 

@@ -48,6 +48,9 @@ const PrestamoHerramientas = lazy(() => import("./pages/herramientas/PrestamoHer
 // Almacén: solo parque vehicular (el admin no lo maneja)
 const Almacen = lazy(() => import("./pages/almacen/Almacen"));
 
+// Titular de la Coordinación de Parque Vehicular (solo admin)
+const Coordinacion = lazy(() => import("./pages/admin/coordinacion/Coordinacion"));
+
 // Reportes (solo admin)
 const Reportes = lazy(() => import("./pages/reportes/Reportes"));
 
@@ -112,6 +115,7 @@ export default function App() {
           <Route path="/admin/ayuda" element={solo([ADMIN], <Ayuda />)} />
 
           <Route path="/admin/reportes" element={solo([ADMIN], <Reportes />)} />
+          <Route path="/admin/coordinacion" element={solo([ADMIN], <Coordinacion />)} />
 
           <Route path="/admin/foraneo" element={solo([ADMIN], <OrdenesForaneas />)} />
           <Route path="/admin/foraneo/:id" element={solo([ADMIN], <OrdenForanea />)} />

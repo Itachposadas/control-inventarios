@@ -14,7 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { areaApi } from "../../api/area";
 import { AREA_MENU, AREA_SECONDARY_MENU } from "../../config/menus";
 import { Boton, Alerta, Field, TextArea, inputClass } from "../../components/ui";
-import { AUTORIZA } from "../../config/ordenCompra";
+import { useTitularActual } from "../../utils/titular";
 import { DIAS_VIGENTE, DIAS_LIMITE, fechaLimite, fechaCorta } from "../../config/espera";
 import {
   Search, Loader2, CarFront, ChevronRight, ArrowLeft, CheckCircle2, Send, AlertCircle, Clock,
@@ -227,6 +227,8 @@ function ElegirVehiculo({ area, onElegir }) {
 const MIN_FALLA = 10;
 
 function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
+  // Titular de la coordinación (lo cambia administración en "Coordinación")
+  const titular = useTitularActual();
   const ahora = useReloj();
   const [falla, setFalla] = useState("");
   const [solicitante, setSolicitante] = useState("");
@@ -281,8 +283,8 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
         </p>
 
         <div className="mt-6">
-          <p className="font-semibold text-slate-900">{AUTORIZA.nombre}</p>
-          <p>{AUTORIZA.cargo}</p>
+          <p className="font-semibold text-slate-900">{titular?.nombre ?? "…"}</p>
+          <p>{titular?.cargo ?? ""}</p>
           <p className="font-semibold tracking-wide">P R E S E N T E</p>
         </div>
 

@@ -7,7 +7,7 @@ import { menusForRole } from "../../config/menus";
 import { ROLES } from "../../config/roles";
 import {
   ClipboardPlus, Stethoscope, CheckCircle2, History, Car, Camera, ClipboardCheck, ClipboardList,
-  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck, Hammer, ShoppingCart, Package,
+  DollarSign, Undo2, UserCog, Users, ChevronDown, LifeBuoy, Truck, Hammer, ShoppingCart, Package, UserCheck,
 } from "lucide-react";
 
 const GUIA_MECANICO = [
@@ -235,6 +235,16 @@ const GUIA_ADMIN = [
       "Si una cuenta quedó bloqueada por intentos fallidos, ábrela en Usuarios y pulsa “Desbloquear”.",
     ],
     nota: "Las contraseñas deben tener al menos 8 caracteres, con letras y números, y no contener el nombre de usuario.",
+  },
+  {
+    icon: <UserCheck size={20} />,
+    titulo: "Coordinación",
+    pasos: [
+      "En Coordinación ves quién es el titular de la Coordinación de Parque Vehicular: a esa persona van dirigidas las solicitudes y aparece como quien autoriza en los formatos.",
+      "Si cambia el jefe, pulsa “Registrar nuevo titular”, escribe su nombre y desde qué fecha está a cargo.",
+      "Si el nombre tiene un error de escritura, usa “Corregir nombre o cargo”. Si registraste a alguien por error, pulsa “Deshacer” en el historial.",
+    ],
+    nota: "Los documentos anteriores conservan al titular que estaba a cargo en su fecha.",
   },
 ];
 

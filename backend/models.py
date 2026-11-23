@@ -902,3 +902,33 @@ def material_almacen_de(solicitud_ids):
 def _plazo(peticion):
     from vigencia import plazo  # import local: vigencia importa este módulo
     return plazo(peticion)
+
+
+class TitularCoordinacion(db.Model):
+    """
+    Quién encabeza la Coordinación de Parque Vehicular (a quien van dirigidas
+    las solicitudes y quien autoriza en los formatos). Se guarda el historial:
+    cada formato muestra al titular vigente en su fecha, así los documentos
+    viejos no cambian de nombre cuando llega un jefe nuevo.
+    desde = None en el primero: "desde el inicio del sistema".
+    """
+    __tablename__ = "titulares_coordinacion"
+
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(120), nullable=False)
+    cargo = db.Column(db.String(120), nullable=False)
+    desde = db.Column(db.Date, nullable=True)
+    registrado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    registrado_por = db.relationship("Usuario", foreign_keys=[registrado_por_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "cargo": self.cargo,
+            "desde": self.desde.isoformat() if self.desde else None,
+            "registrado_por": _nombre_usuario(self.registrado_por),
+            "registrado_at": _iso(self.created_at),
+        }

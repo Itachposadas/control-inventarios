@@ -4,7 +4,7 @@
 import {
   LayoutDashboard, Car, Users, BarChart3,
   UserCog, HelpCircle,
-  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks, ShoppingCart, Package,
+  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks, ShoppingCart, Package, UserCheck,
 } from "lucide-react";
 import { ROLES } from "./roles";
 
@@ -21,6 +21,8 @@ export const ADMIN_MENU = [
   { label: "Taller foráneo", to: "/admin/foraneo", icon: <Truck size={18} /> },
   { label: "Usuarios", to: "/admin/usuarios", icon: <Users size={18} /> },
   { label: "Reportes", to: "/admin/reportes", icon: <BarChart3 size={18} /> },
+  // Titular de la coordinación: a quien van las solicitudes y quien autoriza en los formatos
+  { label: "Coordinación", to: "/admin/coordinacion", icon: <UserCheck size={18} /> },
 ];
 
 export const ADMIN_SECONDARY_MENU = [

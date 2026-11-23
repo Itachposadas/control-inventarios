@@ -8,6 +8,8 @@ export const DATOS_CLIENTE = {
   telefono: "(712) 1220333, 01220200",
 };
 
+// Titular original: solo se usa si no se pudo consultar al servidor.
+// El vigente lo registra administración en "Coordinación" (ver utils/titular.js).
 export const AUTORIZA = {
   nombre: "C. Tiburcio Monroy Yáñez",
   cargo: "Coordinador de Parque Vehicular",

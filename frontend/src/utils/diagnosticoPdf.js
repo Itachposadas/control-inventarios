@@ -7,7 +7,7 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { MARGEN, aFecha, cantidad, logos, pie } from "./pdfComun";
-import { AUTORIZA } from "../config/ordenCompra";
+import { autorizaEn } from "./titular";
 
 const NEGRO = [0, 0, 0];
 const GRIS = [120, 120, 120];
@@ -17,6 +17,8 @@ const MESES = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "
 
 /** @param {object} s  servicio tal como lo regresa /api/solicitudes/<id> */
 export async function descargarDiagnosticoPdf(s) {
+  // Titular de la coordinación vigente en la fecha del documento
+  const autoriza = await autorizaEn(s.fecha_ingreso);
   const doc = new jsPDF({ unit: "mm", format: "letter" });
   const ancho = doc.internal.pageSize.getWidth();
   const limite = doc.internal.pageSize.getHeight() - 18; // arriba del pie
@@ -188,7 +190,7 @@ export async function descargarDiagnosticoPdf(s) {
   texto("Área usuaria:", MARGEN, y, { tam: 10.5 });
   texto([p.solicitante_nombre, area].filter(Boolean).join(" — ") || "—", MARGEN + 26, y, { negrita: false, tam: 10.5 });
   texto("Autorizó:", MARGEN, y + 6, { tam: 10.5 });
-  texto(`${AUTORIZA.nombre}, ${AUTORIZA.cargo}`, MARGEN + 26, y + 6, { negrita: false, tam: 10.5 });
+  texto(`${autoriza.nombre}, ${autoriza.cargo}`, MARGEN + 26, y + 6, { negrita: false, tam: 10.5 });
 
   pie(doc);
   doc.save(`dictamen_${s.folio || s.id}.pdf`);

@@ -6,12 +6,14 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { TINTA, GRIS, MARGEN, fechaLarga, logos, pie } from "./pdfComun";
-import { AUTORIZA } from "../config/ordenCompra";
+import { autorizaEn } from "./titular";
 
 const NEGRO = [15, 23, 42];
 
 /** @param {object} s  servicio tal como lo regresa /api/solicitudes/<id> */
 export async function descargarEntregaPdf(s) {
+  // Titular de la coordinación vigente en la fecha del documento
+  const autoriza = await autorizaEn(s.fecha_entrega);
   const doc = new jsPDF({ unit: "mm", format: "letter" });
   const ancho = doc.internal.pageSize.getWidth();
   const util = ancho - MARGEN * 2;
@@ -91,7 +93,7 @@ export async function descargarEntregaPdf(s) {
     y += 6;
   };
   dato("Área (solicitó):", [p.solicitante_nombre, s.ingreso?.area || s.vehiculo?.area].filter(Boolean).join(" — "));
-  dato("Autorizó:", `${AUTORIZA.nombre}, ${AUTORIZA.cargo}`);
+  dato("Autorizó:", `${autoriza.nombre}, ${autoriza.cargo}`);
 
   pie(doc);
   doc.save(`entrega_${s.folio || s.id}.pdf`);

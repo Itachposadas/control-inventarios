@@ -20,3 +20,6 @@ Thumbs.db
 
 # Fotos de evidencia (datos, no código)
 backend/uploads/
+
+# Configuración de Claude Code (no es parte del sistema)
+.claude/

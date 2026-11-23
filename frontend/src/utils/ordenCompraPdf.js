@@ -7,7 +7,8 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { MARGEN, pesos, aFecha, cantidad, logos, pie } from "./pdfComun";
-import { DATOS_CLIENTE, AUTORIZA } from "../config/ordenCompra";
+import { DATOS_CLIENTE } from "../config/ordenCompra";
+import { autorizaEn } from "./titular";
 
 const NEGRO = [0, 0, 0];
 const RENGLONES = 15; // renglones de la tabla (en papel son 17; así cabe todo en una hoja)
@@ -15,6 +16,8 @@ const FUENTE = "times";
 
 /** @param {object} o  orden tal como la regresa /api/ordenes-compra */
 export async function descargarOrdenCompraPdf(o) {
+  // Titular de la coordinación vigente en la fecha del documento
+  const autoriza = await autorizaEn(o.fecha);
   const doc = new jsPDF({ unit: "mm", format: "letter" });
   const ancho = doc.internal.pageSize.getWidth();
   const der = ancho - MARGEN;
@@ -193,8 +196,8 @@ export async function descargarOrdenCompraPdf(o) {
   // ─── Autorizó (sin firma) ───
   const yF = y + cajaH * 3 + 12;
   texto("Autorizó", ancho / 2, yF, { tam: 11, alinear: "center" });
-  texto(AUTORIZA.nombre, ancho / 2, yF + 6, { tam: 10, alinear: "center" });
-  texto(AUTORIZA.cargo, ancho / 2, yF + 11, { negrita: false, tam: 10, alinear: "center" });
+  texto(autoriza.nombre, ancho / 2, yF + 6, { tam: 10, alinear: "center" });
+  texto(autoriza.cargo, ancho / 2, yF + 11, { negrita: false, tam: 10, alinear: "center" });
 
   pie(doc);
   doc.save(`orden-compra_${o.folio || o.id}.pdf`);

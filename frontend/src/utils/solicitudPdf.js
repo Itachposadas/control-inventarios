@@ -7,7 +7,7 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { MARGEN, aFecha, cantidad, logos, pie } from "./pdfComun";
-import { AUTORIZA } from "../config/ordenCompra";
+import { autorizaEn } from "./titular";
 import { DIAS_LIMITE, fechaLimite } from "../config/espera";
 
 const NEGRO = [0, 0, 0];
@@ -20,6 +20,8 @@ const INTERLINEA = 5.6;
  * @param {Window} [ventana]  pestaña ya abierta donde mostrarlo para imprimir; sin ella, se descarga
  */
 export async function descargarSolicitudPdf(p, ventana) {
+  // Titular de la coordinación vigente en la fecha del documento
+  const autoriza = await autorizaEn(p.fecha);
   const doc = new jsPDF({ unit: "mm", format: "letter" });
   const ancho = doc.internal.pageSize.getWidth();
   const alto = doc.internal.pageSize.getHeight();
@@ -67,8 +69,8 @@ export async function descargarSolicitudPdf(p, ventana) {
 
   // ─── Destinatario ───
   y += INTERLINEA * 5.5;
-  texto(AUTORIZA.nombre.toUpperCase(), MARGEN, y, { negrita: true });
-  texto(AUTORIZA.cargo.toUpperCase(), MARGEN, y + INTERLINEA, { negrita: true });
+  texto(autoriza.nombre.toUpperCase(), MARGEN, y, { negrita: true });
+  texto(autoriza.cargo.toUpperCase(), MARGEN, y + INTERLINEA, { negrita: true });
   texto("P R E S E N T E", MARGEN, y + INTERLINEA * 2, { negrita: true });
   y += INTERLINEA * 4;
 
