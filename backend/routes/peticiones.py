@@ -283,6 +283,74 @@ def listar():
     return jsonify({**info, "items": [p.to_dict() for p in items], "conteo": conteo, "areas": areas}), 200
 
 
+# ─── Rezago: el área envió la solicitud y no ha llevado la unidad ───
+DIAS_REZAGO = 30       # ventana para contar las vencidas por área
+REINCIDENTE = 2        # desde cuántas vencidas en la ventana se marca al área
+
+
+def por_vencer():
+    """Pendientes que ya entraron en "por vencer" (la que vence primero va antes)."""
+    ahora = utcnow()
+    return (
+        PeticionServicio.query
+        .filter(PeticionServicio.estado == "pendiente",
+                PeticionServicio.created_at <= ahora - timedelta(days=DIAS_VIGENTE))
+        .order_by(PeticionServicio.created_at.asc(), PeticionServicio.id.asc())
+        .all()
+    )
+
+
+@peticiones_bp.route("/rezago", methods=["GET"])
+@role_required("admin", "mecanico")
+def rezago():
+    """Para el panel del admin y el inicio de Coordinación:
+    solicitudes por vencer y áreas que más dejan vencer sus solicitudes."""
+    vencer_solicitudes()
+    desde = utcnow() - timedelta(days=DIAS_REZAGO)
+
+    vencidas = (
+        db.session.query(Vehiculo.area, db.func.count(PeticionServicio.id), db.func.max(PeticionServicio.atendida_at))
+        .join(Vehiculo, PeticionServicio.vehiculo_id == Vehiculo.id)
+        .filter(PeticionServicio.estado == "vencida", PeticionServicio.atendida_at >= desde)
+        .group_by(Vehiculo.area)
+        .all()
+    )
+    # Cuántas mandó cada área en la misma ventana (para ver qué parte se le venció)
+    enviadas = dict(
+        db.session.query(Vehiculo.area, db.func.count(PeticionServicio.id))
+        .join(Vehiculo, PeticionServicio.vehiculo_id == Vehiculo.id)
+        .filter(PeticionServicio.created_at >= desde - timedelta(days=DIAS_LIMITE))
+        .group_by(Vehiculo.area)
+        .all()
+    )
+    areas = [{"area": a or "Sin área", "vencidas": n, "enviadas": max(enviadas.get(a, 0), n),
+              "ultima": _iso(u), "reincidente": n >= REINCIDENTE} for a, n, u in vencidas]
+    # Más vencidas primero; a igual número, la que venció más recientemente
+    areas.sort(key=lambda x: x["ultima"] or "", reverse=True)
+    areas.sort(key=lambda x: x["vencidas"], reverse=True)
+
+    items = []
+    for p in por_vencer():
+        v = p.vehiculo
+        items.append({
+            "id": p.id,
+            "folio": p.folio,
+            "fecha": _iso(p.created_at),
+            "area": v.area if v else None,
+            "vehiculo": (v.numero_economico or v.unidad or v.no_inventario) if v else None,
+            "placas": v.placas if v else None,
+            "solicitante": p.solicitante_nombre,
+        })
+
+    return jsonify({
+        "dias": DIAS_REZAGO,
+        "dias_limite": DIAS_LIMITE,
+        "por_vencer": items,
+        "vencidas": sum(a["vencidas"] for a in areas),
+        "areas": areas,
+    }), 200
+
+
 @peticiones_bp.route("/<int:peticion_id>", methods=["GET"])
 @role_required("admin", "mecanico")
 def obtener(peticion_id):

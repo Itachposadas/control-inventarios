@@ -16,6 +16,7 @@ const GUIA_MECANICO = [
     titulo: "1. Recibir la solicitud",
     pasos: [
       "Las áreas piden servicio desde su cuenta. Entra a Solicitudes: las que están más cerca de vencer aparecen primero. Si la unidad no llega en 12 días, la solicitud se cancela sola.",
+      "En Inicio, “Rezago de las áreas” muestra las solicitudes por vencer (el área no ha traído la unidad) y qué áreas dejaron vencer solicitudes en los últimos 30 días. La campana también te avisa de las que están por vencer.",
       "Cada solicitud es una carta del área con la unidad, la falla que presenta y el nombre de quien la pide. Con “Carta” la descargas en PDF.",
       "Cuando llegue la unidad, pulsa “Atender” y luego “Atender y abrir servicio”. Se abre el servicio de la unidad.",
       "Pulsa “Continuar con el diagnóstico”.",
@@ -176,7 +177,7 @@ const GUIA_ADMIN = [
     pasos: [
       "En Solicitudes ves lo que piden las áreas: pendientes, atendidas, descartadas y vencidas, con quién la pidió y la falla que presenta la unidad.",
       "Cada pendiente tiene 12 días para que el área lleve la unidad: verde (vigente) los primeros 8 días y amarillo (por vencer) del 8 al 12. Después se cancela sola y pasa a “Vencidas”.",
-      "En el Panel de control ves cuántas vencieron en los últimos 30 días: es el rezago de las áreas que no llevaron su unidad.",
+      "En el Panel de control, “Rezago de las áreas” muestra qué áreas dejaron vencer solicitudes en los últimos 30 días; las que tienen 2 o más aparecen como “Reincidente”.",
       "Con “Carta” descargas la solicitud en PDF, y en las atendidas puedes abrir su servicio.",
     ],
     nota: "Es solo de consulta: los precios se capturan en la orden de compra.",

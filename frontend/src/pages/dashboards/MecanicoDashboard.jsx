@@ -16,6 +16,7 @@ import {
 
 import { Alerta } from "../../components/ui";
 import AvisosPreventivo from "../../components/dashboard/AvisosPreventivo";
+import RezagoAreas from "../../components/dashboard/RezagoAreas";
 const ACTIVAS = EN_TALLER;
 
 const ACCIONES = [
@@ -93,6 +94,11 @@ export default function MecanicoDashboard() {
             </span>
           </button>
         ))}
+      </div>
+
+      {/* Lo que más le interesa a Coordinación: áreas que piden servicio y no traen la unidad */}
+      <div className="mb-8">
+        <RezagoAreas bandeja="/mecanico/solicitudes-areas" />
       </div>
 
       <h2 className="text-base font-semibold text-slate-900">Mis vehículos en el taller</h2>

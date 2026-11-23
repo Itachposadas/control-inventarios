@@ -28,7 +28,7 @@ const TIPO_AVISO = {
 
 const TEXTOS_CAMPANA = {
   admin: { subtitulo: "Órdenes de compra por atender", vacio: "No hay órdenes de compra por atender" },
-  mecanico: { subtitulo: "Tus servicios en el taller", vacio: "No tienes servicios en proceso" },
+  mecanico: { subtitulo: "Solicitudes por vencer y tus servicios", vacio: "No hay avisos por ahora" },
   area: { subtitulo: "Tus solicitudes y vehículos", vacio: "No tienes avisos por ahora" },
 };
 

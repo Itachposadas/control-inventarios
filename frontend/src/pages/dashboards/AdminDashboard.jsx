@@ -13,6 +13,7 @@ import VehiculosPorAnio from "../../components/dashboard/VehiculosPorAnio";
 import DonutCard from "../../components/dashboard/DonutCard";
 import { Cifras, Cifra } from "../../components/dashboard/Cifras";
 import AvisosPreventivo from "../../components/dashboard/AvisosPreventivo";
+import RezagoAreas from "../../components/dashboard/RezagoAreas";
 import { dashboardApi } from "../../api/dashboard";
 import { ordenesCompraApi } from "../../api/ordenesCompra";
 import { ESTADOS, formatFecha } from "../../config/solicitudes";
@@ -202,6 +203,9 @@ export default function AdminDashboard() {
                   </button>
                 )}
               </section>
+
+              {/* Áreas que dejan vencer sus solicitudes (las por vencer ya están arriba) */}
+              <RezagoAreas bandeja="/admin/solicitudes-areas" sinPorVencer />
 
               {/* Unidades que deben volver a revisión (solo aparece si hay alguna) */}
               <AvisosPreventivo historial="/admin/historial" />

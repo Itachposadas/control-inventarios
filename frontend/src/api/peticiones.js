@@ -11,6 +11,9 @@ export const peticionesApi = {
   pagina: ({ estado = "", pagina = 1, q = "", area = "", plazo = "", orden = "" } = {}) =>
     request(`/peticiones${toQuery({ estado, pagina, q, area, plazo, orden })}`),
 
+  // Rezago: por vencer y áreas que más dejan vencer sus solicitudes (admin y Coordinación)
+  rezago: () => request("/peticiones/rezago"),
+
   obtener: (id) => request(`/peticiones/${id}`),
 
   // Mecánico: "Atender" (recibe la unidad y abre su servicio)

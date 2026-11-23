@@ -6,7 +6,7 @@ from extensions import db
 from models import Vehiculo, Solicitud, SolicitudEvento, OrdenCompra, PeticionServicio, ROLES, utcnow
 from auth_utils import role_required, get_current_user
 from routes.solicitudes import EN_TALLER
-from routes.peticiones import servicio_listo
+from routes.peticiones import servicio_listo, por_vencer
 import vigencia
 
 general_bp = Blueprint("general", __name__, url_prefix="/api")
@@ -92,8 +92,15 @@ def _notificaciones_area(user):
         .all()
     )
     items = []
+    # Unidades con una solicitud más reciente: su cancelación o descarte anterior
+    # ya no se avisa (el área la volvió a pedir o la unidad ya está en el taller)
+    con_reciente = set()
     for p in peticiones:
         s = p.solicitud
+        ya_pedida = p.vehiculo_id in con_reciente
+        con_reciente.add(p.vehiculo_id)
+        if ya_pedida and p.estado in ("vencida", "descartada"):
+            continue
         base = {"ruta": f"/area/seguimiento?folio={p.folio}", "texto": f"{p.folio} · {_nombre_vehiculo(p.vehiculo)}"}
         if p.estado == "pendiente":
             plazo = vigencia.plazo(p)
@@ -159,6 +166,17 @@ def notificaciones():
                 "fecha": o.created_at.isoformat() if o.created_at else None,
             })
     else:
+        # Coordinación: solicitudes por vencer (el área no ha traído la unidad)
+        for p in por_vencer():
+            vence = (vigencia.limites(p)[1] - timedelta(hours=6)).strftime("%d/%m/%Y")
+            items.append({
+                "id": f"por-vencer-{p.id}",
+                "tipo": "por_vencer",
+                "titulo": f"Se cancela el {vence}: el área no ha traído la unidad",
+                "texto": f"{p.folio} · {_nombre_vehiculo(p.vehiculo)} · {p.vehiculo.area or '—'}",
+                "ruta": "/mecanico/solicitudes-areas",
+                "fecha": _iso_o_none(p.created_at),
+            })
         # Servicios del mecánico que siguen en el taller
         activos = (
             Solicitud.query.filter(
