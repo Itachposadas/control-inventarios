@@ -15,13 +15,15 @@ const Pendiente = ({ children }) => (
 );
 
 export default function AvisoPrivacidad() {
-  useEffect(() => window.scrollTo(0, 0), []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-fondo font-sans text-slate-800">
       <EncabezadoPublico />
 
-      <main className="flex-1 py-12 sm:py-16">
+      <main className="flex-1 pt-28 pb-12 sm:pt-32 sm:pb-16">
         <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <TriangleAlert size={18} className="shrink-0 mt-0.5" />

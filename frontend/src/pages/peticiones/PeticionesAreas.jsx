@@ -72,7 +72,9 @@ export default function PeticionesAreas() {
 
   const buscar = useDebounce(q.trim()); // lo escrito, cuando se deja de escribir
   // Una búsqueda nueva empieza en la página 1
-  useEffect(() => setPagina(1), [buscar]);
+  useEffect(() => {
+    setPagina(1);
+  }, [buscar]);
 
   const cargar = useCallback(() => {
     setLoading(true);

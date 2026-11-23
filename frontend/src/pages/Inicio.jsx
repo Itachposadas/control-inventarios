@@ -65,31 +65,31 @@ export default function Inicio() {
                                 sm:h-[130%] sm:right-[4%]" />
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
+        <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 pt-28 pb-14 sm:pt-40 sm:pb-24 text-center">
           <div className="animate-fade-up">
             <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10
-                          px-3.5 py-1.5 text-xs font-semibold tracking-wide">
+                          px-3 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-semibold tracking-wide">
               <Building2 size={14} className="text-white/80" />
               Gobierno Municipal de Atlacomulco
             </p>
 
-            <h1 className="mt-6 text-4xl sm:text-5xl font-bold leading-[1.1] tracking-tight">
+            <h1 className="mt-5 sm:mt-6 text-[2.1rem] sm:text-5xl font-bold leading-[1.08] tracking-tight text-balance">
               Sistema de Control de Parque Vehicular
             </h1>
-            <div className="mx-auto mt-6 h-1 w-16 rounded-full bg-white/70" />
+            <div className="mx-auto mt-5 sm:mt-6 h-1 w-14 sm:w-16 rounded-full bg-white/70" />
 
-            <p className="mt-6 text-lg sm:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-5 sm:mt-6 text-base sm:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed text-pretty">
               Solicitudes de servicio, seguimiento por folio y formatos del taller municipal en un solo lugar.
             </p>
-            <p className="mt-3 text-sm text-white/70">
+            <p className="mt-3 text-[13px] sm:text-sm text-white/70 text-pretty">
               Acceso exclusivo para el personal autorizado del H. Ayuntamiento de Atlacomulco.
             </p>
 
             <button
               onClick={() => navigate("/login")}
-              className="group mt-10 inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-lg
-                         bg-white text-institucional font-bold text-base shadow-md
-                         hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/40 transition"
+              className="group mt-8 sm:mt-10 w-full max-w-xs sm:w-auto sm:max-w-none inline-flex items-center justify-center gap-2
+                         px-7 py-3.5 rounded-lg bg-white text-institucional font-bold text-base shadow-md
+                         hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/40 transition"
             >
               Ingresar al sistema
               <ArrowRight size={19} className="group-hover:translate-x-1 transition" />
@@ -99,20 +99,20 @@ export default function Inicio() {
       </section>
 
       {/* ══════════ CÓMO FUNCIONA ══════════ */}
-      <section id="como-funciona" className="scroll-mt-20 py-20 sm:py-24 bg-fondo">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="como-funciona" className="scroll-mt-24 py-14 sm:py-24 bg-fondo">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
+            <h2 className="text-[1.7rem] sm:text-4xl font-bold leading-tight tracking-tight text-slate-900 text-balance">
               Del área al taller en cuatro pasos
             </h2>
-            <p className="mt-4 text-base sm:text-lg text-slate-500">
+            <p className="mt-3 sm:mt-4 text-[15px] sm:text-lg text-slate-500">
               Todo el proceso queda registrado, sin formatos en papel.
             </p>
           </div>
 
-          <ol className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <ol className="mt-9 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
             {PASOS.map((p, i) => (
-              <li key={p.titulo} className="bg-white rounded-lg border border-slate-200 p-6">
+              <li key={p.titulo} className="bg-white rounded-lg border border-slate-200 p-5 sm:p-6">
                 <div className="flex items-center justify-between">
                   <span className="w-12 h-12 rounded-lg flex items-center justify-center bg-institucional/10 text-institucional">
                     {p.icono}
@@ -125,8 +125,8 @@ export default function Inicio() {
             ))}
           </ol>
 
-          <p className="mt-10 mx-auto max-w-2xl flex items-start sm:items-center justify-center gap-2.5
-                        rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+          <p className="mt-8 sm:mt-10 mx-auto max-w-2xl flex items-start sm:items-center sm:justify-center gap-2.5
+                        rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 text-pretty">
             <Info size={18} className="shrink-0 text-institucional" />
             ¿Su área aún no cuenta con usuario? Solicítelo en la Coordinación de Parque Vehicular.
           </p>
