@@ -3,13 +3,13 @@
 // Muestra los requisitos mientras se escribe; el backend vuelve a validarlos.
 //   <FormCambiarPassword onCambiada={(user) => ...} />
 import { useState } from "react";
-import { Field, inputClass, Boton, Alerta } from "../ui";
+import { Field, inputClass, Boton, Alerta, OjoPassword } from "../ui";
 import ReglasPassword from "../ui/ReglasPassword";
 import { authApi } from "../../api/auth";
 import { useAuth } from "../../context/AuthContext";
 import { errorPassword, LONGITUD_MAXIMA } from "../../config/password";
 import { useCamposVacios } from "../../hooks/useCamposVacios";
-import { Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 const VACIO = { actual: "", nueva: "", confirmar: "" };
 
@@ -74,6 +74,7 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
           value={form.actual}
           onChange={set("actual")}
           autoComplete="current-password"
+          placeholder="Ingresa tu contraseña actual"
           required
           className={inputClass}
         />
@@ -85,6 +86,7 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
           value={form.nueva}
           onChange={set("nueva")}
           autoComplete="new-password"
+          placeholder="Ingresa tu nueva contraseña"
           required
           aria-describedby="reglas-password"
           className={inputClass}
@@ -100,6 +102,7 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
           value={form.confirmar}
           onChange={set("confirmar")}
           autoComplete="new-password"
+          placeholder="Vuelve a escribir la nueva contraseña"
           required
           className={inputClass}
         />
@@ -114,7 +117,7 @@ export default function FormCambiarPassword({ onCambiada, textoBoton = "Cambiar 
           onClick={() => setVer((v) => !v)}
           className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-institucional transition"
         >
-          {ver ? <EyeOff size={16} /> : <Eye size={16} />}
+          <OjoPassword abierto={ver} size={16} />
           {ver ? "Ocultar contraseñas" : "Mostrar contraseñas"}
         </button>
         <Boton type="submit" disabled={saving}>

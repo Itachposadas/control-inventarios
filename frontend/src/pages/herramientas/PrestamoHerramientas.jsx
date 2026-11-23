@@ -476,6 +476,7 @@ function NuevoPrestamo({ onClose, onGuardado }) {
             }}
             autoFocus
             maxLength={150}
+            placeholder="Nombre(s) y apellidos"
             className={inputClass}
           />
         </Field>

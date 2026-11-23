@@ -227,11 +227,11 @@ function FormTitular({ titulo, texto, inicial, conFecha = false, onGuardar, onCa
       </div>
 
       <Field label="Nombre completo" required error={faltan.nombre}>
-        <input value={datos.nombre} onChange={cambiar("nombre")} maxLength={120} className={inputClass} autoFocus />
+        <input value={datos.nombre} onChange={cambiar("nombre")} maxLength={120} placeholder="Nombre(s) y apellidos" className={inputClass} autoFocus />
       </Field>
       <div className={`grid gap-4 ${conFecha ? "sm:grid-cols-2" : ""}`}>
         <Field label="Cargo" required error={faltan.cargo}>
-          <input value={datos.cargo} onChange={cambiar("cargo")} maxLength={120} className={inputClass} />
+          <input value={datos.cargo} onChange={cambiar("cargo")} maxLength={120} placeholder="Cargo en la coordinación" className={inputClass} />
         </Field>
         {conFecha && (
           <Field label="A cargo desde" required error={faltan.desde}>

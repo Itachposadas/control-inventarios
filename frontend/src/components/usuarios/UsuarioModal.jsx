@@ -1,9 +1,9 @@
 // src/components/usuarios/UsuarioModal.jsx
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { rolesApi } from "../../api/roles";
 import { vehiculosApi } from "../../api/vehiculos";
-import { Modal, Boton, Alerta, Field, AvisoCampo, inputClass } from "../ui";
+import { Modal, Boton, Alerta, Field, AvisoCampo, OjoPassword, inputClass } from "../ui";
 import { useCamposVacios } from "../../hooks/useCamposVacios";
 import ReglasPassword from "../ui/ReglasPassword";
 import { errorPassword, LONGITUD_MAXIMA } from "../../config/password";
@@ -157,6 +157,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
             name="nombre_completo"
             maxLength={150}
             value={form.nombre_completo}
+            placeholder="Nombre(s) y apellidos"
             onChange={handleChange}
             className={inputClass}
           />
@@ -170,6 +171,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               autoCapitalize="none"
               spellCheck={false}
               value={form.username}
+              placeholder="Nombre de usuario para iniciar sesión"
               onChange={handleChange}
               className={inputClass}
             />
@@ -190,6 +192,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               type="email"
               maxLength={120}
               value={form.email}
+              placeholder="Correo electrónico"
               onChange={handleChange}
               className={inputClass}
             />
@@ -216,6 +219,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               value={form.password}
               onChange={handleChange}
               autoComplete="new-password"
+              placeholder={editando ? "Nueva contraseña temporal" : "Contraseña temporal"}
               className={`${inputClass} pr-11`}
             />
             <button
@@ -223,9 +227,9 @@ export default function UsuarioModal({ open, onClose, onSave, usuario = null }) 
               onClick={() => setShowPassword((s) => !s)}
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5
-                         text-slate-500 hover:text-institucional transition"
+                         text-slate-500 hover:text-institucional transition active:scale-[0.92]"
             >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              <OjoPassword abierto={showPassword} size={16} />
             </button>
           </div>
           {(form.password || !editando) && (

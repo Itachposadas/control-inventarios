@@ -329,6 +329,7 @@ function DatosSolicitud({ area, vehiculo, onAtras, onEnviada }) {
               }}
               maxLength={120}
               autoComplete="off"
+              placeholder="Nombre(s) y apellidos"
               className={inputClass}
             />
           </Field>

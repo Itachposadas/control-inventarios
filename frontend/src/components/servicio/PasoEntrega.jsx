@@ -95,6 +95,7 @@ export default function PasoEntrega({ s, editable, fotosCompletas, onEntregada }
                 onChange={(e) => setOperador(e.target.value)}
                 maxLength={150}
                 autoComplete="off"
+                placeholder="Nombre de quien maneja la unidad en el área"
                 className={inputClass}
               />
             </Field>

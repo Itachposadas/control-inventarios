@@ -247,13 +247,13 @@ function AtenderOrden({ orden, onClose, onGuardada, onAtendida }) {
           <h4 className="text-sm font-semibold text-slate-800 mb-3">Datos del proveedor</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Nombre / Razón social" required className="sm:col-span-2" error={errores.proveedor_nombre}>
-              <input value={proveedor.nombre} onChange={setProv("nombre")} maxLength={200} className={inputClass} />
+              <input value={proveedor.nombre} onChange={setProv("nombre")} maxLength={200} placeholder="Nombre o razón social del proveedor" className={inputClass} />
             </Field>
             <Field label="Dirección">
-              <input value={proveedor.direccion} onChange={setProv("direccion")} maxLength={255} className={inputClass} />
+              <input value={proveedor.direccion} onChange={setProv("direccion")} maxLength={255} placeholder="Calle, número, colonia y municipio" className={inputClass} />
             </Field>
             <Field label="Teléfono">
-              <input value={proveedor.telefono} onChange={setProv("telefono")} maxLength={50} inputMode="tel" className={inputClass} />
+              <input value={proveedor.telefono} onChange={setProv("telefono")} maxLength={50} placeholder="Teléfono a 10 dígitos" inputMode="tel" className={inputClass} />
             </Field>
           </div>
         </div>

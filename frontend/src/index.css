@@ -85,6 +85,11 @@ button:not(:disabled):active {
   html {
     scroll-behavior: auto;
   }
+  /* Ojo de la contraseña: cambia sin el movimiento del párpado */
+  .ojo-password * {
+    transition-duration: 80ms !important;
+    transition-delay: 0ms !important;
+  }
   .animate-modal,
   .animate-pop,
   .animate-alerta,

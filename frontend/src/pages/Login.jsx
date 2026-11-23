@@ -4,10 +4,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { HOME_BY_ROLE } from "../config/roles";
 import { useSystemHealth } from "../hooks/useSystemHealth";
-import { MarcaAgua, AvisoCampo } from "../components/ui";
+import { MarcaAgua, AvisoCampo, OjoPassword } from "../components/ui";
 import { useCamposVacios } from "../hooks/useCamposVacios";
 import {
-  Eye, EyeOff, User, Lock, ArrowRight, ArrowLeft, Loader2, AlertCircle, ArrowBigUp,
+  User, Lock, ArrowRight, ArrowLeft, Loader2, AlertCircle, ArrowBigUp,
 } from "lucide-react";
 
 export default function Login() {
@@ -181,6 +181,7 @@ export default function Login() {
                       onChange={handleChange}
                       autoComplete="off"
                       autoFocus
+                      placeholder="Ingresa tu usuario o correo"
                       className={inputClass}
                     />
                   </InputConIcono>
@@ -204,6 +205,7 @@ export default function Login() {
                       onKeyDown={revisarCapsLock}
                       onBlur={() => setCapsLock(false)}
                       autoComplete="new-password"
+                      placeholder="Ingresa tu contraseña"
                       className={`${inputClass} pr-11`}
                     />
                     <button
@@ -213,9 +215,10 @@ export default function Login() {
                       title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                       className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-lg
                                  text-slate-500 hover:text-institucional hover:bg-slate-100
-                                 focus:outline-none focus-visible:ring-2 focus-visible:ring-institucional/30 transition"
+                                 focus:outline-none focus-visible:ring-2 focus-visible:ring-institucional/30 transition
+                                 active:scale-[0.92]"
                     >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      <OjoPassword abierto={showPassword} size={18} />
                     </button>
                   </InputConIcono>
                   {errores.password && <AvisoCampo>{errores.password}</AvisoCampo>}
