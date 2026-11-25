@@ -19,6 +19,7 @@ from routes.ordenes_compra import ordenes_compra_bp
 from routes.historial import historial_bp
 from routes.almacen import almacen_bp
 from routes.coordinacion import coordinacion_bp, cargar_titular_inicial
+from routes.logos import logos_bp
 import validacion
 import vigencia
 
@@ -207,6 +208,7 @@ def create_app():
     app.register_blueprint(historial_bp)
     app.register_blueprint(almacen_bp)
     app.register_blueprint(coordinacion_bp)
+    app.register_blueprint(logos_bp)
 
     # Crea las tablas que falten al arrancar (no modifica las que ya existen),
     # así un módulo nuevo no deja al sistema sin funcionar.

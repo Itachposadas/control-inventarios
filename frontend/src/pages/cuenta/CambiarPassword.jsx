@@ -8,6 +8,7 @@ import FormCambiarPassword from "../../components/cuenta/FormCambiarPassword";
 import { MarcaAgua } from "../../components/ui";
 import { HOME_BY_ROLE } from "../../config/roles";
 import { KeyRound, LogOut, Loader2 } from "lucide-react";
+import Logo from "../../components/ui/Logo";
 
 export default function CambiarPassword() {
   const { user, loading, logout } = useAuth();
@@ -38,7 +39,7 @@ export default function CambiarPassword() {
         <div className="h-1.5 bg-institucional" />
         <div className="p-6 sm:p-8">
           <div className="flex items-center justify-between gap-3 mb-6">
-            <img src="/logo-atlacomulco.png" alt="Municipio de Atlacomulco" className="h-10 w-auto object-contain" />
+            <Logo clave="ayuntamiento" alt="Municipio de Atlacomulco" className="h-10 w-auto object-contain" />
             <span className="w-11 h-11 rounded-xl bg-institucional/10 text-institucional flex items-center justify-center">
               <KeyRound size={22} />
             </span>

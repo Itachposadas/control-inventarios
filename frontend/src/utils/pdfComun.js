@@ -7,7 +7,7 @@ export const GRIS = [100, 116, 139];
 export const MARGEN = 15;
 export const AMARILLO = [242, 218, 150]; // amarillo crema: línea bajo los logotipos de todos los PDF
 
-const LOGOTIPO_MUNICIPAL = encodeURI("/Logotipo municipal de Atlacomulco.png");
+import { urlLogo, esPersonalizado } from "./logos";
 
 export const pesos = (n) => Number(n || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 export const aFecha = (iso) => new Date(iso.endsWith("Z") ? iso : `${iso}Z`);
@@ -38,12 +38,16 @@ export async function cargarImagen(src) {
 }
 
 // Logotipo municipal a la izquierda, logo de Atlacomulco a la derecha y,
-// debajo, la línea amarilla que comparten todos los formatos y el reporte
+// debajo, la línea amarilla que comparten todos los formatos y el reporte.
+// Usan las imágenes de Administración › Logotipos (o las originales).
 export async function logos(doc) {
   const ancho = doc.internal.pageSize.getWidth();
   const [municipal, atlacomulco] = await Promise.all([
-    cargarSinFondo(LOGOTIPO_MUNICIPAL),
-    cargarImagen("/logo-atlacomulco.png"),
+    // Al original se le quita el fondo gris; una imagen subida se usa tal cual
+    esPersonalizado("logotipo_municipal")
+      ? cargarImagen(urlLogo("logotipo_municipal"))
+      : cargarSinFondo(urlLogo("logotipo_municipal")),
+    cargarImagen(urlLogo("ayuntamiento")),
   ]);
   const altoMunicipal = 22;
   if (municipal) {

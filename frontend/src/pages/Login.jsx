@@ -9,6 +9,7 @@ import { useCamposVacios } from "../hooks/useCamposVacios";
 import {
   User, Lock, ArrowRight, ArrowLeft, Loader2, AlertCircle, ArrowBigUp,
 } from "lucide-react";
+import Logo from "../components/ui/Logo";
 
 export default function Login() {
   const { login, logout } = useAuth();
@@ -110,13 +111,13 @@ export default function Login() {
           {/* Logos */}
           {/* Logos (PNG con fondo transparente: se ven sobre el fondo y la marca de agua) */}
           <div className="flex items-center justify-between gap-4 mb-6 lg:mb-12">
-            <img
-              src="/gobierno-estado.png"
+            <Logo
+              clave="gobierno_estado"
               alt="Gobierno del Estado de México"
               className="h-11 sm:h-14 lg:h-16 w-auto max-w-[47%] object-contain"
             />
-            <img
-              src="/logo-atlacomulco.png"
+            <Logo
+              clave="ayuntamiento"
               alt="Logo Atlacomulco"
               className="h-11 sm:h-14 lg:h-16 w-auto max-w-[47%] object-contain"
             />

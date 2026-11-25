@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogIn, Menu, X, ChevronRight } from "lucide-react";
+import Logo from "../ui/Logo";
 
 const ENLACES = [
   { to: "/#como-funciona", label: "Cómo funciona" },
@@ -52,8 +53,8 @@ export default function EncabezadoPublico() {
                      shadow-[0_8px_30px_-10px_rgba(74,15,31,0.35)]"
         >
           <Link to="/" className="flex items-center gap-3.5 min-w-0 mr-auto">
-            <img
-              src="/logo-atlacomulco.png"
+            <Logo
+              clave="ayuntamiento"
               alt="H. Ayuntamiento de Atlacomulco"
               className="h-8 sm:h-[38px] w-auto object-contain shrink-0"
             />

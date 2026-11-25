@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Topbar from "../components/Topbar";
 import SystemStatus from "../components/layout/SystemStatus";
+import Logo from "../components/ui/Logo";
 
 export default function DashboardLayout({
   children,
@@ -38,8 +39,8 @@ export default function DashboardLayout({
       >
         {/* Logo */}
         <div className="h-16 px-4 border-b border-slate-200 flex items-center gap-3">
-          <img
-            src="/logo-atlacomulco.png"
+          <Logo
+            clave="ayuntamiento"
             alt="Logo Atlacomulco"
             className="h-11 w-auto object-contain shrink-0"
           />

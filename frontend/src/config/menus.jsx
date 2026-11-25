@@ -4,7 +4,7 @@
 import {
   LayoutDashboard, Car, Users, BarChart3,
   UserCog, HelpCircle,
-  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks, ShoppingCart, Package, UserCheck,
+  Wrench, History, Camera, Truck, Hammer, Inbox, Plus, ListChecks, ShoppingCart, Package, UserCheck, Image,
 } from "lucide-react";
 import { ROLES } from "./roles";
 
@@ -23,6 +23,8 @@ export const ADMIN_MENU = [
   { label: "Reportes", to: "/admin/reportes", icon: <BarChart3 size={18} /> },
   // Titular de la coordinación: a quien van las solicitudes y quien autoriza en los formatos
   { label: "Coordinación", to: "/admin/coordinacion", icon: <UserCheck size={18} /> },
+  // Logos de las pantallas y de los PDF (por si cambia la imagen institucional)
+  { label: "Logotipos", to: "/admin/logos", icon: <Image size={18} /> },
 ];
 
 export const ADMIN_SECONDARY_MENU = [

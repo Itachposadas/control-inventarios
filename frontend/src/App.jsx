@@ -50,6 +50,7 @@ const Almacen = lazy(() => import("./pages/almacen/Almacen"));
 
 // Titular de la Coordinación de Parque Vehicular (solo admin)
 const Coordinacion = lazy(() => import("./pages/admin/coordinacion/Coordinacion"));
+const Logotipos = lazy(() => import("./pages/admin/logos/Logotipos"));
 
 // Reportes (solo admin)
 const Reportes = lazy(() => import("./pages/reportes/Reportes"));
@@ -116,6 +117,7 @@ export default function App() {
 
           <Route path="/admin/reportes" element={solo([ADMIN], <Reportes />)} />
           <Route path="/admin/coordinacion" element={solo([ADMIN], <Coordinacion />)} />
+          <Route path="/admin/logos" element={solo([ADMIN], <Logotipos />)} />
 
           <Route path="/admin/foraneo" element={solo([ADMIN], <OrdenesForaneas />)} />
           <Route path="/admin/foraneo/:id" element={solo([ADMIN], <OrdenForanea />)} />

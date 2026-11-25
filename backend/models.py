@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy.dialects.mysql import MEDIUMTEXT
+from sqlalchemy.dialects.mysql import MEDIUMTEXT, MEDIUMBLOB
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 
@@ -935,4 +935,36 @@ class TitularCoordinacion(db.Model):
             "desde": self.desde.isoformat() if self.desde else None,
             "registrado_por": _nombre_usuario(self.registrado_por),
             "registrado_at": _iso(self.created_at),
+        }
+
+
+# Logotipos que el administrador puede cambiar desde "Logotipos". Mientras una
+# clave no tenga registro se usa la imagen original de frontend/public.
+LOGOS = ("ayuntamiento", "logotipo_municipal", "gobierno_estado", "marca_agua")
+
+
+class LogoSistema(db.Model):
+    """Imagen que sustituye a un logotipo original. Se guarda en la BD (y no en
+    uploads/) para que entre en los respaldos y no se pierda al reiniciar el servidor."""
+    __tablename__ = "logos_sistema"
+
+    clave = db.Column(db.String(40), primary_key=True)  # una de LOGOS
+    mimetype = db.Column(db.String(30), nullable=False)
+    datos = db.Column(db.LargeBinary().with_variant(MEDIUMBLOB(), "mysql"), nullable=False)
+    nombre_archivo = db.Column(db.String(255))
+    actualizado_por_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    actualizado_por = db.relationship("Usuario", foreign_keys=[actualizado_por_id])
+
+    def to_dict(self):
+        return {
+            "clave": self.clave,
+            "personalizado": True,
+            "nombre_archivo": self.nombre_archivo,
+            "tamano": len(self.datos or b""),
+            # Cambia con cada imagen nueva: el navegador no se queda con la anterior
+            "version": int(self.updated_at.timestamp()) if self.updated_at else 0,
+            "actualizado_por": _nombre_usuario(self.actualizado_por),
+            "actualizado_at": _iso(self.updated_at),
         }
