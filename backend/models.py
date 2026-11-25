@@ -712,6 +712,9 @@ class PeticionServicio(db.Model):
     mecanico_nombre = db.Column(db.String(120))
     mecanico_firma = db.Column(db.Text().with_variant(MEDIUMTEXT(), "mysql"))
     recibida_at = db.Column(db.DateTime)
+    # Vencida que la Coordinación o el admin quitaron de la bandeja con "Limpiar vencidas".
+    # No se borra: sigue contando para el rezago, el panel y los reportes.
+    archivada_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=utcnow, index=True)
 
     vehiculo = db.relationship("Vehiculo")
@@ -752,6 +755,7 @@ class PeticionServicio(db.Model):
             "plazo": _plazo(self),
             "motivo_descarte": self.motivo_descarte,
             "atendida_at": _iso(self.atendida_at),
+            "archivada_at": _iso(self.archivada_at),
         }
 
 

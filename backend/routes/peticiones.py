@@ -245,6 +245,11 @@ def listar():
     query = PeticionServicio.query.join(Vehiculo, PeticionServicio.vehiculo_id == Vehiculo.id)
     if estado != "todas":
         query = query.filter(PeticionServicio.estado == estado)
+    # Vencidas: la bandeja muestra las que no se han limpiado; ?archivadas=1 muestra las limpiadas
+    ver_archivadas = request.args.get("archivadas") == "1"
+    if estado == "vencida":
+        archivada = PeticionServicio.archivada_at.isnot(None)
+        query = query.filter(archivada if ver_archivadas else PeticionServicio.archivada_at.is_(None))
     if orden == "antiguas":
         query = query.order_by(PeticionServicio.created_at.asc(), PeticionServicio.id.asc())
     else:
@@ -279,8 +284,34 @@ def listar():
         if plazo in PLAZOS:
             query = _filtro_plazo(query, plazo)
 
+    # Cuántas vencidas hay en la bandeja y cuántas ya se limpiaron (sin filtros)
+    vencidas = None
+    if estado == "vencida":
+        base = PeticionServicio.query.filter(PeticionServicio.estado == "vencida")
+        vencidas = {
+            "en_bandeja": base.filter(PeticionServicio.archivada_at.is_(None)).count(),
+            "archivadas": base.filter(PeticionServicio.archivada_at.isnot(None)).count(),
+        }
+
     items, info = paginar(query, por_defecto=10)
-    return jsonify({**info, "items": [p.to_dict() for p in items], "conteo": conteo, "areas": areas}), 200
+    return jsonify({**info, "items": [p.to_dict() for p in items], "conteo": conteo,
+                    "areas": areas, "vencidas": vencidas}), 200
+
+
+# ─── Limpiar vencidas: las quita de la bandeja sin borrarlas ───
+@peticiones_bp.route("/vencidas/archivar", methods=["POST"])
+@role_required("admin", "mecanico")
+def archivar_vencidas():
+    """Quita de la pestaña "Vencidas" todas las que hay. No se eliminan: siguen
+    contando para el rezago de las áreas, el panel de control y los reportes."""
+    ahora = utcnow()
+    n = (
+        PeticionServicio.query
+        .filter(PeticionServicio.estado == "vencida", PeticionServicio.archivada_at.is_(None))
+        .update({PeticionServicio.archivada_at: ahora}, synchronize_session=False)
+    )
+    db.session.commit()
+    return jsonify({"archivadas": n}), 200
 
 
 # ─── Rezago: el área envió la solicitud y no ha llevado la unidad ───

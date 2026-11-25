@@ -25,9 +25,10 @@ import TablaMateriales from "../../components/peticiones/TablaMateriales";
 import { descargarSolicitudPdf } from "../../utils/pdfs";
 import {
   Loader2, Inbox, CarFront, XCircle, Building2, Clock, FileDown, UserRound,
-  CheckCircle2, ArrowRight, Search,
+  CheckCircle2, ArrowRight, Search, Archive, ArrowLeft,
 } from "lucide-react";
 import { useCamposVacios } from "../../hooks/useCamposVacios";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const PESTANAS = [
   { valor: "pendiente", label: "Pendientes" },
@@ -69,6 +70,11 @@ export default function PeticionesAreas() {
   const [plazo, setPlazo] = useState("");
   const [area, setArea] = useState("");
   const [orden, setOrden] = useState("antiguas");
+  // Vencidas: false = las que siguen en la bandeja; true = las que ya se limpiaron
+  const [verArchivadas, setVerArchivadas] = useState(false);
+  const [limpiando, setLimpiando] = useState(false); // ventana de confirmación abierta
+  const [archivando, setArchivando] = useState(false);
+  const [aviso, setAviso] = useState("");
 
   const buscar = useDebounce(q.trim()); // lo escrito, cuando se deja de escribir
   // Una búsqueda nueva empieza en la página 1
@@ -80,18 +86,18 @@ export default function PeticionesAreas() {
     setLoading(true);
     setError("");
     peticionesApi
-      .pagina({ estado, pagina, q: buscar, area, plazo, orden })
+      .pagina({ estado, pagina, q: buscar, area, plazo, orden, archivadas: verArchivadas ? 1 : "" })
       .then(setDatos)
       .catch((e) => setError(e.message || "No se pudieron cargar las solicitudes"))
       .finally(() => setLoading(false));
-  }, [estado, pagina, buscar, area, plazo, orden]);
+  }, [estado, pagina, buscar, area, plazo, orden, verArchivadas]);
 
   useEffect(cargar, [cargar]);
 
   // Las solicitudes nuevas de las áreas aparecen sin recargar la página
   useAutoActualizar(() =>
     peticionesApi
-      .pagina({ estado, pagina, q: buscar, area, plazo, orden })
+      .pagina({ estado, pagina, q: buscar, area, plazo, orden, archivadas: verArchivadas ? 1 : "" })
       .then(setDatos)
       .catch(() => {})
   );
@@ -108,6 +114,34 @@ export default function PeticionesAreas() {
     setPlazo("");
     setArea("");
     setOrden(valor === "pendiente" ? "antiguas" : "recientes");
+    setVerArchivadas(false);
+    setAviso("");
+  };
+
+  const verLimpiadas = (si) => {
+    setVerArchivadas(si);
+    setPagina(1);
+    setAviso("");
+  };
+
+  // "Limpiar vencidas": se quitan de la bandeja, pero siguen guardadas para el
+  // rezago de las áreas, el panel de control y los reportes.
+  const limpiarVencidas = async () => {
+    setArchivando(true);
+    try {
+      const { archivadas } = await peticionesApi.archivarVencidas();
+      setLimpiando(false);
+      setPagina(1);
+      setAviso(
+        archivadas === 1 ? "Se limpió 1 solicitud vencida." : `Se limpiaron ${archivadas} solicitudes vencidas.`
+      );
+      cargar();
+    } catch (e) {
+      setLimpiando(false);
+      setError(e.message || "No se pudieron limpiar las solicitudes vencidas");
+    } finally {
+      setArchivando(false);
+    }
   };
 
   const pendientes = estado === "pendiente";
@@ -115,6 +149,7 @@ export default function PeticionesAreas() {
   const areas = datos?.areas || [];
   const conteo = datos?.conteo || {};
   const hayFiltro = Boolean(buscar || area || plazo);
+  const vencidas = datos?.vencidas; // { en_bandeja, archivadas } solo en la pestaña Vencidas
 
   const irAlServicio = (p) => navigate(`${SOLICITUDES_BASE[role]}/${p.solicitud.id}`);
   const actualizar = (p) =>
@@ -197,6 +232,48 @@ export default function PeticionesAreas() {
         </div>
       </div>
 
+      {/* Vencidas: limpiar la bandeja (opcional) o consultar las que ya se limpiaron */}
+      {estado === "vencida" && vencidas && (
+        <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-3">
+          {verArchivadas ? (
+            <>
+              <p className="flex-1 text-sm text-slate-600">
+                Solicitudes vencidas que se limpiaron de la bandeja. Siguen contando en el rezago de las áreas y en
+                los reportes.
+              </p>
+              <Boton variante="secundario" tamano="sm" icono={<ArrowLeft size={14} />} onClick={() => verLimpiadas(false)}>
+                Volver a vencidas
+              </Boton>
+            </>
+          ) : (
+            <>
+              <p className="flex-1 text-xs text-slate-500">
+                Puedes limpiar la bandeja si ya no necesitas ver las vencidas. No se borran: siguen contando en el
+                rezago de las áreas y en los reportes.
+                {vencidas.archivadas > 0 && (
+                  <>
+                    {" "}
+                    <button
+                      type="button"
+                      onClick={() => verLimpiadas(true)}
+                      className="font-medium text-institucional hover:underline"
+                    >
+                      Ver limpiadas ({vencidas.archivadas})
+                    </button>
+                  </>
+                )}
+              </p>
+              {vencidas.en_bandeja > 0 && (
+                <Boton variante="secundario" tamano="sm" icono={<Archive size={14} />} onClick={() => setLimpiando(true)}>
+                  Limpiar vencidas ({vencidas.en_bandeja})
+                </Boton>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {aviso && <Alerta tipo="exito" className="mb-4">{aviso}</Alerta>}
       {error && <Alerta className="mb-4">{error}</Alerta>}
 
       {loading && !datos ? (
@@ -207,7 +284,13 @@ export default function PeticionesAreas() {
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <Inbox size={44} className="mx-auto text-slate-300" />
           <p className="mt-4 text-sm font-medium text-slate-700">
-            {hayFiltro ? "Ninguna solicitud coincide con la búsqueda o el filtro" : VACIO[estado]}
+            {hayFiltro
+              ? "Ninguna solicitud coincide con la búsqueda o el filtro"
+              : verArchivadas
+                ? "No hay solicitudes vencidas limpiadas"
+                : estado === "vencida" && vencidas?.archivadas > 0
+                  ? "No hay solicitudes vencidas en la bandeja"
+                  : VACIO[estado]}
           </p>
         </div>
       ) : (
@@ -358,6 +441,21 @@ export default function PeticionesAreas() {
           onContinuar={irAlServicio}
         />
       )}
+
+      <ConfirmModal
+        open={limpiando}
+        onClose={() => setLimpiando(false)}
+        onConfirm={limpiarVencidas}
+        loading={archivando}
+        tono="confirmar"
+        title="¿Limpiar las solicitudes vencidas?"
+        confirmLabel="Sí, limpiar"
+        loadingLabel="Limpiando..."
+      >
+        Se quitarán de esta bandeja{" "}
+        {vencidas?.en_bandeja === 1 ? "1 solicitud vencida" : `${vencidas?.en_bandeja || 0} solicitudes vencidas`}. No se
+        borran: podrás consultarlas en “Ver limpiadas” y seguirán contando en el rezago de las áreas y en los reportes.
+      </ConfirmModal>
 
       {descartando && (
         <Descartar

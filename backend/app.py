@@ -46,6 +46,7 @@ COLUMNAS_NUEVAS = [
     ("usuarios", "intentos_fallidos", "INT NOT NULL DEFAULT 0"),
     ("usuarios", "bloqueado_hasta", "DATETIME NULL"),
     ("peticiones_servicio", "descripcion_falla", "TEXT NULL"),
+    ("peticiones_servicio", "archivada_at", "DATETIME NULL"),
 ]
 
 # Valores que debe aceptar la columna usuarios.role (ENUM de MySQL)

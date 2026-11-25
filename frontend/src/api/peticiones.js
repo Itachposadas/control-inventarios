@@ -8,8 +8,12 @@ export const peticionesApi = {
 
   // Página de la bandeja con búsqueda y filtros:
   // { items, total, pagina, paginas, por_pagina, conteo: {todas, vigente, por_vencer} | null, areas }
-  pagina: ({ estado = "", pagina = 1, q = "", area = "", plazo = "", orden = "" } = {}) =>
-    request(`/peticiones${toQuery({ estado, pagina, q, area, plazo, orden })}`),
+  // En "vencida" responde también vencidas: {en_bandeja, archivadas}; archivadas=1 lista las ya limpiadas
+  pagina: ({ estado = "", pagina = 1, q = "", area = "", plazo = "", orden = "", archivadas = "" } = {}) =>
+    request(`/peticiones${toQuery({ estado, pagina, q, area, plazo, orden, archivadas })}`),
+
+  // "Limpiar vencidas" (admin y Coordinación): las quita de la bandeja sin borrarlas → { archivadas }
+  archivarVencidas: () => request("/peticiones/vencidas/archivar", { method: "POST", body: {} }),
 
   // Rezago: por vencer y áreas que más dejan vencer sus solicitudes (admin y Coordinación)
   rezago: () => request("/peticiones/rezago"),
